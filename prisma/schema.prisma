@@ -1,0 +1,107 @@
+// Prisma schema for atasilabs.com Studio with Supabase PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum LeadStatus {
+  NEW
+  READ
+  ARCHIVED
+}
+
+enum ProjectStatus {
+  PLANNING
+  IN_PROGRESS
+  REVIEW
+  COMPLETED
+}
+
+enum UserRole {
+  ADMIN
+  DEVELOPER
+}
+
+model Lead {
+  id          String   @id @default(uuid())
+  name        String
+  email       String
+  company     String?
+  serviceType String?
+  budget      String?
+  message     String
+  status      String   @default("NEW")
+  createdAt   DateTime @default(now())
+}
+
+model Portfolio {
+  id              String   @id @default(uuid())
+  title           String
+  description     String
+  fullDescription String?
+  category        String   @default("Full-Stack")
+  imageUrl        String
+  techStack       String[]
+  liveUrl         String?
+  repoUrl         String?
+  featured        Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model ClientProject {
+  id          String   @id @default(uuid())
+  clientName  String
+  clientEmail String
+  title       String
+  description String
+  deadline    String
+  budget      Float
+  progress    Int      @default(0)
+  status      String   @default("PLANNING")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model PricingTier {
+  id             String   @id @default(uuid())
+  tierNumber     Int
+  name           String
+  tagline        String
+  price          Float
+  priceBilling   String
+  popular        Boolean  @default(false)
+  highlightBadge String?
+  deliveryTime   String
+  revisionCount  String
+  features       String[]
+  specs          Json?
+  idealFor       String
+  ctaText        String
+  updatedAt      DateTime @updatedAt
+}
+
+model ServiceItem {
+  id          String   @id @default(uuid())
+  title       String
+  subtitle    String
+  description String
+  features    String[]
+  iconName    String
+  techTags    String[]
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  role      String   @default("ADMIN")
+  avatarUrl String?
+  createdAt DateTime @default(now())
+}

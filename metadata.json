@@ -1,0 +1,6 @@
+{
+  "name": "Sistem Informasi Web Developer",
+  "description": "Sistem informasi portofolio dan manajemen proyek web developer lengkap dengan landing page interaktif, manajemen leads, CMS portofolio, dan pelacak progres proyek klien.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
