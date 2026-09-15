@@ -40,6 +40,7 @@ import {
   Business as BusinessIcon,
   AttachMoney as MoneyIcon,
   CalendarToday as CalendarIcon,
+  AutoAwesome as AutoIcon,
 } from '@mui/icons-material';
 import { useApp } from '../../context/AppContext';
 import { Lead, LeadStatus } from '../../types';
@@ -52,12 +53,31 @@ export const LeadsView: React.FC = () => {
     deleteLead,
     markAllLeadsRead,
     unreadLeadsCount,
+    addProject,
+    setDashboardTab,
   } = useApp();
 
   const [filterTab, setFilterTab] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [leadToDelete, setLeadToDelete] = useState<string | null>(null);
+
+  const handleConvertToProject = async () => {
+    if (!selectedLead) return;
+    const newProj = await addProject({
+      clientName: selectedLead.name,
+      clientEmail: selectedLead.email,
+      clientCompany: selectedLead.company,
+      title: selectedLead.serviceType || 'Pengembangan Web Custom',
+      description: selectedLead.message,
+      deadline: '2026-05-30',
+      budget: selectedLead.budget?.includes('50') ? 50000000 : selectedLead.budget?.includes('25') ? 25000000 : 15000000,
+      progress: 10,
+      status: 'PLANNING',
+    });
+    setSelectedLead(null);
+    setDashboardTab('documents');
+  };
 
   const filteredLeads = leads.filter((lead) => {
     const matchesTab =
@@ -511,17 +531,25 @@ export const LeadsView: React.FC = () => {
                 Hapus
               </Button>
 
-              <Box sx={{ display: 'flex', gap: 1 }}>
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                 <Button onClick={() => setSelectedLead(null)} color="inherit">
                   Tutup
                 </Button>
                 <Button
                   variant="contained"
+                  color="success"
+                  startIcon={<AutoIcon />}
+                  onClick={handleConvertToProject}
+                >
+                  Jadikan Proyek & Auto-Gen 5 Dokumen
+                </Button>
+                <Button
+                  variant="outlined"
                   component="a"
                   href={`mailto:${selectedLead.email}?subject=Tanggapan Konsultasi Proyek DevStudio&body=Halo ${selectedLead.name},%0D%0A%0D%0ATerima kasih telah menghubungi kami mengenai inquiry ${selectedLead.serviceType || 'proyek web'}...`}
                   startIcon={<SendIcon />}
                 >
-                  Balas via Email
+                  Balas Email
                 </Button>
               </Box>
             </DialogActions>

@@ -17,6 +17,7 @@ import {
   TableRow,
   useTheme,
   IconButton,
+  Alert,
 } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import {
@@ -30,6 +31,10 @@ import {
   CheckCircle as CheckCircleIcon,
   Schedule as ScheduleIcon,
   Bolt as BoltIcon,
+  Description as DescriptionIcon,
+  Calculate as CalcIcon,
+  AutoAwesome as AutoIcon,
+  FolderSpecial as FolderIcon,
 } from '@mui/icons-material';
 import { useApp } from '../../context/AppContext';
 
@@ -42,7 +47,6 @@ export const OverviewView: React.FC = () => {
     pricingTiers,
     setDashboardTab,
     unreadLeadsCount,
-    updateLeadStatus,
   } = useApp();
 
   const activeProjects = projects.filter((p) => p.status === 'IN_PROGRESS' || p.status === 'PLANNING' || p.status === 'REVIEW');
@@ -59,33 +63,33 @@ export const OverviewView: React.FC = () => {
 
   const statCards = [
     {
-      title: 'Total Pesan Masuk (Leads)',
-      value: leads.length,
-      subtitle: `${unreadLeadsCount} pesan baru belum dibaca`,
-      icon: <EmailIcon sx={{ color: theme.palette.primary.main }} />,
-      color: theme.palette.primary.main,
-      tabTarget: 'leads',
-    },
-    {
       title: 'Proyek Klien Berjalan',
       value: activeProjects.length,
       subtitle: `${completedProjects.length} proyek terselesaikan`,
-      icon: <AssignmentIcon sx={{ color: '#10b981' }} />,
-      color: '#10b981',
+      icon: <AssignmentIcon sx={{ color: theme.palette.primary.main }} />,
+      color: theme.palette.primary.main,
       tabTarget: 'projects',
     },
     {
-      title: 'Portofolio Diterbitkan',
-      value: portfolios.length,
-      subtitle: 'Tersinkron di Supabase DB',
-      icon: <CodeIcon sx={{ color: '#8b5cf6' }} />,
-      color: '#8b5cf6',
-      tabTarget: 'portfolio',
+      title: 'Dokumen Operasional (Auto)',
+      value: projects.length * 5,
+      subtitle: 'Paket CIF, RSD, MoU, SPK, BAST',
+      icon: <DescriptionIcon sx={{ color: '#10b981' }} />,
+      color: '#10b981',
+      tabTarget: 'documents',
     },
     {
-      title: 'Total Nilai Pipeline',
+      title: 'Pesan Masuk (Leads)',
+      value: leads.length,
+      subtitle: `${unreadLeadsCount} pesan baru perlu direspon`,
+      icon: <EmailIcon sx={{ color: '#3b82f6' }} />,
+      color: '#3b82f6',
+      tabTarget: 'leads',
+    },
+    {
+      title: 'Nilai Pipeline Proyek',
       value: formatRupiah(totalPipelineBudget),
-      subtitle: 'Akumulasi kontrak proyek',
+      subtitle: 'Akumulasi total kontrak',
       icon: <TrendingUpIcon sx={{ color: '#f59e0b' }} />,
       color: '#f59e0b',
       tabTarget: 'projects',
@@ -98,97 +102,101 @@ export const OverviewView: React.FC = () => {
         return { bg: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', label: 'Baru' };
       case 'READ':
         return { bg: theme.palette.mode === 'dark' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(217, 119, 6, 0.1)', color: theme.palette.primary.main, label: 'Dibaca' };
-      case 'ARCHIVED':
       default:
-        return { bg: 'rgba(100, 116, 139, 0.1)', color: '#64748b', label: 'Arsip' };
+        return { bg: 'rgba(148, 163, 184, 0.1)', color: '#64748b', label: 'Diarsipkan' };
     }
   };
 
   return (
-    <Box>
-      {/* Top Welcome & Actions */}
-      <Box
+    <Box sx={{ width: '100%' }}>
+      {/* Welcome & Quick Action Header */}
+      <Paper
+        elevation={0}
         sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row' },
-          justifyContent: 'space-between',
-          alignItems: { xs: 'flex-start', sm: 'center' },
-          gap: 2,
-          mb: 4,
+          p: { xs: 2.5, sm: 3.5 },
+          borderRadius: 3.5,
+          background:
+            theme.palette.mode === 'dark'
+              ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(15, 23, 42, 0.9) 100%)'
+              : 'linear-gradient(135deg, rgba(217, 119, 6, 0.1) 0%, rgba(255, 255, 255, 0.9) 100%)',
+          border: `1px solid ${theme.palette.divider}`,
+          mb: 3.5,
         }}
       >
-        <Box>
-          <Typography variant="h5" sx={{ fontWeight: 800, mb: 0.5 }}>
-            Ringkasan Sistem & Metrik Operasional
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Data dikueri secara langsung dari basis data PostgreSQL Supabase melalui Prisma ORM Client.
-          </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+          <Box>
+            <Chip
+              icon={<AutoIcon sx={{ fontSize: '14px !important' }} />}
+              label="SISTEM OPERASIONAL DOKUMEN AUTOMATED"
+              size="small"
+              sx={{
+                fontWeight: 800,
+                fontSize: '0.68rem',
+                backgroundColor: theme.palette.mode === 'dark' ? 'rgba(245, 158, 11, 0.2)' : 'rgba(217, 119, 6, 0.15)',
+                color: theme.palette.primary.main,
+                mb: 1,
+              }}
+            />
+            <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary', mb: 0.5 }}>
+              Selamat Datang di Studio Control Center Atasilabs
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 700 }}>
+              Pusat kendali manajemen proyek, otomatisasi 5 paket dokumen (CIF, RSD, MoU, SPK, BAST), kalkulator HPP, dan pengelolaan pesan prospek.
+            </Typography>
+          </Box>
+
+          <Stack direction="row" spacing={1.5} flexWrap="wrap">
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<DescriptionIcon />}
+              onClick={() => setDashboardTab('documents')}
+              sx={{ fontWeight: 700, borderRadius: 2.5 }}
+            >
+              Cetak / Kelola Dokumen
+            </Button>
+            <Button
+              variant="outlined"
+              color="inherit"
+              startIcon={<AssignmentIcon />}
+              onClick={() => setDashboardTab('projects')}
+              sx={{ fontWeight: 700, borderRadius: 2.5 }}
+            >
+              Proyek Aktif
+            </Button>
+          </Stack>
         </Box>
+      </Paper>
 
-        <Stack direction="row" spacing={1.5}>
-          <Button
-            variant="outlined"
-            size="small"
-            startIcon={<BoltIcon />}
-            onClick={() => setDashboardTab('pricing')}
-            sx={{ fontWeight: 600, borderRadius: 2 }}
-          >
-            Atur Pricelist (5 Tiers)
-          </Button>
-          <Button
-            variant="outlined"
-            size="small"
-            startIcon={<AddIcon />}
-            onClick={() => setDashboardTab('portfolio')}
-            sx={{ fontWeight: 600, borderRadius: 2 }}
-          >
-            Tambah Portofolio
-          </Button>
-          <Button
-            variant="contained"
-            size="small"
-            color="primary"
-            startIcon={<EmailIcon />}
-            onClick={() => setDashboardTab('leads')}
-            sx={{ fontWeight: 600, borderRadius: 2 }}
-          >
-            Kelola Leads {unreadLeadsCount > 0 && `(${unreadLeadsCount})`}
-          </Button>
-        </Stack>
-      </Box>
-
-      {/* KPI Cards Grid */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      {/* Overview Metric Cards */}
+      <Grid container spacing={2.5} sx={{ mb: 3.5 }}>
         {statCards.map((card, idx) => (
-          <Grid size={{ xs: 12, sm: 6, lg: 3 }} key={idx}>
+          <Grid key={idx} size={{ xs: 12, sm: 6, md: 3 }}>
             <Paper
               elevation={0}
+              onClick={() => setDashboardTab(card.tabTarget as any)}
               sx={{
-                p: 2.8,
-                borderRadius: 3.5,
+                p: 2.5,
+                borderRadius: 3,
                 border: `1px solid ${theme.palette.divider}`,
                 backgroundColor: theme.palette.background.paper,
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                height: '100%',
-                transition: 'transform 0.2s ease, border-color 0.2s ease',
+                cursor: 'pointer',
+                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
                 '&:hover': {
                   transform: 'translateY(-3px)',
+                  boxShadow: '0 8px 20px rgba(0,0,0,0.08)',
                   borderColor: card.color,
                 },
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                <Typography variant="subtitle2" color="text.secondary" sx={{ fontWeight: 700, fontSize: '0.82rem' }}>
                   {card.title}
                 </Typography>
                 <Box
                   sx={{
-                    width: 38,
-                    height: 38,
-                    borderRadius: 2.5,
+                    p: 1,
+                    borderRadius: 2,
                     backgroundColor: `${card.color}15`,
                     display: 'flex',
                     alignItems: 'center',
@@ -198,201 +206,212 @@ export const OverviewView: React.FC = () => {
                   {card.icon}
                 </Box>
               </Box>
-
-              <Typography variant="h4" sx={{ fontWeight: 800, mb: 0.5, fontSize: { xs: '1.6rem', md: '1.9rem' } }}>
+              <Typography variant="h4" sx={{ fontWeight: 800, mb: 0.5, fontSize: '1.8rem' }}>
                 {card.value}
               </Typography>
-
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 'auto' }}>
-                <Typography variant="caption" color="text.secondary">
-                  {card.subtitle}
-                </Typography>
-                <Button
-                  size="small"
-                  onClick={() => setDashboardTab(card.tabTarget as any)}
-                  sx={{ minWidth: 'auto', p: 0.5, color: card.color }}
-                >
-                  <ArrowForwardIcon sx={{ fontSize: 16 }} />
-                </Button>
-              </Box>
+              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                {card.subtitle}
+              </Typography>
             </Paper>
           </Grid>
         ))}
       </Grid>
 
-      {/* Middle Split: Recent Leads & Active Projects */}
-      <Grid container spacing={3.5}>
-        {/* Left: Recent Leads / Messages */}
-        <Grid size={{ xs: 12, lg: 7 }}>
+      {/* Main Two-Column Layout */}
+      <Grid container spacing={3}>
+        {/* Left Column: Proyek Klien & Workflow Stage */}
+        <Grid size={{ xs: 12, lg: 8 }}>
           <Paper
             elevation={0}
             sx={{
               p: 3,
-              borderRadius: 3.5,
+              borderRadius: 3,
               border: `1px solid ${theme.palette.divider}`,
               backgroundColor: theme.palette.background.paper,
-              height: '100%',
+              mb: 3,
             }}
           >
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2.5 }}>
-              <Box>
-                <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                  Pesan Masuk Terbaru (Tabel Lead)
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Hasil submit dari formulir landing page
-                </Typography>
-              </Box>
-              <Button
-                size="small"
-                endIcon={<ArrowForwardIcon />}
-                onClick={() => setDashboardTab('leads')}
-                sx={{ fontWeight: 600 }}
-              >
-                Buka Semua
-              </Button>
-            </Box>
-
-            <TableContainer>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 700, fontSize: '0.78rem' }}>PENGIRIM</TableCell>
-                    <TableCell sx={{ fontWeight: 700, fontSize: '0.78rem' }}>LAYANAN</TableCell>
-                    <TableCell sx={{ fontWeight: 700, fontSize: '0.78rem' }}>STATUS</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 700, fontSize: '0.78rem' }}>AKSI</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {leads.slice(0, 4).map((lead) => {
-                    const statusConfig = getStatusChipColor(lead.status);
-                    return (
-                      <TableRow key={lead.id} hover>
-                        <TableCell>
-                          <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.86rem' }}>
-                            {lead.name}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {lead.email}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2" sx={{ fontSize: '0.82rem' }}>
-                            {lead.serviceType || 'Konsultasi'}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={statusConfig.label}
-                            size="small"
-                            sx={{
-                              backgroundColor: statusConfig.bg,
-                              color: statusConfig.color,
-                              fontWeight: 700,
-                              fontSize: '0.7rem',
-                              height: 22,
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell align="right">
-                          <Button
-                            size="small"
-                            onClick={() => {
-                              updateLeadStatus(lead.id, 'READ');
-                              setDashboardTab('leads');
-                            }}
-                            sx={{ fontSize: '0.75rem', fontWeight: 600 }}
-                          >
-                            Detail
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Paper>
-        </Grid>
-
-        {/* Right: Active Project Progress Overview (LinearProgress) */}
-        <Grid size={{ xs: 12, lg: 5 }}>
-          <Paper
-            elevation={0}
-            sx={{
-              p: 3,
-              borderRadius: 3.5,
-              border: `1px solid ${theme.palette.divider}`,
-              backgroundColor: theme.palette.background.paper,
-              height: '100%',
-            }}
-          >
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2.5 }}>
-              <Box>
-                <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                  Progres Proyek Klien
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Pelacakan deadline & deliverable kerja
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <AssignmentIcon color="primary" />
+                <Typography variant="h6" sx={{ fontWeight: 800, fontSize: '1.1rem' }}>
+                  Proyek Klien Aktif & Status SOP Dokumen
                 </Typography>
               </Box>
               <Button
                 size="small"
                 endIcon={<ArrowForwardIcon />}
                 onClick={() => setDashboardTab('projects')}
-                sx={{ fontWeight: 600 }}
+                sx={{ fontWeight: 700, fontSize: '0.8rem' }}
               >
-                Kelola
+                Lihat Semua ({projects.length})
               </Button>
             </Box>
 
-            <Stack spacing={2.5}>
-              {projects.slice(0, 4).map((proj) => (
-                <Box
-                  key={proj.id}
-                  sx={{
-                    p: 1.8,
-                    borderRadius: 2.5,
-                    border: `1px solid ${theme.palette.divider}`,
-                    backgroundColor:
-                      theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
-                  }}
-                >
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.8 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.88rem' }}>
-                      {proj.title}
-                    </Typography>
-                    <Typography variant="caption" color="primary" sx={{ fontWeight: 700 }}>
-                      {proj.progress}%
-                    </Typography>
-                  </Box>
+            <TableContainer>
+              <Table size="small">
+                <TableHead sx={{ bgcolor: 'action.hover' }}>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700 }}>Klien / Proyek</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Progres</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Nilai Kontrak</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Status Dokumen</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 700 }}>Aksi</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {projects.slice(0, 4).map((proj) => (
+                    <TableRow key={proj.id} hover>
+                      <TableCell>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                          {proj.clientName}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" noWrap display="block">
+                          {proj.title}
+                        </Typography>
+                      </TableCell>
+                      <TableCell sx={{ width: 140 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <LinearProgress
+                            variant="determinate"
+                            value={proj.progress}
+                            sx={{ flexGrow: 1, height: 6, borderRadius: 3 }}
+                          />
+                          <Typography variant="caption" sx={{ fontWeight: 700 }}>{proj.progress}%</Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: 'primary.main' }}>
+                        {formatRupiah(proj.budget)}
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          icon={<CheckCircleIcon sx={{ fontSize: '12px !important' }} />}
+                          label="5 Dokumen Ready"
+                          size="small"
+                          color="success"
+                          variant="outlined"
+                          sx={{ height: 22, fontSize: '0.68rem', fontWeight: 700 }}
+                        />
+                      </TableCell>
+                      <TableCell align="right">
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          startIcon={<DescriptionIcon sx={{ fontSize: 14 }} />}
+                          onClick={() => setDashboardTab('documents')}
+                          sx={{ fontSize: '0.72rem', py: 0.2 }}
+                        >
+                          Dokumen
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Paper>
 
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.2 }}>
-                    Klien: {proj.clientName} • Deadline: {proj.deadline}
-                  </Typography>
+          {/* User Guide Card for Operations */}
+          <Alert
+            severity="info"
+            icon={<AutoIcon color="info" />}
+            sx={{
+              borderRadius: 3,
+              fontSize: '0.82rem',
+              '& .MuiAlert-message': { width: '100%' },
+            }}
+          >
+            <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 0.5 }}>
+              💡 Panduan Operasional Cepat Atasilabs:
+            </Typography>
+            <Typography variant="body2" sx={{ fontSize: '0.8rem', lineHeight: 1.6 }}>
+              1. <strong>Pesan Masuk (Leads)</strong>: Terima pesan dari calon klien, klik <em>"Jadikan Proyek & Auto-Gen 5 Dokumen"</em>.<br />
+              2. <strong>Dokumen & SOP Workflow</strong>: Pilih nama proyek klien dari dropdown untuk langsung mencetak dokumen resmi ber-kop (CIF, RSD, MoU, SPK, BAST) ke format PDF A4.<br />
+              3. <strong>Kalkulator HPP</strong>: Hitung alokasi fee developer, server/domain, dan simulasi pembagian laba kotor per tier.
+            </Typography>
+          </Alert>
+        </Grid>
 
-                  <LinearProgress
-                    variant="determinate"
-                    value={proj.progress}
+        {/* Right Column: Inbound Leads & Quick Access */}
+        <Grid size={{ xs: 12, lg: 4 }}>
+          {/* Recent Leads Widget */}
+          <Paper
+            elevation={0}
+            sx={{
+              p: 3,
+              borderRadius: 3,
+              border: `1px solid ${theme.palette.divider}`,
+              backgroundColor: theme.palette.background.paper,
+              mb: 3,
+            }}
+          >
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <EmailIcon color="primary" />
+                <Typography variant="h6" sx={{ fontWeight: 800, fontSize: '1.05rem' }}>
+                  Pesan Masuk Terbaru
+                </Typography>
+              </Box>
+              {unreadLeadsCount > 0 && (
+                <Chip label={`${unreadLeadsCount} Baru`} color="error" size="small" sx={{ fontWeight: 800, height: 20 }} />
+              )}
+            </Box>
+
+            <Stack spacing={1.5}>
+              {leads.slice(0, 3).map((lead) => {
+                const statusStyle = getStatusChipColor(lead.status);
+                return (
+                  <Paper
+                    key={lead.id}
+                    variant="outlined"
+                    onClick={() => setDashboardTab('leads')}
                     sx={{
-                      height: 7,
-                      borderRadius: 4,
-                      backgroundColor:
-                        theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
-                      '& .MuiLinearProgress-bar': {
-                        borderRadius: 4,
-                        backgroundColor:
-                          proj.progress === 100
-                            ? '#10b981'
-                            : proj.progress > 60
-                            ? theme.palette.primary.main
-                            : '#f59e0b',
+                      p: 1.8,
+                      borderRadius: 2.5,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      '&:hover': {
+                        backgroundColor: 'action.hover',
+                        borderColor: theme.palette.primary.main,
                       },
                     }}
-                  />
-                </Box>
-              ))}
+                  >
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 0.5 }}>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                        {lead.name}
+                      </Typography>
+                      <Chip
+                        label={statusStyle.label}
+                        size="small"
+                        sx={{
+                          height: 18,
+                          fontSize: '0.62rem',
+                          fontWeight: 700,
+                          backgroundColor: statusStyle.bg,
+                          color: statusStyle.color,
+                        }}
+                      />
+                    </Box>
+                    <Typography variant="caption" color="text.secondary" display="block" noWrap sx={{ mb: 0.8 }}>
+                      {lead.company || lead.email}
+                    </Typography>
+                    <Typography variant="body2" color="text.primary" noWrap sx={{ fontSize: '0.78rem', fontStyle: 'italic' }}>
+                      "{lead.message}"
+                    </Typography>
+                  </Paper>
+                );
+              })}
             </Stack>
+
+            <Button
+              fullWidth
+              variant="outlined"
+              size="small"
+              onClick={() => setDashboardTab('leads')}
+              sx={{ mt: 2, fontWeight: 700, borderRadius: 2 }}
+            >
+              Buka Semua Inbox Leads
+            </Button>
           </Paper>
         </Grid>
       </Grid>

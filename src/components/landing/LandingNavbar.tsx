@@ -71,7 +71,7 @@ export const LandingNavbar: React.FC = () => {
         position="sticky"
         elevation={0}
         sx={{
-          backgroundColor: theme.palette.mode === 'dark' ? 'rgba(11, 15, 25, 0.85)' : 'rgba(255, 255, 255, 0.88)',
+          backgroundColor: theme.palette.mode === 'dark' ? 'rgba(9, 9, 11, 0.85)' : 'rgba(255, 255, 255, 0.88)',
           backdropFilter: 'blur(12px)',
           borderBottom: `1px solid ${theme.palette.divider}`,
           color: theme.palette.text.primary,

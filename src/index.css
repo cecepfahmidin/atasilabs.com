@@ -1,1 +1,124 @@
 @import "tailwindcss";
+
+/* -------------------------------------------------------------
+ * PRINT STYLES FOR ATASILABS OFFICIAL DOCUMENT GENERATOR
+ * ONLY PRINTS THE DOCUMENT ITSELF, STARTING FROM KOP SURAT
+ * ------------------------------------------------------------- */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm 12mm 12mm 12mm;
+  }
+
+  /* Reset global backgrounds to pure white paper & dark text */
+  html, body {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Hide EVERYTHING on the entire web page by default */
+  body * {
+    visibility: hidden !important;
+  }
+
+  /* Unhide ONLY the printable document container and its child elements */
+  .printable-document,
+  .printable-document * {
+    visibility: visible !important;
+  }
+
+  /* Absolute position the printable document right at top-left (0,0) of the paper */
+  .printable-document {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    display: block !important;
+  }
+
+  /* Explicitly hide non-printable buttons or action bars inside printable-document */
+  .printable-document .no-print,
+  .printable-document button,
+  .printable-document .MuiButton-root,
+  .printable-document .MuiChip-root.no-print {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* Tables formatting for print */
+  .printable-document table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    page-break-inside: auto !important;
+    margin-bottom: 12px !important;
+  }
+
+  .printable-document tr {
+    page-break-inside: avoid !important;
+    page-break-after: auto !important;
+  }
+
+  .printable-document th,
+  .printable-document td {
+    border: 1px solid #cbd5e1 !important;
+    color: #0f172a !important;
+    padding: 6px 10px !important;
+    font-size: 11px !important;
+    line-height: 1.4 !important;
+  }
+
+  .printable-document th {
+    background-color: #f8fafc !important;
+    font-weight: 700 !important;
+    color: #0f172a !important;
+  }
+
+  /* Headings & Typography */
+  .printable-document h6,
+  .printable-document .MuiTypography-h6 {
+    color: #b45309 !important;
+    font-size: 16px !important;
+    font-weight: 800 !important;
+  }
+
+  .printable-document .MuiTypography-subtitle2 {
+    color: #d97706 !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+  }
+
+  .printable-document .MuiTypography-body2 {
+    font-size: 11px !important;
+    color: #1e293b !important;
+  }
+
+  .printable-document .MuiTypography-caption {
+    font-size: 10px !important;
+    color: #475569 !important;
+  }
+
+  /* Signature & Footer Section */
+  .printable-document .signature-block {
+    page-break-inside: avoid !important;
+    margin-top: 24px !important;
+  }
+
+  .page-break-before {
+    page-break-before: always !important;
+  }
+
+  .avoid-break {
+    page-break-inside: avoid !important;
+  }
+}

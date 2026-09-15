@@ -38,7 +38,7 @@ export const Footer: React.FC = () => {
         pt: 8,
         pb: 5,
         borderTop: `1px solid ${theme.palette.divider}`,
-        backgroundColor: theme.palette.mode === 'dark' ? '#080c14' : '#f8fafc',
+        backgroundColor: theme.palette.mode === 'dark' ? '#050505' : '#f8fafc',
       }}
     >
       <Container maxWidth="lg">

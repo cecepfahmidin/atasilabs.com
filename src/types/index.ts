@@ -29,27 +29,260 @@ export interface Portfolio {
 
 export type ProjectStatus = 'PLANNING' | 'IN_PROGRESS' | 'REVIEW' | 'COMPLETED';
 
+export type IPWStage = 
+  | 'STAGE_1_DISCOVERY' 
+  | 'STAGE_2_PRE_SALES' 
+  | 'STAGE_3_CONTRACTING' 
+  | 'STAGE_4_DELEGATION' 
+  | 'STAGE_5_EXECUTION' 
+  | 'STAGE_6_CLOSURE';
+
+export type DocumentType = 'CIF' | 'RSD' | 'MOU' | 'SPK' | 'BAST' | 'HPP';
+
 export interface ClientProject {
   id: string;
   clientName: string;
   clientEmail: string;
+  clientPhone?: string;
+  clientCompany?: string;
   title: string;
   description: string;
   deadline: string;
   budget: number;
   progress: number; // 0 - 100
   status: ProjectStatus;
+  ipwStage?: IPWStage;
+  tierNumber?: 1 | 2 | 3 | 4 | 5;
+  freelancerName?: string;
+  freelancerFee?: number;
   createdAt: string;
   updatedAt: string;
 }
+
+// 1. Client Intake Form (CIF) Data Model
+export interface CIFData {
+  id: string;
+  projectId?: string;
+  docNumber: string;
+  adminName: string;
+  date: string;
+  infoSource: string;
+  clientName: string;
+  picName: string;
+  contact: string;
+  industry: string;
+  websiteUrl?: string;
+  businessLocation: string;
+  projectSummary: string;
+  primaryGoals: string;
+  targetAudience: string;
+  tier: 'Tier 1: Starter' | 'Tier 2: Growth' | 'Tier 3: Profesional' | 'Tier 4: Enterprise' | 'Tier 5: Elite' | string;
+  pageStructure: string;
+  mainFeatures: string;
+  techFramework: string;
+  brandingAssets: {
+    logo: boolean;
+    color: boolean;
+    officialFont: boolean;
+    others?: string;
+  };
+  visualStyle: string; // Modern/Minimalis, Profesional/Korporasi, Elegant/Mewah
+  referenceWebsites: string[];
+  contentAvailability: {
+    general: 'Tersedia' | 'Tidak Tersedia' | 'Disediakan Developer';
+    copywriting: 'Tersedia' | 'Tidak Tersedia' | 'Disediakan Developer';
+    images: 'Tersedia' | 'Tidak Tersedia' | 'Disediakan Developer';
+  };
+  estimatedBudget: number;
+  additionalCosts?: number;
+  paymentScheme: {
+    dpPercent: number;
+    midPercent?: number;
+    finalPercent: number;
+  };
+  targetLaunchDate: string;
+  additionalNotes?: string;
+  updatedAt: string;
+}
+
+// 2. Requirement Specification Document (RSD) Data Model
+export interface RSDFeatureItem {
+  id: string;
+  featureCode: string; // e.g. ATL-001
+  moduleArea: string;
+  nameAndDesc: string;
+  roleAccess: string;
+  priority: 'High' | 'Medium' | 'Low';
+}
+
+export interface RSDTechComponent {
+  component: string; // e.g. Frontend Web, Backend API, Database Utama, Cache, Cloud
+  techFramework: string;
+  versionSpec: string;
+  reason: string;
+}
+
+export interface RSDMilestone {
+  name: string;
+  scope: string;
+  durationDays: number;
+  targetDate: string;
+}
+
+export interface RSDData {
+  id: string;
+  projectId?: string;
+  docCode: string; // .../ATL-RSD/.../20...
+  clientName: string;
+  issueDate: string;
+  domain: string;
+  emailPass: string;
+  authorITLead: string;
+  tier: string;
+  freelancerName: string;
+  businessContext: string;
+  solutionSummary: string;
+  projectGoals: string;
+  inScope: string;
+  outOfScope: string;
+  techStack: RSDTechComponent[];
+  functionalFeatures: RSDFeatureItem[];
+  nonFunctional: {
+    security: string;
+    performance: string;
+    availability: string;
+    compatibility: string;
+  };
+  milestones: RSDMilestone[];
+  updatedAt: string;
+}
+
+// 3. MoU (Memorandum of Understanding) Data Model
+export interface MoUData {
+  id: string;
+  projectId?: string;
+  docNumber: string; // .../MoU/ATL/.../20...
+  date: string;
+  dayName: string;
+  monthName: string;
+  yearName: string;
+  atasilabsPic: string;
+  atasilabsRole: string;
+  clientCompany: string;
+  clientAddress: string;
+  clientPic: string;
+  clientRole: string;
+  tierCategory: 'Tier 1-2' | 'Tier 3-5';
+  totalInvestment: number;
+  totalInvestmentTerbilang: string;
+  paymentScheme: {
+    dpPercent: number;
+    dpNominal: number;
+    midPercent?: number;
+    midNominal?: number;
+    finalPercent: number;
+    finalNominal: number;
+  };
+  bankAccount: {
+    bankName: string;
+    accountNumber: string;
+    accountHolder: string;
+  };
+  warrantyDays: number; // default 30
+  revisionLimitDays: number;
+  updatedAt: string;
+}
+
+// 4. Surat Perintah Kerja (SPK) Data Model
+export interface SPKData {
+  id: string;
+  projectId?: string;
+  spkNumber: string; // .../SPK-ATL/.../20...
+  date: string;
+  atasilabsPic: string;
+  atasilabsRole: string;
+  atasilabsAddress: string;
+  atasilabsWhatsapp: string;
+  atasilabsEmail: string;
+
+  freelancerName: string;
+  freelancerNik: string;
+  freelancerAddress: string;
+  freelancerWhatsapp: string;
+  freelancerEmail: string;
+  freelancerStatus: string;
+  freelancerBankInfo: string;
+
+  deadlineDate: string;
+  totalNominal: number;
+  totalNominalTerbilang: string;
+  dpPercent: number; // default 40
+  dpNominal: number;
+  finalPercent: number; // default 60
+  finalNominal: number;
+  penaltyPerDayPercent: number; // 0.5%
+  maxPenaltyPercent: number; // 10%
+  revisionLimitCount: number;
+  updatedAt: string;
+}
+
+// 5. Berita Acara Serah Terima (BAST) Data Model
+export interface BASTData {
+  id: string;
+  projectId?: string;
+  bastNumber: string; // .../BAST/ATL/.../20...
+  date: string;
+  atasilabsPic: string;
+  atasilabsRole: string;
+  clientCompany: string;
+  clientAddress: string;
+  clientPic: string;
+  clientRole: string;
+  mainUrl: string;
+  sourceCodeAccess: string;
+  adminPanelAccess: string;
+  warrantyDays: number;
+  locationCity: string; // Subang
+  updatedAt: string;
+}
+
+// 6. HPP Financial Breakdown Data Model
+export interface HPPItem {
+  tierNumber: 1 | 2 | 3 | 4 | 5;
+  tierName: string;
+  pageRange: string;
+  developerFee: number;
+  developerRole: string;
+  domainHostingFee: number;
+  domainHostingSpec: string;
+  qaDeploymentFee: number;
+  totalHPP: number;
+  sellingPrice: number;
+  grossProfit: number;
+  grossProfitPercent: number;
+  workingDays: string;
+  profitAllocations: {
+    marketing: number; // 17.5% of Gross Profit
+    operational: number; // 5%
+    businessDev: number; // 10%
+    mitigation: number; // 5%
+    zakat: number; // 2.5%
+  };
+}
+
+export type UserRole = 'CEO' | 'CTO' | 'CMO' | 'ADMIN' | 'CLIENT' | 'FREELANCER';
 
 export interface User {
   id: string;
   email: string;
   name: string;
-  role: 'ADMIN' | 'DEVELOPER';
+  role: UserRole;
+  phone?: string;
+  company?: string;
+  status: 'ACTIVE' | 'INACTIVE';
   avatarUrl?: string;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface ServiceItem {
@@ -85,3 +318,4 @@ export interface PricingTier {
   ctaText: string;
   updatedAt: string;
 }
+

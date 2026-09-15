@@ -21,6 +21,7 @@ import { PortfolioCMSView } from '@/components/dashboard/PortfolioCMSView';
 import { ProjectsView } from '@/components/dashboard/ProjectsView';
 import { PricingCMSView } from '@/components/dashboard/PricingCMSView';
 import { SchemaInspectorView } from '@/components/dashboard/SchemaInspectorView';
+import { DocumentsWorkflowView } from '@/components/dashboard/DocumentsWorkflowView';
 
 export default function MainPage() {
   const { activeView, dashboardTab } = useApp();
@@ -29,6 +30,7 @@ export default function MainPage() {
     return (
       <DashboardLayout>
         {dashboardTab === 'overview' && <OverviewView />}
+        {dashboardTab === 'documents' && <DocumentsWorkflowView />}
         {dashboardTab === 'leads' && <LeadsView />}
         {dashboardTab === 'portfolio' && <PortfolioCMSView />}
         {dashboardTab === 'projects' && <ProjectsView />}

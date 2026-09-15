@@ -38,9 +38,15 @@ import {
   Person as PersonIcon,
   CheckCircle as CheckCircleIcon,
   RestartAlt as ResetIcon,
+  Description as DescriptionIcon,
+  People as PeopleIcon,
+  Calculate as CalculateIcon,
 } from '@mui/icons-material';
+import { useRouter, usePathname } from 'next/navigation';
 import { useApp } from '../../context/AppContext';
 import { AtasiLabsLogo } from '../common/AtasiLabsLogo';
+import { ROLE_CONFIGS, hasPermission } from '../../lib/rbac';
+import { UserRole } from '../../types';
 
 const DRAWER_WIDTH = 260;
 
@@ -52,7 +58,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
+  const router = useRouter();
+  const pathname = usePathname();
 
   const {
     themeMode,
@@ -64,46 +71,81 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
     logout,
     unreadLeadsCount,
     resetAllDataToDefaults,
+    users,
+    switchUserRole,
+    hasRolePermission,
   } = useApp();
 
-  const menuItems = [
+  const userRole = currentUser?.role || 'ADMIN';
+  const roleConfig = ROLE_CONFIGS[userRole] || ROLE_CONFIGS.ADMIN;
+
+  const rawMenuItems = [
     {
       id: 'overview',
       label: 'Halaman Ringkasan',
+      href: '/dashboard',
       icon: <DashboardIcon />,
-      badge: 0,
-    },
-    {
-      id: 'leads',
-      label: 'Pesan Masuk (Leads)',
-      icon: <EmailIcon />,
-      badge: unreadLeadsCount,
-    },
-    {
-      id: 'portfolio',
-      label: 'Manajemen Portofolio',
-      icon: <CodeIcon />,
       badge: 0,
     },
     {
       id: 'projects',
       label: 'Klien & Proyek Aktif',
+      href: '/dashboard/projects',
       icon: <AssignmentIcon />,
+      badge: 0,
+    },
+    {
+      id: 'documents',
+      label: 'Dokumen & Generator',
+      href: '/dashboard/documents',
+      icon: <DescriptionIcon />,
+      badge: 0,
+    },
+    {
+      id: 'hpp',
+      label: 'Kalkulator HPP & Financial Matrix',
+      href: '/dashboard/hpp',
+      icon: <CalculateIcon />,
+      badge: 0,
+    },
+    {
+      id: 'leads',
+      label: 'Pesan Masuk (Leads)',
+      href: '/dashboard/leads',
+      icon: <EmailIcon />,
+      badge: unreadLeadsCount,
+    },
+    {
+      id: 'users',
+      label: 'Manajemen User & RBAC',
+      href: '/dashboard/users',
+      icon: <PeopleIcon />,
+      badge: 0,
+    },
+    {
+      id: 'portfolio',
+      label: 'Manajemen Portofolio',
+      href: '/dashboard/portfolio',
+      icon: <CodeIcon />,
       badge: 0,
     },
     {
       id: 'pricing',
       label: 'Atur Pricelist & Spec',
+      href: '/dashboard/pricing',
       icon: <BoltIcon />,
       badge: 0,
     },
     {
       id: 'schema',
       label: 'Skema Prisma & RLS',
+      href: '/dashboard/schema',
       icon: <StorageIcon />,
       badge: 0,
     },
   ];
+
+  const menuItems = rawMenuItems.filter((item) => hasRolePermission(userRole, item.id));
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -157,13 +199,17 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
       {/* Navigation List */}
       <List sx={{ px: 0, flexGrow: 1 }}>
         {menuItems.map((item) => {
-          const isSelected = dashboardTab === item.id;
+          const isSelected =
+            pathname === item.href ||
+            (item.href !== '/dashboard' && pathname?.startsWith(item.href)) ||
+            dashboardTab === item.id;
           return (
             <ListItem key={item.id} disablePadding sx={{ mb: 0.8 }}>
               <ListItemButton
                 selected={isSelected}
                 onClick={() => {
                   setDashboardTab(item.id as any);
+                  router.push(item.href);
                   if (isMobile) setMobileOpen(false);
                 }}
                 sx={{
@@ -254,17 +300,22 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
       >
         <Avatar
           src={currentUser?.avatarUrl}
-          sx={{ width: 34, height: 34, bgcolor: theme.palette.primary.main }}
+          sx={{ width: 34, height: 34, bgcolor: roleConfig.hexColor }}
         >
           {currentUser?.name?.[0] || 'A'}
         </Avatar>
         <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
-          <Typography variant="body2" noWrap sx={{ fontWeight: 700, fontSize: '0.84rem' }}>
-            {currentUser?.name || 'Administrator'}
-          </Typography>
-          <Typography variant="caption" color="text.secondary" noWrap sx={{ fontSize: '0.7rem', display: 'block' }}>
-            {currentUser?.email || 'admin@supabase'}
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Typography variant="body2" noWrap sx={{ fontWeight: 700, fontSize: '0.84rem' }}>
+              {currentUser?.name || 'Administrator'}
+            </Typography>
+          </Box>
+          <Chip
+            label={roleConfig.label}
+            size="small"
+            color={roleConfig.badgeColor as any}
+            sx={{ height: 18, fontSize: '0.62rem', fontWeight: 800, mt: 0.2 }}
+          />
         </Box>
         <IconButton size="small" onClick={logout} title="Logout">
           <LogoutIcon fontSize="small" sx={{ fontSize: 18 }} />
@@ -283,7 +334,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
           width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
           ml: { md: `${DRAWER_WIDTH}px` },
           backgroundColor:
-            theme.palette.mode === 'dark' ? 'rgba(11, 15, 25, 0.88)' : 'rgba(255, 255, 255, 0.88)',
+            theme.palette.mode === 'dark' ? 'rgba(9, 9, 11, 0.88)' : 'rgba(255, 255, 255, 0.88)',
           backdropFilter: 'blur(12px)',
           borderBottom: `1px solid ${theme.palette.divider}`,
           color: theme.palette.text.primary,

@@ -231,7 +231,7 @@ export const PortfolioCMSView: React.FC = () => {
                 height="180"
                 image={item.imageUrl}
                 alt={item.title}
-                sx={{ backgroundColor: '#1e293b' }}
+                sx={{ backgroundColor: '#18181b' }}
               />
 
               <CardContent sx={{ flexGrow: 1, p: 2.5 }}>

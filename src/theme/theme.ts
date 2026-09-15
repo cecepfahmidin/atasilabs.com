@@ -16,12 +16,12 @@ export const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
       contrastText: '#ffffff',
     },
     background: {
-      default: mode === 'dark' ? '#0b0f19' : '#f8fafc',
-      paper: mode === 'dark' ? '#111827' : '#ffffff',
+      default: mode === 'dark' ? '#09090b' : '#f8fafc',
+      paper: mode === 'dark' ? '#121212' : '#ffffff',
     },
     text: {
-      primary: mode === 'dark' ? '#f1f5f9' : '#0f172a',
-      secondary: mode === 'dark' ? '#94a3b8' : '#475569',
+      primary: mode === 'dark' ? '#f4f4f5' : '#0f172a',
+      secondary: mode === 'dark' ? '#a1a1aa' : '#475569',
     },
     divider: mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
     success: {

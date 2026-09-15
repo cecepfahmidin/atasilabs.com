@@ -114,7 +114,7 @@ export const ContactSection: React.FC = () => {
       id="contact"
       sx={{
         py: { xs: 8, md: 12 },
-        backgroundColor: theme.palette.mode === 'dark' ? '#0b0f19' : '#ffffff',
+        backgroundColor: theme.palette.mode === 'dark' ? '#09090b' : '#ffffff',
         borderTop: `1px solid ${theme.palette.divider}`,
       }}
     >

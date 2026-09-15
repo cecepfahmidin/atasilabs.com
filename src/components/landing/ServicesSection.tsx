@@ -61,7 +61,7 @@ export const ServicesSection: React.FC = () => {
       sx={{
         py: { xs: 8, md: 12 },
         borderTop: `1px solid ${theme.palette.divider}`,
-        backgroundColor: theme.palette.mode === 'dark' ? '#0b0f19' : '#f8fafc',
+        backgroundColor: theme.palette.mode === 'dark' ? '#09090b' : '#f8fafc',
       }}
     >
       <Container maxWidth="lg">

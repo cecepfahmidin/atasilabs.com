@@ -225,7 +225,7 @@ export const HeroSection: React.FC = () => {
                   textAlign: 'center',
                   borderRadius: 3,
                   backgroundColor:
-                    theme.palette.mode === 'dark' ? 'rgba(17, 24, 39, 0.7)' : 'rgba(255, 255, 255, 0.8)',
+                    theme.palette.mode === 'dark' ? 'rgba(18, 18, 18, 0.7)' : 'rgba(255, 255, 255, 0.8)',
                   border: `1px solid ${theme.palette.divider}`,
                   backdropFilter: 'blur(8px)',
                   transition: 'transform 0.2s ease, border-color 0.2s ease',

@@ -2,8 +2,11 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { PaletteMode } from '@mui/material';
-import { Lead, Portfolio, ClientProject, User, LeadStatus, ProjectStatus, PricingTier } from '../types';
-import { INITIAL_LEADS, INITIAL_PORTFOLIOS, INITIAL_PROJECTS, INITIAL_USER, INITIAL_PRICING_TIERS } from '../data/initialData';
+import { Lead, Portfolio, ClientProject, User, UserRole, LeadStatus, ProjectStatus, PricingTier } from '../types';
+import { INITIAL_LEADS, INITIAL_PORTFOLIOS, INITIAL_PROJECTS, INITIAL_USER, INITIAL_USERS, INITIAL_PRICING_TIERS } from '../data/initialData';
+import { generateAutoDocumentsForProject } from '../lib/documentGenerator';
+import { DEFAULT_ROLE_PERMISSIONS } from '../lib/rbac';
+import { getStageFromProgress } from '../lib/ipwStages';
 
 interface NotificationState {
   open: boolean;
@@ -16,15 +19,26 @@ interface AppContextType {
   toggleTheme: () => void;
   activeView: 'landing' | 'dashboard';
   setActiveView: (view: 'landing' | 'dashboard') => void;
-  dashboardTab: 'overview' | 'leads' | 'portfolio' | 'projects' | 'pricing' | 'schema';
-  setDashboardTab: (tab: 'overview' | 'leads' | 'portfolio' | 'projects' | 'pricing' | 'schema') => void;
+  dashboardTab: 'overview' | 'leads' | 'portfolio' | 'projects' | 'pricing' | 'schema' | 'documents' | 'users' | 'hpp';
+  setDashboardTab: (tab: 'overview' | 'leads' | 'portfolio' | 'projects' | 'pricing' | 'schema' | 'documents' | 'users' | 'hpp') => void;
   
-  // Auth
+  // Auth & RBAC
   currentUser: User | null;
   login: (email?: string) => boolean;
   logout: () => void;
   isLoginModalOpen: boolean;
   setIsLoginModalOpen: (open: boolean) => void;
+  switchUserRole: (userId: string) => void;
+
+  // Users Management & Dynamic RBAC
+  users: User[];
+  addUser: (user: Omit<User, 'id' | 'createdAt'>) => Promise<User>;
+  updateUser: (id: string, fields: Partial<User>) => Promise<void>;
+  deleteUser: (id: string) => Promise<void>;
+  rolePermissions: Record<UserRole, Record<string, boolean>>;
+  updateRolePermission: (role: UserRole, key: string, allowed: boolean) => void;
+  resetRolePermissionsToDefault: () => void;
+  hasRolePermission: (role: UserRole, key: string) => boolean;
 
   // Leads
   leads: Lead[];
@@ -71,6 +85,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 const STORAGE_KEYS = {
   THEME: 'webdev_sys_theme',
   USER: 'webdev_sys_user',
+  RBAC: 'webdev_sys_rbac_permissions',
 };
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -100,36 +115,106 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
+  // Dynamic RBAC Permissions State
+  const [rolePermissions, setRolePermissions] = useState<Record<UserRole, Record<string, boolean>>>(DEFAULT_ROLE_PERMISSIONS);
+
+  useEffect(() => {
+    try {
+      const savedPerms = localStorage.getItem(STORAGE_KEYS.RBAC);
+      if (savedPerms) {
+        setRolePermissions(JSON.parse(savedPerms));
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
+
+  const updateRolePermission = (role: UserRole, key: string, allowed: boolean) => {
+    setRolePermissions((prev) => {
+      const updated = {
+        ...prev,
+        [role]: {
+          ...(prev[role] || {}),
+          [key]: allowed,
+        },
+      };
+      try {
+        localStorage.setItem(STORAGE_KEYS.RBAC, JSON.stringify(updated));
+      } catch (e) {
+        console.error(e);
+      }
+      return updated;
+    });
+    showNotification(`Hak akses '${key}' untuk role [${role}] telah diubah menjadi: ${allowed ? 'DIIZINKAN' : 'DIBLOKIR'}`, 'info');
+  };
+
+  const resetRolePermissionsToDefault = () => {
+    setRolePermissions(DEFAULT_ROLE_PERMISSIONS);
+    try {
+      localStorage.removeItem(STORAGE_KEYS.RBAC);
+    } catch (e) {
+      console.error(e);
+    }
+    showNotification('Matriks Hak Akses RBAC telah dikembalikan ke standar default.', 'success');
+  };
+
+  const hasRolePermission = (role: UserRole, key: string): boolean => {
+    if (rolePermissions && rolePermissions[role] && rolePermissions[role][key] !== undefined) {
+      return !!rolePermissions[role][key];
+    }
+    return true;
+  };
+
   // View state
   const [activeView, setActiveView] = useState<'landing' | 'dashboard'>('landing');
-  const [dashboardTab, setDashboardTab] = useState<'overview' | 'pricing' | 'leads' | 'portfolio' | 'projects' | 'schema'>('overview');
+  const [dashboardTab, setDashboardTab] = useState<'overview' | 'pricing' | 'leads' | 'portfolio' | 'projects' | 'schema' | 'documents' | 'users' | 'hpp'>('overview');
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [selectedServiceForInquiry, setSelectedServiceForInquiry] = useState('');
 
-  // User Auth
+  // Users & RBAC Auth State
+  const [users, setUsers] = useState<User[]>(INITIAL_USERS);
   const [currentUser, setCurrentUser] = useState<User | null>(INITIAL_USER);
 
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.USER);
-      if (saved) setCurrentUser(JSON.parse(saved));
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Find existing or update
+        const existing = users.find((u) => u.id === parsed.id || u.email === parsed.email);
+        if (existing) setCurrentUser(existing);
+        else setCurrentUser(parsed);
+      }
     } catch {
       setCurrentUser(INITIAL_USER);
     }
   }, []);
 
+  const switchUserRole = (userId: string) => {
+    const targetUser = users.find((u) => u.id === userId);
+    if (targetUser) {
+      setCurrentUser(targetUser);
+      try {
+        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(targetUser));
+      } catch (e) {
+        console.error(e);
+      }
+      showNotification(`Beralih simulasi ke role: ${targetUser.role} (${targetUser.name})`, 'info');
+    }
+  };
+
   const login = (email?: string) => {
-    const userToSet = {
+    const foundUser = users.find((u) => u.email === email) || {
       ...INITIAL_USER,
       email: email || INITIAL_USER.email,
     };
-    setCurrentUser(userToSet);
+    setCurrentUser(foundUser);
     try {
-      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userToSet));
+      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(foundUser));
     } catch (e) {
       console.error(e);
     }
-    showNotification(`Berhasil login sebagai ${userToSet.name}`, 'success');
+    showNotification(`Berhasil login sebagai ${foundUser.name} [${foundUser.role}]`, 'success');
     return true;
   };
 
@@ -141,7 +226,33 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       console.error(e);
     }
     setActiveView('landing');
-    showNotification('Sesi admin berakhir. Anda kembali ke Laman Depan.', 'info');
+    showNotification('Sesi berakhir. Anda kembali ke Laman Depan.', 'info');
+  };
+
+  const addUser = async (userData: Omit<User, 'id' | 'createdAt'>): Promise<User> => {
+    const newU: User = {
+      ...userData,
+      id: `usr-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+    setUsers((prev) => [newU, ...prev]);
+    showNotification(`User ${newU.name} (${newU.role}) berhasil ditambahkan!`, 'success');
+    return newU;
+  };
+
+  const updateUser = async (id: string, fields: Partial<User>) => {
+    setUsers((prev) =>
+      prev.map((u) => (u.id === id ? { ...u, ...fields, updatedAt: new Date().toISOString() } : u))
+    );
+    if (currentUser?.id === id) {
+      setCurrentUser((prev) => (prev ? { ...prev, ...fields } : null));
+    }
+    showNotification('Data pengguna & hak akses RBAC berhasil diperbarui!', 'success');
+  };
+
+  const deleteUser = async (id: string) => {
+    setUsers((prev) => prev.filter((u) => u.id !== id));
+    showNotification('Pengguna telah dihapus dari sistem', 'warning');
   };
 
   // Backend state initialized with initial data
@@ -303,6 +414,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
     setProjects((prev) => [tempProj, ...prev]);
 
+    // Automatically generate 5 official documents (CIF, RSD, MoU, SPK, BAST)
+    try {
+      const autoDocs = generateAutoDocumentsForProject(tempProj);
+      console.log('Auto-generated documents for project:', tempProj.id, autoDocs);
+    } catch (docErr) {
+      console.error('Auto document generation error:', docErr);
+    }
+
     try {
       const res = await fetch('/api/projects', {
         method: 'POST',
@@ -312,14 +431,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const data = await res.json();
       if (data.success && data.data) {
         setProjects((prev) => prev.map((p) => (p.id === tempProj.id ? data.data : p)));
-        showNotification('Proyek disimpan ke Prisma & Supabase!', 'success');
+        showNotification('Proyek dicatat & 5 Dokumen Operasional (CIF, RSD, MoU, SPK, BAST) dibuat otomatis!', 'success');
         return data.data;
       }
     } catch (e) {
       console.error(e);
     }
 
-    showNotification('Proyek klien berhasil dicatat', 'success');
+    showNotification('Proyek dicatat & 5 Dokumen Operasional (CIF, RSD, MoU, SPK, BAST) dibuat otomatis!', 'success');
     return tempProj;
   };
 
@@ -351,12 +470,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const updateProjectProgress = async (id: string, progress: number, status?: ProjectStatus) => {
     const clampedProgress = Math.max(0, Math.min(100, progress));
-    let calculatedStatus: ProjectStatus = status || 'IN_PROGRESS';
+    const stageCfg = getStageFromProgress(clampedProgress);
+    let calculatedStatus: ProjectStatus = status || stageCfg.defaultStatus;
     if (!status) {
-      if (clampedProgress === 100) calculatedStatus = 'COMPLETED';
-      else if (clampedProgress > 80) calculatedStatus = 'REVIEW';
-      else if (clampedProgress > 0) calculatedStatus = 'IN_PROGRESS';
-      else calculatedStatus = 'PLANNING';
+      calculatedStatus = stageCfg.defaultStatus;
     }
 
     setProjects((prev) =>
@@ -365,6 +482,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return {
           ...p,
           progress: clampedProgress,
+          ipwStage: stageCfg.stage,
           status: calculatedStatus,
           updatedAt: new Date().toISOString(),
         };
@@ -375,7 +493,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       await fetch('/api/projects', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, progress: clampedProgress, status: calculatedStatus }),
+        body: JSON.stringify({ id, progress: clampedProgress, ipwStage: stageCfg.stage, status: calculatedStatus }),
       });
     } catch (e) {
       console.error(e);
@@ -439,8 +557,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setPortfolios(INITIAL_PORTFOLIOS);
     setProjects(INITIAL_PROJECTS);
     setPricingTiers(INITIAL_PRICING_TIERS);
+    setUsers(INITIAL_USERS);
     setCurrentUser(INITIAL_USER);
-    showNotification('Basis data berhasil direset ke data sampel awal', 'info');
+    showNotification('Basis data & akun pengguna berhasil direset ke data sampel awal', 'info');
   };
 
   return (
@@ -457,6 +576,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         logout,
         isLoginModalOpen,
         setIsLoginModalOpen,
+        switchUserRole,
+        users,
+        addUser,
+        updateUser,
+        deleteUser,
+        rolePermissions,
+        updateRolePermission,
+        resetRolePermissionsToDefault,
+        hasRolePermission,
         leads,
         addLead,
         updateLeadStatus,

@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { SERVICES_DATA } from '@/data/initialData';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const items = await prisma.serviceItem.findMany();

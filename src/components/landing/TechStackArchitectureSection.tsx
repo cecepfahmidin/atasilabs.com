@@ -69,7 +69,7 @@ export const TechStackArchitectureSection: React.FC = () => {
       sx={{
         py: { xs: 8, md: 12 },
         borderTop: `1px solid ${theme.palette.divider}`,
-        backgroundColor: theme.palette.mode === 'dark' ? '#0e1424' : '#f1f5f9',
+        backgroundColor: theme.palette.mode === 'dark' ? '#121212' : '#f1f5f9',
       }}
     >
       <Container maxWidth="lg">

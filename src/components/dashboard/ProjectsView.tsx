@@ -17,11 +17,13 @@ import {
   Stack,
   LinearProgress,
   CircularProgress,
-  Slider,
   useTheme,
   Alert,
+  Tooltip,
+  Divider,
 } from '@mui/material';
 import Grid from '@mui/material/Grid2';
+import { useRouter } from 'next/navigation';
 import {
   Add as AddIcon,
   Edit as EditIcon,
@@ -32,18 +34,24 @@ import {
   Person as PersonIcon,
   CheckCircle as CheckCircleIcon,
   TrendingUp as TrendingUpIcon,
+  Description as DescriptionIcon,
+  ArrowForward as ArrowForwardIcon,
+  Layers as LayersIcon,
 } from '@mui/icons-material';
 import { useApp } from '../../context/AppContext';
-import { ClientProject, ProjectStatus } from '../../types';
+import { ClientProject, ProjectStatus, IPWStage } from '../../types';
+import { IPW_STAGES_CONFIG, IPW_STAGES_LIST, getStageFromProgress } from '../../lib/ipwStages';
 
 export const ProjectsView: React.FC = () => {
   const theme = useTheme();
+  const router = useRouter();
   const {
     projects,
     addProject,
     updateProject,
     deleteProject,
     updateProjectProgress,
+    setDashboardTab,
   } = useApp();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -58,8 +66,10 @@ export const ProjectsView: React.FC = () => {
     description: '',
     deadline: '',
     budget: 25000000,
-    progress: 0,
+    progress: 15,
     status: 'PLANNING' as ProjectStatus,
+    ipwStage: 'STAGE_1_DISCOVERY' as IPWStage,
+    freelancerName: '',
   });
 
   const [formError, setFormError] = useState<string | null>(null);
@@ -72,19 +82,6 @@ export const ProjectsView: React.FC = () => {
     }).format(num);
   };
 
-  const getStatusChip = (status: ProjectStatus) => {
-    switch (status) {
-      case 'PLANNING':
-        return <Chip label="Perencanaan" size="small" sx={{ backgroundColor: 'rgba(100, 116, 139, 0.12)', color: '#64748b', fontWeight: 700, fontSize: '0.72rem' }} />;
-      case 'IN_PROGRESS':
-        return <Chip label="Pengerjaan" size="small" sx={{ backgroundColor: theme.palette.mode === 'dark' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(217, 119, 6, 0.12)', color: theme.palette.primary.main, fontWeight: 700, fontSize: '0.72rem' }} />;
-      case 'REVIEW':
-        return <Chip label="Review Klien" size="small" sx={{ backgroundColor: 'rgba(245, 158, 11, 0.12)', color: '#f59e0b', fontWeight: 700, fontSize: '0.72rem' }} />;
-      case 'COMPLETED':
-        return <Chip label="Selesai" size="small" sx={{ backgroundColor: 'rgba(16, 185, 129, 0.12)', color: '#10b981', fontWeight: 700, fontSize: '0.72rem' }} />;
-    }
-  };
-
   const handleOpenAdd = () => {
     setEditingProj(null);
     setFormData({
@@ -94,8 +91,10 @@ export const ProjectsView: React.FC = () => {
       description: '',
       deadline: '2024-05-30',
       budget: 25000000,
-      progress: 10,
+      progress: 15,
       status: 'PLANNING',
+      ipwStage: 'STAGE_1_DISCOVERY',
+      freelancerName: '',
     });
     setFormError(null);
     setIsDialogOpen(true);
@@ -103,6 +102,7 @@ export const ProjectsView: React.FC = () => {
 
   const handleOpenEdit = (proj: ClientProject) => {
     setEditingProj(proj);
+    const stageCfg = getStageFromProgress(proj.progress, proj.ipwStage);
     setFormData({
       clientName: proj.clientName,
       clientEmail: proj.clientEmail,
@@ -112,9 +112,23 @@ export const ProjectsView: React.FC = () => {
       budget: proj.budget,
       progress: proj.progress,
       status: proj.status,
+      ipwStage: stageCfg.stage,
+      freelancerName: proj.freelancerName || '',
     });
     setFormError(null);
     setIsDialogOpen(true);
+  };
+
+  const handleStageSelectInForm = (selectedStage: IPWStage) => {
+    const stageCfg = IPW_STAGES_CONFIG[selectedStage];
+    if (stageCfg) {
+      setFormData((prev) => ({
+        ...prev,
+        ipwStage: selectedStage,
+        progress: stageCfg.progressPercent,
+        status: stageCfg.defaultStatus,
+      }));
+    }
   };
 
   const handleSave = (e: React.FormEvent) => {
@@ -133,25 +147,46 @@ export const ProjectsView: React.FC = () => {
     setIsDialogOpen(false);
   };
 
+  const handleConfirmDelete = () => {
+    if (projToDelete) {
+      deleteProject(projToDelete);
+      setProjToDelete(null);
+    }
+  };
+
+  const handleStageButtonClick = (projId: string, targetStage: IPWStage) => {
+    const stageCfg = IPW_STAGES_CONFIG[targetStage];
+    if (stageCfg) {
+      updateProject(projId, {
+        progress: stageCfg.progressPercent,
+        ipwStage: targetStage,
+        status: stageCfg.defaultStatus,
+      });
+    }
+  };
+
   return (
-    <Box>
-      {/* Header */}
+    <Box sx={{ pb: 6 }}>
+      {/* Header Banner */}
       <Box
         sx={{
           display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row' },
+          flexDirection: { xs: 'column', md: 'row' },
           justifyContent: 'space-between',
-          alignItems: { xs: 'flex-start', sm: 'center' },
+          alignItems: { md: 'center' },
           gap: 2,
           mb: 4,
         }}
       >
         <Box>
-          <Typography variant="h5" sx={{ fontWeight: 800, mb: 0.5 }}>
-            Manajemen Klien & Proyek Aktif
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+            <LayersIcon color="primary" />
+            <Typography variant="h5" sx={{ fontWeight: 800, color: theme.palette.text.primary }}>
+              Klien & Proyek Aktif (Alur SOP 6-Tahap IPW)
+            </Typography>
+          </Box>
           <Typography variant="body2" color="text.secondary">
-            Pelacakan milestone, tenggat waktu (deadline), dan visualisasi persentase kerja via MUI LinearProgress & CircularProgress.
+            Pelacakan progres proyek berdasarkan 6 Tahap SOP Operasional Atasilabs: Discovery (CIF) ➔ Spec (RSD) ➔ Kontrak (MoU) ➔ SPK ➔ Eksekusi ➔ Closure (BAST).
           </Typography>
         </Box>
 
@@ -161,11 +196,15 @@ export const ProjectsView: React.FC = () => {
           onClick={handleOpenAdd}
           sx={{
             borderRadius: 2.5,
+            px: 3,
+            py: 1,
             fontWeight: 700,
+            textTransform: 'none',
             background: theme.palette.mode === 'dark'
               ? 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)'
               : 'linear-gradient(135deg, #F59E0B 0%, #B45309 100%)',
             color: theme.palette.mode === 'dark' ? '#181512' : '#ffffff',
+            boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)',
           }}
         >
           Tambah Proyek Baru
@@ -174,204 +213,251 @@ export const ProjectsView: React.FC = () => {
 
       {/* Projects Grid Cards */}
       <Grid container spacing={3}>
-        {projects.map((proj) => (
-          <Grid size={{ xs: 12, md: 6 }} key={proj.id}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: 3,
-                borderRadius: 3.5,
-                border: `1px solid ${theme.palette.divider}`,
-                backgroundColor: theme.palette.background.paper,
-                display: 'flex',
-                flexDirection: 'column',
-                height: '100%',
-                transition: 'transform 0.2s ease, border-color 0.2s ease',
-                '&:hover': {
-                  borderColor: theme.palette.primary.main,
-                },
-              }}
-            >
-              {/* Header with CircularProgress indicator */}
-              <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2 }}>
-                <Box sx={{ pr: 1 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.8 }}>
-                    {getStatusChip(proj.status)}
-                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-                      ID: #{proj.id.slice(-4)}
-                    </Typography>
-                  </Box>
-                  <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.25 }}>
-                    {proj.title}
-                  </Typography>
-                </Box>
-
-                {/* CircularProgress Indicator */}
-                <Box sx={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
-                  <CircularProgress
-                    variant="determinate"
-                    value={proj.progress}
-                    size={52}
-                    thickness={4.5}
-                    sx={{
-                      color:
-                        proj.progress === 100
-                          ? '#10b981'
-                          : proj.progress > 60
-                          ? theme.palette.primary.main
-                          : '#f59e0b',
-                    }}
-                  />
-                  <Box
-                    sx={{
-                      top: 0,
-                      left: 0,
-                      bottom: 0,
-                      right: 0,
-                      position: 'absolute',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Typography variant="caption" sx={{ fontWeight: 800, fontSize: '0.72rem' }}>
-                      {proj.progress}%
-                    </Typography>
-                  </Box>
-                </Box>
-              </Box>
-
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5, lineHeight: 1.6 }}>
-                {proj.description}
-              </Typography>
-
-              {/* Client & Budget Badges */}
-              <Grid container spacing={1.5} sx={{ mb: 2.5 }}>
-                <Grid size={6}>
-                  <Box
-                    sx={{
-                      p: 1.2,
-                      borderRadius: 2,
-                      border: `1px solid ${theme.palette.divider}`,
-                      backgroundColor:
-                        theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
-                    }}
-                  >
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '0.7rem' }}>
-                      Klien & Kontak
-                    </Typography>
-                    <Typography variant="subtitle2" noWrap sx={{ fontWeight: 700, fontSize: '0.82rem' }}>
-                      {proj.clientName}
-                    </Typography>
-                  </Box>
-                </Grid>
-
-                <Grid size={6}>
-                  <Box
-                    sx={{
-                      p: 1.2,
-                      borderRadius: 2,
-                      border: `1px solid ${theme.palette.divider}`,
-                      backgroundColor:
-                        theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
-                    }}
-                  >
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '0.7rem' }}>
-                      Nilai Kontrak
-                    </Typography>
-                    <Typography variant="subtitle2" color="primary" noWrap sx={{ fontWeight: 700, fontSize: '0.82rem' }}>
-                      {formatRupiah(proj.budget)}
-                    </Typography>
-                  </Box>
-                </Grid>
-              </Grid>
-
-              {/* Linear Progress Bar */}
-              <Box sx={{ mb: 2.5, mt: 'auto' }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.8 }}>
-                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-                    Tenggat Waktu: {proj.deadline}
-                  </Typography>
-                  <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                    {proj.progress}% Terselesaikan
-                  </Typography>
-                </Box>
-                <LinearProgress
-                  variant="determinate"
-                  value={proj.progress}
-                  sx={{
-                    height: 8,
-                    borderRadius: 4,
-                    backgroundColor:
-                      theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
-                    '& .MuiLinearProgress-bar': {
-                      borderRadius: 4,
-                      backgroundColor:
-                        proj.progress === 100
-                          ? '#10b981'
-                          : proj.progress > 60
-                          ? theme.palette.primary.main
-                          : '#f59e0b',
-                    },
-                  }}
-                />
-              </Box>
-
-              {/* Quick Progress Buttons & Actions */}
-              <Box
+        {projects.map((proj) => {
+          const currentStageCfg = getStageFromProgress(proj.progress, proj.ipwStage);
+          return (
+            <Grid size={{ xs: 12, md: 6 }} key={proj.id}>
+              <Paper
+                elevation={0}
                 sx={{
-                  pt: 2,
-                  borderTop: `1px solid ${theme.palette.divider}`,
+                  p: 3,
+                  borderRadius: 3.5,
+                  border: `1px solid ${theme.palette.divider}`,
+                  backgroundColor: theme.palette.background.paper,
                   display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
+                  flexDirection: 'column',
+                  height: '100%',
+                  transition: 'transform 0.2s ease, border-color 0.2s ease',
+                  '&:hover': {
+                    borderColor: currentStageCfg.hexColor,
+                    transform: 'translateY(-2px)',
+                  },
                 }}
               >
-                <Stack direction="row" spacing={0.8} sx={{ alignItems: 'center' }}>
-                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-                    Ubah Progres:
-                  </Typography>
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    onClick={() => updateProjectProgress(proj.id, proj.progress - 10)}
-                    disabled={proj.progress <= 0}
-                    sx={{ minWidth: 32, px: 0.8, py: 0.2, fontSize: '0.75rem' }}
-                  >
-                    -10%
-                  </Button>
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    onClick={() => updateProjectProgress(proj.id, proj.progress + 10)}
-                    disabled={proj.progress >= 100}
-                    sx={{ minWidth: 32, px: 0.8, py: 0.2, fontSize: '0.75rem' }}
-                  >
-                    +10%
-                  </Button>
-                  <Button
-                    size="small"
-                    variant={proj.progress === 100 ? 'contained' : 'outlined'}
-                    color="success"
-                    onClick={() => updateProjectProgress(proj.id, 100, 'COMPLETED')}
-                    sx={{ px: 1, py: 0.2, fontSize: '0.75rem' }}
-                  >
-                    Selesai
-                  </Button>
-                </Stack>
+                {/* Header with CircularProgress & Stage Chip */}
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2 }}>
+                  <Box sx={{ pr: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.8, flexWrap: 'wrap' }}>
+                      <Chip
+                        label={currentStageCfg.shortName}
+                        size="small"
+                        sx={{
+                          backgroundColor: `${currentStageCfg.hexColor}20`,
+                          color: currentStageCfg.hexColor,
+                          fontWeight: 800,
+                          fontSize: '0.72rem',
+                          border: `1px solid ${currentStageCfg.hexColor}40`,
+                        }}
+                      />
+                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                        ID: #{proj.id.slice(-4)}
+                      </Typography>
+                    </Box>
+                    <Typography variant="h6" sx={{ fontWeight: 800, lineHeight: 1.25 }}>
+                      {proj.title}
+                    </Typography>
+                  </Box>
 
-                <Box sx={{ display: 'flex', gap: 0.5 }}>
-                  <IconButton size="small" onClick={() => handleOpenEdit(proj)} title="Edit Proyek">
-                    <EditIcon fontSize="small" />
-                  </IconButton>
-                  <IconButton size="small" color="error" onClick={() => setProjToDelete(proj.id)} title="Hapus Proyek">
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
+                  {/* CircularProgress Indicator */}
+                  <Box sx={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
+                    <CircularProgress
+                      variant="determinate"
+                      value={proj.progress}
+                      size={54}
+                      thickness={4.5}
+                      sx={{ color: currentStageCfg.hexColor }}
+                    />
+                    <Box
+                      sx={{
+                        top: 0,
+                        left: 0,
+                        bottom: 0,
+                        right: 0,
+                        position: 'absolute',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Typography variant="caption" sx={{ fontWeight: 800, fontSize: '0.75rem' }}>
+                        {proj.progress}%
+                      </Typography>
+                    </Box>
+                  </Box>
                 </Box>
-              </Box>
-            </Paper>
-          </Grid>
-        ))}
+
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5, lineHeight: 1.6 }}>
+                  {proj.description}
+                </Typography>
+
+                {/* 6 IPW Stages Visual Progress Stepper */}
+                <Box
+                  sx={{
+                    p: 2,
+                    mb: 2.5,
+                    borderRadius: 2.5,
+                    backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
+                    border: `1px solid ${theme.palette.divider}`,
+                  }}
+                >
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                    <Typography variant="caption" sx={{ fontWeight: 800, color: currentStageCfg.hexColor }}>
+                      {currentStageCfg.label}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                      Dokumen SOP: <strong>{currentStageCfg.documentAssigned.split(' ')[0]}</strong>
+                    </Typography>
+                  </Box>
+
+                  {/* 6 Stage Chips Indicator */}
+                  <Grid container spacing={0.8} sx={{ mb: 1.5 }}>
+                    {IPW_STAGES_LIST.map((stg) => {
+                      const isCompleted = proj.progress >= stg.progressPercent;
+                      const isCurrent = currentStageCfg.stage === stg.stage;
+                      return (
+                        <Grid size={2} key={stg.stage}>
+                          <Tooltip title={`${stg.label} (${stg.progressPercent}%)`} arrow placement="top">
+                            <Box
+                              onClick={() => handleStageButtonClick(proj.id, stg.stage)}
+                              sx={{
+                                height: 8,
+                                borderRadius: 4,
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                backgroundColor: isCurrent
+                                  ? stg.hexColor
+                                  : isCompleted
+                                  ? `${stg.hexColor}80`
+                                  : theme.palette.mode === 'dark'
+                                  ? 'rgba(255,255,255,0.1)'
+                                  : 'rgba(0,0,0,0.1)',
+                                border: isCurrent ? `2px solid ${theme.palette.common.white}` : 'none',
+                                boxShadow: isCurrent ? `0 0 8px ${stg.hexColor}` : 'none',
+                              }}
+                            />
+                          </Tooltip>
+                        </Grid>
+                      );
+                    })}
+                  </Grid>
+
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '0.72rem' }}>
+                    {currentStageCfg.description}
+                  </Typography>
+                </Box>
+
+                {/* Client & Budget Information */}
+                <Grid container spacing={1.5} sx={{ mb: 2.5 }}>
+                  <Grid size={6}>
+                    <Box
+                      sx={{
+                        p: 1.2,
+                        borderRadius: 2,
+                        border: `1px solid ${theme.palette.divider}`,
+                        backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
+                      }}
+                    >
+                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '0.7rem' }}>
+                        Klien / Perusahaan
+                      </Typography>
+                      <Typography variant="subtitle2" noWrap sx={{ fontWeight: 700, fontSize: '0.82rem' }}>
+                        {proj.clientName}
+                      </Typography>
+                    </Box>
+                  </Grid>
+
+                  <Grid size={6}>
+                    <Box
+                      sx={{
+                        p: 1.2,
+                        borderRadius: 2,
+                        border: `1px solid ${theme.palette.divider}`,
+                        backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
+                      }}
+                    >
+                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '0.7rem' }}>
+                        Nilai Kontrak Proyek
+                      </Typography>
+                      <Typography variant="subtitle2" color="primary" noWrap sx={{ fontWeight: 700, fontSize: '0.82rem' }}>
+                        {formatRupiah(proj.budget)}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                </Grid>
+
+                {/* 1-Click Stage Switcher Bar */}
+                <Box sx={{ mb: 2.5, mt: 'auto' }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, display: 'block', mb: 1 }}>
+                    Pindah Tahap Operasional 6-Stage (1-Click):
+                  </Typography>
+                  <Stack direction="row" spacing={0.6} sx={{ flexWrap: 'wrap', gap: 0.6 }}>
+                    {IPW_STAGES_LIST.map((stg) => {
+                      const isActive = currentStageCfg.stage === stg.stage;
+                      return (
+                        <Button
+                          key={stg.stage}
+                          size="small"
+                          variant={isActive ? 'contained' : 'outlined'}
+                          onClick={() => handleStageButtonClick(proj.id, stg.stage)}
+                          sx={{
+                            borderRadius: 1.5,
+                            py: 0.3,
+                            px: 0.8,
+                            fontSize: '0.68rem',
+                            fontWeight: 800,
+                            textTransform: 'none',
+                            minWidth: 0,
+                            borderColor: stg.hexColor,
+                            color: isActive ? '#ffffff' : stg.hexColor,
+                            backgroundColor: isActive ? stg.hexColor : 'transparent',
+                            '&:hover': {
+                              backgroundColor: stg.hexColor,
+                              color: '#ffffff',
+                            },
+                          }}
+                        >
+                          T{stg.stageNumber}: {stg.documentAssigned.split(' ')[0]}
+                        </Button>
+                      );
+                    })}
+                  </Stack>
+                </Box>
+
+                <Divider sx={{ mb: 2 }} />
+
+                {/* Bottom Card Actions */}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Button
+                    size="small"
+                    startIcon={<DescriptionIcon fontSize="small" />}
+                    endIcon={<ArrowForwardIcon fontSize="small" />}
+                    onClick={() => {
+                      setDashboardTab('documents');
+                      router.push('/dashboard/documents');
+                    }}
+                    sx={{
+                      fontWeight: 700,
+                      fontSize: '0.78rem',
+                      textTransform: 'none',
+                      color: currentStageCfg.hexColor,
+                    }}
+                  >
+                    Buka Dokumen ({currentStageCfg.documentAssigned.split(' ')[0]})
+                  </Button>
+
+                  <Box>
+                    <IconButton size="small" onClick={() => handleOpenEdit(proj)} color="primary" title="Edit Proyek">
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                    <IconButton size="small" onClick={() => setProjToDelete(proj.id)} color="error" title="Hapus Proyek">
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </Box>
+                </Box>
+              </Paper>
+            </Grid>
+          );
+        })}
       </Grid>
 
       {/* Add / Edit Project Dialog */}
@@ -380,20 +466,12 @@ export const ProjectsView: React.FC = () => {
         onClose={() => setIsDialogOpen(false)}
         maxWidth="sm"
         fullWidth
-        slotProps={{
-          paper: {
-            sx: {
-              borderRadius: 3.5,
-              p: 1,
-              backgroundColor: theme.palette.background.paper,
-            },
-          },
-        }}
+        PaperProps={{ sx: { borderRadius: 3.5, p: 1 } }}
       >
         <Box component="form" onSubmit={handleSave}>
           <DialogTitle component="div" sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="h6" component="h2" sx={{ fontWeight: 700 }}>
-              {editingProj ? 'Edit Proyek Klien' : 'Tambah Proyek Klien Baru'}
+            <Typography variant="h6" component="h2" sx={{ fontWeight: 800 }}>
+              {editingProj ? 'Edit Proyek & Tahap IPW 6-Stage' : 'Tambah Proyek Klien Baru (6-Stage IPW)'}
             </Typography>
             <IconButton size="small" onClick={() => setIsDialogOpen(false)}>
               <CloseIcon />
@@ -413,10 +491,38 @@ export const ProjectsView: React.FC = () => {
                   fullWidth
                   required
                   label="Judul Proyek"
-                  placeholder="Contoh: Redesign & Migrasi E-Commerce Headless"
+                  placeholder="Contoh: Redesign & Migrasi Portal B2B Mitra"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 />
+              </Grid>
+
+              {/* 6-Stage Selector Dropdown */}
+              <Grid size={12}>
+                <TextField
+                  select
+                  fullWidth
+                  required
+                  label="Tahap SOP Operasional (6 IPW Stages)"
+                  value={formData.ipwStage}
+                  onChange={(e) => handleStageSelectInForm(e.target.value as IPWStage)}
+                  helperText="Memilih tahap otomatis memperbarui persentase progres dan dokumen SOP acuan."
+                >
+                  {IPW_STAGES_LIST.map((stg) => (
+                    <MenuItem key={stg.stage} value={stg.stage}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Chip
+                          label={`Tahap ${stg.stageNumber}`}
+                          size="small"
+                          sx={{ backgroundColor: stg.hexColor, color: '#fff', fontWeight: 800, height: 20 }}
+                        />
+                        <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                          {stg.label} ({stg.progressPercent}%)
+                        </Typography>
+                      </Box>
+                    </MenuItem>
+                  ))}
+                </TextField>
               </Grid>
 
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -467,87 +573,66 @@ export const ProjectsView: React.FC = () => {
                 <TextField
                   fullWidth
                   type="number"
-                  label="Nilai Anggaran / Kontrak (IDR)"
+                  label="Nilai Kontrak (IDR)"
                   value={formData.budget}
                   onChange={(e) => setFormData({ ...formData, budget: Number(e.target.value) })}
                 />
               </Grid>
 
-              <Grid size={{ xs: 12, sm: 6 }}>
+              <Grid size={12}>
                 <TextField
-                  select
                   fullWidth
-                  label="Status Tahapan"
-                  value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-                >
-                  <MenuItem value="PLANNING">Perencanaan (Planning)</MenuItem>
-                  <MenuItem value="IN_PROGRESS">Pengerjaan (In Progress)</MenuItem>
-                  <MenuItem value="REVIEW">Review / Pengujian (Review)</MenuItem>
-                  <MenuItem value="COMPLETED">Selesai (Completed)</MenuItem>
-                </TextField>
-              </Grid>
-
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, mb: 1, display: 'block' }}>
-                  Persentase Progres Kerja: {formData.progress}%
-                </Typography>
-                <Slider
-                  value={formData.progress}
-                  onChange={(e, val) => setFormData({ ...formData, progress: val as number })}
-                  valueLabelDisplay="auto"
-                  step={5}
-                  min={0}
-                  max={100}
+                  label="Nama Freelancer / Mitra Penanggung Jawab"
+                  placeholder="Contoh: Doni Wijaya (Full-Stack Dev)"
+                  value={formData.freelancerName}
+                  onChange={(e) => setFormData({ ...formData, freelancerName: e.target.value })}
                 />
               </Grid>
             </Grid>
           </DialogContent>
 
-          <DialogActions sx={{ p: 2.5, justifyContent: 'space-between' }}>
-            <Button onClick={() => setIsDialogOpen(false)} color="inherit">
+          <DialogActions sx={{ px: 3, py: 2 }}>
+            <Button onClick={() => setIsDialogOpen(false)} color="inherit" sx={{ fontWeight: 600 }}>
               Batal
             </Button>
             <Button
               type="submit"
               variant="contained"
-              color="primary"
-              sx={{ px: 3, fontWeight: 700, borderRadius: 2 }}
+              sx={{
+                borderRadius: 2,
+                px: 3,
+                fontWeight: 700,
+                background: theme.palette.mode === 'dark'
+                  ? 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)'
+                  : 'linear-gradient(135deg, #F59E0B 0%, #B45309 100%)',
+                color: theme.palette.mode === 'dark' ? '#181512' : '#ffffff',
+              }}
             >
-              Simpan Proyek
+              {editingProj ? 'Simpan Perubahan' : 'Tambah Proyek'}
             </Button>
           </DialogActions>
         </Box>
       </Dialog>
 
-      {/* Delete Confirmation */}
+      {/* Delete Confirmation Dialog */}
       <Dialog
         open={Boolean(projToDelete)}
         onClose={() => setProjToDelete(null)}
         maxWidth="xs"
         fullWidth
-        slotProps={{ paper: { sx: { borderRadius: 3, p: 1 } } }}
+        PaperProps={{ sx: { borderRadius: 3, p: 1 } }}
       >
-        <DialogTitle sx={{ fontWeight: 700 }}>Hapus Catatan Proyek?</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 800 }}>Hapus Proyek?</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary">
-            Data proyek klien ini akan dihapus dari sistem manajemen.
+            Apakah Anda yakin ingin menghapus proyek ini dari sistem? Tindakan ini tidak dapat dibatalkan.
           </Typography>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setProjToDelete(null)} color="inherit">
+          <Button onClick={() => setProjToDelete(null)} color="inherit" sx={{ fontWeight: 600 }}>
             Batal
           </Button>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={() => {
-              if (projToDelete) {
-                deleteProject(projToDelete);
-                setProjToDelete(null);
-              }
-            }}
-          >
+          <Button onClick={handleConfirmDelete} variant="contained" color="error" sx={{ fontWeight: 700, borderRadius: 2 }}>
             Hapus Proyek
           </Button>
         </DialogActions>

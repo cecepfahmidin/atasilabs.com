@@ -142,7 +142,7 @@ export const PortfolioSection: React.FC = () => {
                     sx={{
                       transition: 'transform 0.4s ease',
                       '&:hover': { transform: 'scale(1.04)' },
-                      backgroundColor: '#1e293b',
+                      backgroundColor: '#18181b',
                     }}
                   />
                   <Box sx={{ position: 'absolute', top: 12, left: 12, display: 'flex', gap: 1 }}>

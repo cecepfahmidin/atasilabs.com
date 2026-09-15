@@ -178,7 +178,7 @@ export const SchemaInspectorView: React.FC = () => {
               sx={{
                 p: 2.5,
                 borderRadius: 2.5,
-                backgroundColor: theme.palette.mode === 'dark' ? '#070a12' : '#0f172a',
+                backgroundColor: theme.palette.mode === 'dark' ? '#09090b' : '#0f172a',
                 color: '#e2e8f0',
                 fontFamily: '"JetBrains Mono", monospace',
                 fontSize: '0.85rem',
@@ -252,7 +252,7 @@ export const SchemaInspectorView: React.FC = () => {
               sx={{
                 p: 2.5,
                 borderRadius: 2.5,
-                backgroundColor: theme.palette.mode === 'dark' ? '#070a12' : '#0f172a',
+                backgroundColor: theme.palette.mode === 'dark' ? '#09090b' : '#0f172a',
                 color: '#38bdf8',
                 fontFamily: '"JetBrains Mono", monospace',
                 fontSize: '0.8rem',
