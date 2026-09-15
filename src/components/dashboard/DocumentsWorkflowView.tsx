@@ -15,6 +15,7 @@ import {
 import {
   Edit as EditIcon,
   AutoAwesome as AutoIcon,
+  RestartAlt as ResetIcon,
 } from '@mui/icons-material';
 import {
   INITIAL_CIF_DATA,
@@ -28,6 +29,20 @@ import { DocumentFormDialog } from './DocumentFormDialog';
 import { CIFData, RSDData, MoUData, SPKData, BASTData } from '../../types';
 import { useApp } from '../../context/AppContext';
 import { generateAutoDocumentsForProject } from '../../lib/documentGenerator';
+
+const LOCAL_STORAGE_KEY_CUSTOM_DOCS = 'atasilabs_custom_project_documents';
+
+const getSavedCustomDocs = (): Record<string, any> => {
+  if (typeof window !== 'undefined') {
+    try {
+      const saved = localStorage.getItem(LOCAL_STORAGE_KEY_CUSTOM_DOCS);
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.error(e);
+    }
+  }
+  return {};
+};
 
 export const DocumentsWorkflowView: React.FC = () => {
   const { projects, showNotification } = useApp();
@@ -46,16 +61,19 @@ export const DocumentsWorkflowView: React.FC = () => {
   // Dialog State
   const [isFormOpen, setIsFormOpen] = useState(false);
 
-  // Auto-generate documents whenever selected project changes
+  // Load documents for selected project (check LocalStorage first, fallback to Auto-Gen)
   useEffect(() => {
     const proj = projects.find((p) => p.id === selectedProjectId);
     if (proj) {
       const autoDocs = generateAutoDocumentsForProject(proj);
-      setCifData(autoDocs.cif);
-      setRsdData(autoDocs.rsd);
-      setMouData(autoDocs.mou);
-      setSpkData(autoDocs.spk);
-      setBastData(autoDocs.bast);
+      const allCustom = getSavedCustomDocs();
+      const projCustom = allCustom[selectedProjectId] || {};
+
+      setCifData(projCustom.cif || autoDocs.cif);
+      setRsdData(projCustom.rsd || autoDocs.rsd);
+      setMouData(projCustom.mou || autoDocs.mou);
+      setSpkData(projCustom.spk || autoDocs.spk);
+      setBastData(projCustom.bast || autoDocs.bast);
     }
   }, [selectedProjectId, projects]);
 
@@ -76,6 +94,9 @@ export const DocumentsWorkflowView: React.FC = () => {
   };
 
   const handleSaveDocument = (type: 'CIF' | 'RSD' | 'MOU' | 'SPK' | 'BAST', data: any) => {
+    const docKey = type.toLowerCase();
+
+    // 1. Update React State
     switch (type) {
       case 'CIF':
         setCifData(data);
@@ -93,7 +114,43 @@ export const DocumentsWorkflowView: React.FC = () => {
         setBastData(data);
         break;
     }
-    showNotification(`Dokumen ${type} berhasil diperbarui!`, 'success');
+
+    // 2. Persist to LocalStorage for selectedProjectId
+    try {
+      const allCustomDocs = getSavedCustomDocs();
+      const projectDocs = allCustomDocs[selectedProjectId] || {};
+      allCustomDocs[selectedProjectId] = {
+        ...projectDocs,
+        [docKey]: data,
+      };
+      localStorage.setItem(LOCAL_STORAGE_KEY_CUSTOM_DOCS, JSON.stringify(allCustomDocs));
+    } catch (e) {
+      console.error(e);
+    }
+
+    showNotification(`Dokumen ${type} berhasil diperbarui & disimpan!`, 'success');
+  };
+
+  const handleResetDocumentToDefault = () => {
+    const proj = projects.find((p) => p.id === selectedProjectId);
+    if (!proj) return;
+
+    const autoDocs = generateAutoDocumentsForProject(proj);
+    setCifData(autoDocs.cif);
+    setRsdData(autoDocs.rsd);
+    setMouData(autoDocs.mou);
+    setSpkData(autoDocs.spk);
+    setBastData(autoDocs.bast);
+
+    try {
+      const allCustomDocs = getSavedCustomDocs();
+      delete allCustomDocs[selectedProjectId];
+      localStorage.setItem(LOCAL_STORAGE_KEY_CUSTOM_DOCS, JSON.stringify(allCustomDocs));
+    } catch (e) {
+      console.error(e);
+    }
+
+    showNotification(`Seluruh dokumen untuk ${proj.clientName} dikembalikan ke standar otomatis!`, 'info');
   };
 
   const selectedProjObj = projects.find((p) => p.id === selectedProjectId);
@@ -109,13 +166,13 @@ export const DocumentsWorkflowView: React.FC = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', mt: 1 }}>
           <Chip
             icon={<AutoIcon sx={{ fontSize: '16px !important' }} />}
-            label="Otomatisasi Dokumen Legal & Teknis"
+            label="Kustomisasi Dokumen 100% Dinamis & Tersimpan"
             color="success"
             size="small"
             sx={{ fontWeight: 700, fontSize: '0.72rem' }}
           />
           <Typography variant="caption" color="text.secondary">
-            Setiap proyek terdaftar otomatis meng-generate 5 paket dokumen legal (CIF, RSD, MoU, SPK, BAST).
+            Setiap dokumen (CIF, RSD, MoU, SPK, BAST) dapat diubah secara bebas dan akan tersimpan secara otomatis per proyek.
           </Typography>
         </Box>
       </Box>
@@ -145,21 +202,34 @@ export const DocumentsWorkflowView: React.FC = () => {
             </Grid>
 
             <Grid item xs={12} sm={6} textAlign={{ sm: 'right' }}>
-              <Button
-                variant="contained"
-                color="primary"
-                startIcon={<EditIcon />}
-                onClick={() => setIsFormOpen(true)}
-                sx={{ fontWeight: 700, mt: { xs: 1, sm: 2.5 } }}
-              >
-                Kustomisasi / Edit Form ({activeDocType})
-              </Button>
+              <Box sx={{ display: 'flex', gap: 1, justifyContent: { sm: 'flex-end' }, flexWrap: 'wrap', mt: { xs: 1, sm: 2.5 } }}>
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  size="small"
+                  startIcon={<ResetIcon />}
+                  onClick={handleResetDocumentToDefault}
+                  sx={{ fontWeight: 700 }}
+                >
+                  Reset Dokumen
+                </Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  size="small"
+                  startIcon={<EditIcon />}
+                  onClick={() => setIsFormOpen(true)}
+                  sx={{ fontWeight: 700 }}
+                >
+                  Kustomisasi / Edit Form ({activeDocType})
+                </Button>
+              </Box>
             </Grid>
           </Grid>
 
           {selectedProjObj && (
             <Alert severity="info" sx={{ mb: 2, fontSize: '0.78rem', py: 0.5 }}>
-              Dokumen saat ini dihasilkan secara otomatis untuk <strong>{selectedProjObj.clientName}</strong> ({selectedProjObj.title} — Budget: Rp {selectedProjObj.budget?.toLocaleString('id-ID')}).
+              Dokumen saat ini untuk <strong>{selectedProjObj.clientName}</strong> ({selectedProjObj.title} — Budget: Rp {selectedProjObj.budget?.toLocaleString('id-ID')}). Seluruh pengubahan form akan tersimpan permanen per proyek.
             </Alert>
           )}
 

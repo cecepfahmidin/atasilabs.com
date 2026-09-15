@@ -17,6 +17,7 @@ import {
   Divider,
   Paper,
   Stack,
+  Tooltip,
 } from '@mui/material';
 import { Close as CloseIcon, Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { CIFData, RSDData, MoUData, SPKData, BASTData, RSDFeatureItem } from '../../types';
@@ -59,6 +60,38 @@ export const DocumentFormDialog: React.FC<DocumentFormDialogProps> = ({
     }));
   };
 
+  // Dynamic RSD Feature Item Management
+  const handleAddRsdFeature = () => {
+    const featCount = (formData.functionalFeatures?.length || 0) + 1;
+    const newFeat: RSDFeatureItem = {
+      id: `f-${Date.now()}`,
+      featureCode: `ATL-${String(featCount).padStart(3, '0')}`,
+      moduleArea: 'Modul Baru',
+      nameAndDesc: 'Nama & Deskripsi Spesifikasi Fitur',
+      roleAccess: 'All User',
+      priority: 'High',
+    };
+    setFormData((prev: any) => ({
+      ...prev,
+      functionalFeatures: [...(prev.functionalFeatures || []), newFeat],
+    }));
+  };
+
+  const handleUpdateRsdFeature = (index: number, field: string, val: any) => {
+    setFormData((prev: any) => {
+      const updated = [...(prev.functionalFeatures || [])];
+      updated[index] = { ...updated[index], [field]: val };
+      return { ...prev, functionalFeatures: updated };
+    });
+  };
+
+  const handleDeleteRsdFeature = (index: number) => {
+    setFormData((prev: any) => ({
+      ...prev,
+      functionalFeatures: (prev.functionalFeatures || []).filter((_: any, i: number) => i !== index),
+    }));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave(type, formData);
@@ -66,12 +99,12 @@ export const DocumentFormDialog: React.FC<DocumentFormDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
       <DialogTitle sx={{ m: 0, p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Chip label={type} color="primary" size="small" sx={{ fontWeight: 800 }} />
           <Typography variant="h6" sx={{ fontWeight: 800 }}>
-            Form Generator Dokumen {type}
+            Form Generator & Editor Dokumen {type}
           </Typography>
         </Box>
         <IconButton onClick={onClose} size="small">
@@ -109,7 +142,7 @@ export const DocumentFormDialog: React.FC<DocumentFormDialogProps> = ({
                   fullWidth
                   size="small"
                   type="date"
-                  label="Tanggal"
+                  label="Tanggal Dokumen"
                   InputLabelProps={{ shrink: true }}
                   value={formData?.date || ''}
                   onChange={(e) => handleChange('date', e.target.value)}
@@ -119,13 +152,13 @@ export const DocumentFormDialog: React.FC<DocumentFormDialogProps> = ({
                 <TextField
                   fullWidth
                   size="small"
-                  label="Sumber Informasi"
+                  label="Sumber Informasi Lead"
                   value={formData?.infoSource || ''}
                   onChange={(e) => handleChange('infoSource', e.target.value)}
                 />
               </Grid>
 
-              <Grid item xs={12}><Divider><Chip label="Informasi Klien & Proyek" size="small" /></Divider></Grid>
+              <Grid item xs={12}><Divider><Chip label="Informasi Klien & Perusahaan" size="small" /></Divider></Grid>
 
               <Grid item xs={12} sm={6}>
                 <TextField
@@ -183,7 +216,7 @@ export const DocumentFormDialog: React.FC<DocumentFormDialogProps> = ({
                 />
               </Grid>
 
-              <Grid item xs={12}><Divider><Chip label="Scope & Anggaran" size="small" /></Divider></Grid>
+              <Grid item xs={12}><Divider><Chip label="Scope, Fitur & Anggaran" size="small" /></Divider></Grid>
 
               <Grid item xs={12}>
                 <TextField
@@ -203,6 +236,24 @@ export const DocumentFormDialog: React.FC<DocumentFormDialogProps> = ({
                   label="Tujuan Utama Pembuatan Website"
                   value={formData?.primaryGoals || ''}
                   onChange={(e) => handleChange('primaryGoals', e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Struktur Halaman (Sitemap)"
+                  value={formData?.pageStructure || ''}
+                  onChange={(e) => handleChange('pageStructure', e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Fitur Utama yang Diminta"
+                  value={formData?.mainFeatures || ''}
+                  onChange={(e) => handleChange('mainFeatures', e.target.value)}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -346,7 +397,7 @@ export const DocumentFormDialog: React.FC<DocumentFormDialogProps> = ({
                 />
               </Grid>
 
-              <Grid item xs={12}><Divider><Chip label="Konteks & Scope" size="small" /></Divider></Grid>
+              <Grid item xs={12}><Divider><Chip label="Konteks & Scope Dokumen RSD" size="small" /></Divider></Grid>
 
               <Grid item xs={12}>
                 <TextField
@@ -370,6 +421,17 @@ export const DocumentFormDialog: React.FC<DocumentFormDialogProps> = ({
                   onChange={(e) => handleChange('solutionSummary', e.target.value)}
                 />
               </Grid>
+
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Tujuan Utama Proyek (Project Goals)"
+                  value={formData?.projectGoals || ''}
+                  onChange={(e) => handleChange('projectGoals', e.target.value)}
+                />
+              </Grid>
+
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
@@ -391,6 +453,80 @@ export const DocumentFormDialog: React.FC<DocumentFormDialogProps> = ({
                   value={formData?.outOfScope || ''}
                   onChange={(e) => handleChange('outOfScope', e.target.value)}
                 />
+              </Grid>
+
+              {/* Dynamic RSD Features Editor */}
+              <Grid item xs={12}>
+                <Divider sx={{ my: 1 }}>
+                  <Chip label="Daftar Fitur Spesifikasi Fungsional (ATL-xxx)" color="primary" size="small" />
+                </Divider>
+
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1.5 }}>
+                  <Button
+                    size="small"
+                    variant="contained"
+                    startIcon={<AddIcon />}
+                    onClick={handleAddRsdFeature}
+                    sx={{ fontSize: '0.75rem', fontWeight: 700 }}
+                  >
+                    Tambah Fitur ATL-xxx
+                  </Button>
+                </Box>
+
+                <Stack spacing={1.5}>
+                  {(formData.functionalFeatures || []).map((feat: RSDFeatureItem, idx: number) => (
+                    <Paper key={feat.id || idx} variant="outlined" sx={{ p: 1.5, borderRadius: 2 }}>
+                      <Grid container spacing={1.5} alignItems="center">
+                        <Grid item xs={6} sm={2}>
+                          <TextField
+                            size="small"
+                            fullWidth
+                            label="Kode"
+                            value={feat.featureCode || ''}
+                            onChange={(e) => handleUpdateRsdFeature(idx, 'featureCode', e.target.value)}
+                          />
+                        </Grid>
+                        <Grid item xs={6} sm={3}>
+                          <TextField
+                            size="small"
+                            fullWidth
+                            label="Modul"
+                            value={feat.moduleArea || ''}
+                            onChange={(e) => handleUpdateRsdFeature(idx, 'moduleArea', e.target.value)}
+                          />
+                        </Grid>
+                        <Grid item xs={12} sm={4}>
+                          <TextField
+                            size="small"
+                            fullWidth
+                            label="Deskripsi Fitur"
+                            value={feat.nameAndDesc || ''}
+                            onChange={(e) => handleUpdateRsdFeature(idx, 'nameAndDesc', e.target.value)}
+                          />
+                        </Grid>
+                        <Grid item xs={6} sm={2}>
+                          <TextField
+                            select
+                            size="small"
+                            fullWidth
+                            label="Prioritas"
+                            value={feat.priority || 'High'}
+                            onChange={(e) => handleUpdateRsdFeature(idx, 'priority', e.target.value)}
+                          >
+                            <MenuItem value="High">High</MenuItem>
+                            <MenuItem value="Medium">Medium</MenuItem>
+                            <MenuItem value="Low">Low</MenuItem>
+                          </TextField>
+                        </Grid>
+                        <Grid item xs={6} sm={1} textAlign="right">
+                          <IconButton size="small" color="error" onClick={() => handleDeleteRsdFeature(idx)}>
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Grid>
+                      </Grid>
+                    </Paper>
+                  ))}
+                </Stack>
               </Grid>
             </Grid>
           )}
@@ -438,7 +574,7 @@ export const DocumentFormDialog: React.FC<DocumentFormDialogProps> = ({
                 />
               </Grid>
 
-              <Grid item xs={12}><Divider><Chip label="Data Klien & Investasi" size="small" /></Divider></Grid>
+              <Grid item xs={12}><Divider><Chip label="Data Klien & Investasi Kontrak" size="small" /></Divider></Grid>
 
               <Grid item xs={12} sm={6}>
                 <TextField
@@ -509,6 +645,36 @@ export const DocumentFormDialog: React.FC<DocumentFormDialogProps> = ({
                   onChange={(e) => handleChange('totalInvestmentTerbilang', e.target.value)}
                 />
               </Grid>
+
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  type="number"
+                  label="Masa Garansi (Hari)"
+                  value={formData?.warrantyDays || 30}
+                  onChange={(e) => handleChange('warrantyDays', Number(e.target.value))}
+                />
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  type="number"
+                  label="Batas Revisi (Hari)"
+                  value={formData?.revisionLimitDays || 14}
+                  onChange={(e) => handleChange('revisionLimitDays', Number(e.target.value))}
+                />
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Nama Bank"
+                  value={formData?.bankAccount?.bankName || 'Bank Rakyat Indonesia (BRI)'}
+                  onChange={(e) => handleNestedChange('bankAccount', 'bankName', e.target.value)}
+                />
+              </Grid>
             </Grid>
           )}
 
@@ -537,7 +703,7 @@ export const DocumentFormDialog: React.FC<DocumentFormDialogProps> = ({
                 />
               </Grid>
 
-              <Grid item xs={12}><Divider><Chip label="Data Freelancer (Pihak 2)" size="small" /></Divider></Grid>
+              <Grid item xs={12}><Divider><Chip label="Data Freelancer Partner (Pihak 2)" size="small" /></Divider></Grid>
 
               <Grid item xs={12} sm={6}>
                 <TextField
@@ -571,7 +737,16 @@ export const DocumentFormDialog: React.FC<DocumentFormDialogProps> = ({
                 <TextField
                   fullWidth
                   size="small"
-                  label="Informasi Bank & No Rekening"
+                  label="Status / Peran Developer"
+                  value={formData?.freelancerStatus || ''}
+                  onChange={(e) => handleChange('freelancerStatus', e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Informasi Bank & No Rekening Freelancer"
                   value={formData?.freelancerBankInfo || ''}
                   onChange={(e) => handleChange('freelancerBankInfo', e.target.value)}
                 />
@@ -595,6 +770,15 @@ export const DocumentFormDialog: React.FC<DocumentFormDialogProps> = ({
                   label="Total Fee Freelancer (IDR)"
                   value={formData?.totalNominal || 0}
                   onChange={(e) => handleChange('totalNominal', Number(e.target.value))}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Total Fee (Terbilang)"
+                  value={formData?.totalNominalTerbilang || ''}
+                  onChange={(e) => handleChange('totalNominalTerbilang', e.target.value)}
                 />
               </Grid>
             </Grid>
@@ -624,6 +808,9 @@ export const DocumentFormDialog: React.FC<DocumentFormDialogProps> = ({
                   onChange={(e) => handleChange('date', e.target.value)}
                 />
               </Grid>
+
+              <Grid item xs={12}><Divider><Chip label="Pihak Klien & Lokasi" size="small" /></Divider></Grid>
+
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
@@ -643,8 +830,17 @@ export const DocumentFormDialog: React.FC<DocumentFormDialogProps> = ({
                   onChange={(e) => handleChange('clientPic', e.target.value)}
                 />
               </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Alamat Perusahaan Klien"
+                  value={formData?.clientAddress || ''}
+                  onChange={(e) => handleChange('clientAddress', e.target.value)}
+                />
+              </Grid>
 
-              <Grid item xs={12}><Divider><Chip label="Akses & Kredensial" size="small" /></Divider></Grid>
+              <Grid item xs={12}><Divider><Chip label="Akses Aset Digital & Kredensial" size="small" /></Divider></Grid>
 
               <Grid item xs={12}>
                 <TextField
@@ -659,7 +855,7 @@ export const DocumentFormDialog: React.FC<DocumentFormDialogProps> = ({
                 <TextField
                   fullWidth
                   size="small"
-                  label="Akses Source Code Repository"
+                  label="Akses Source Code Repository (Git)"
                   value={formData?.sourceCodeAccess || ''}
                   onChange={(e) => handleChange('sourceCodeAccess', e.target.value)}
                 />
@@ -702,7 +898,7 @@ export const DocumentFormDialog: React.FC<DocumentFormDialogProps> = ({
           Batal
         </Button>
         <Button type="submit" form="doc-generator-form" variant="contained" color="primary" sx={{ fontWeight: 700 }}>
-          Hasilkan / Simpan Dokumen {type}
+          Simpan & Update Dokumen {type}
         </Button>
       </DialogActions>
     </Dialog>
