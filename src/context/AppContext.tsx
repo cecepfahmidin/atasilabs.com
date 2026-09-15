@@ -85,7 +85,12 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 const STORAGE_KEYS = {
   THEME: 'webdev_sys_theme',
   USER: 'webdev_sys_user',
+  USERS_LIST: 'webdev_sys_users_list',
   RBAC: 'webdev_sys_rbac_permissions',
+  PROJECTS: 'webdev_sys_projects',
+  LEADS: 'webdev_sys_leads',
+  PORTFOLIOS: 'webdev_sys_portfolios',
+  PRICING: 'webdev_sys_pricing_tiers',
 };
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -171,16 +176,120 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [selectedServiceForInquiry, setSelectedServiceForInquiry] = useState('');
 
-  // Users & RBAC Auth State
-  const [users, setUsers] = useState<User[]>(INITIAL_USERS);
+  // Persistent States initialized from LocalStorage or Initial Constants
+  const [users, setUsers] = useState<User[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEYS.USERS_LIST);
+        if (saved) return JSON.parse(saved);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return INITIAL_USERS;
+  });
+
   const [currentUser, setCurrentUser] = useState<User | null>(INITIAL_USER);
+
+  const [leads, setLeads] = useState<Lead[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEYS.LEADS);
+        if (saved) return JSON.parse(saved);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return INITIAL_LEADS;
+  });
+
+  const [portfolios, setPortfolios] = useState<Portfolio[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEYS.PORTFOLIOS);
+        if (saved) return JSON.parse(saved);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return INITIAL_PORTFOLIOS;
+  });
+
+  const [projects, setProjects] = useState<ClientProject[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEYS.PROJECTS);
+        if (saved) return JSON.parse(saved);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return INITIAL_PROJECTS;
+  });
+
+  const [pricingTiers, setPricingTiers] = useState<PricingTier[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEYS.PRICING);
+        if (saved) return JSON.parse(saved);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return INITIAL_PRICING_TIERS;
+  });
+
+  // Helper State Setters with Automatic LocalStorage Sync
+  const saveUsers = (next: User[]) => {
+    setUsers(next);
+    try {
+      localStorage.setItem(STORAGE_KEYS.USERS_LIST, JSON.stringify(next));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const saveLeads = (next: Lead[]) => {
+    setLeads(next);
+    try {
+      localStorage.setItem(STORAGE_KEYS.LEADS, JSON.stringify(next));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const savePortfolios = (next: Portfolio[]) => {
+    setPortfolios(next);
+    try {
+      localStorage.setItem(STORAGE_KEYS.PORTFOLIOS, JSON.stringify(next));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const saveProjects = (next: ClientProject[]) => {
+    setProjects(next);
+    try {
+      localStorage.setItem(STORAGE_KEYS.PROJECTS, JSON.stringify(next));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const savePricingTiers = (next: PricingTier[]) => {
+    setPricingTiers(next);
+    try {
+      localStorage.setItem(STORAGE_KEYS.PRICING, JSON.stringify(next));
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.USER);
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Find existing or update
         const existing = users.find((u) => u.id === parsed.id || u.email === parsed.email);
         if (existing) setCurrentUser(existing);
         else setCurrentUser(parsed);
@@ -235,33 +344,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       id: `usr-${Date.now()}`,
       createdAt: new Date().toISOString(),
     };
-    setUsers((prev) => [newU, ...prev]);
+    saveUsers([newU, ...users]);
     showNotification(`User ${newU.name} (${newU.role}) berhasil ditambahkan!`, 'success');
     return newU;
   };
 
   const updateUser = async (id: string, fields: Partial<User>) => {
-    setUsers((prev) =>
-      prev.map((u) => (u.id === id ? { ...u, ...fields, updatedAt: new Date().toISOString() } : u))
-    );
+    const nextUsers = users.map((u) => (u.id === id ? { ...u, ...fields, updatedAt: new Date().toISOString() } : u));
+    saveUsers(nextUsers);
     if (currentUser?.id === id) {
-      setCurrentUser((prev) => (prev ? { ...prev, ...fields } : null));
+      const updatedCurrent = { ...currentUser, ...fields };
+      setCurrentUser(updatedCurrent);
+      try {
+        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(updatedCurrent));
+      } catch (e) {
+        console.error(e);
+      }
     }
     showNotification('Data pengguna & hak akses RBAC berhasil diperbarui!', 'success');
   };
 
   const deleteUser = async (id: string) => {
-    setUsers((prev) => prev.filter((u) => u.id !== id));
+    saveUsers(users.filter((u) => u.id !== id));
     showNotification('Pengguna telah dihapus dari sistem', 'warning');
   };
 
-  // Backend state initialized with initial data
-  const [leads, setLeads] = useState<Lead[]>(INITIAL_LEADS);
-  const [portfolios, setPortfolios] = useState<Portfolio[]>(INITIAL_PORTFOLIOS);
-  const [projects, setProjects] = useState<ClientProject[]>(INITIAL_PROJECTS);
-  const [pricingTiers, setPricingTiers] = useState<PricingTier[]>(INITIAL_PRICING_TIERS);
-
-  // Fetch initial data from Next.js API Routes
+  // Fetch initial data from Next.js API Routes (if backend is connected)
   const refreshDataFromBackend = async () => {
     try {
       const [leadsRes, portRes, projRes, pricingRes] = await Promise.all([
@@ -271,12 +379,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         fetch('/api/pricing').then((res) => res.json()).catch(() => null),
       ]);
 
-      if (leadsRes?.success && Array.isArray(leadsRes.data)) setLeads(leadsRes.data);
-      if (portRes?.success && Array.isArray(portRes.data)) setPortfolios(portRes.data);
-      if (projRes?.success && Array.isArray(projRes.data)) setProjects(projRes.data);
-      if (pricingRes?.success && Array.isArray(pricingRes.data)) setPricingTiers(pricingRes.data);
+      if (leadsRes?.success && Array.isArray(leadsRes.data) && leadsRes.data.length > 0) saveLeads(leadsRes.data);
+      if (portRes?.success && Array.isArray(portRes.data) && portRes.data.length > 0) savePortfolios(portRes.data);
+      if (projRes?.success && Array.isArray(projRes.data) && projRes.data.length > 0) saveProjects(projRes.data);
+      if (pricingRes?.success && Array.isArray(pricingRes.data) && pricingRes.data.length > 0) savePricingTiers(pricingRes.data);
     } catch (err) {
-      console.warn('Could not fetch from backend APIs, keeping current state:', err);
+      console.warn('Could not fetch from backend APIs, keeping local storage state:', err);
     }
   };
 
@@ -293,7 +401,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       createdAt: new Date().toISOString(),
     };
 
-    setLeads((prev) => [tempLead, ...prev]);
+    saveLeads([tempLead, ...leads]);
 
     try {
       const res = await fetch('/api/leads', {
@@ -303,7 +411,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       });
       const data = await res.json();
       if (data.success && data.data) {
-        setLeads((prev) => prev.map((l) => (l.id === tempLead.id ? data.data : l)));
+        saveLeads(leads.map((l) => (l.id === tempLead.id ? data.data : l)));
         showNotification('Pesan terkirim! Tersimpan di database Prisma & Supabase.', 'success');
         return data.data;
       }
@@ -316,7 +424,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateLeadStatus = async (id: string, status: LeadStatus) => {
-    setLeads((prev) => prev.map((item) => (item.id === id ? { ...item, status } : item)));
+    saveLeads(leads.map((item) => (item.id === id ? { ...item, status } : item)));
     try {
       await fetch('/api/leads', {
         method: 'PATCH',
@@ -330,7 +438,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const deleteLead = async (id: string) => {
-    setLeads((prev) => prev.filter((item) => item.id !== id));
+    saveLeads(leads.filter((item) => item.id !== id));
     try {
       await fetch(`/api/leads?id=${id}`, { method: 'DELETE' });
     } catch (e) {
@@ -340,7 +448,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const markAllLeadsRead = async () => {
-    setLeads((prev) => prev.map((item) => (item.status === 'NEW' ? { ...item, status: 'READ' } : item)));
+    saveLeads(leads.map((item) => (item.status === 'NEW' ? { ...item, status: 'READ' } : item)));
     showNotification('Semua pesan baru telah ditandai sebagai dibaca', 'success');
   };
 
@@ -355,7 +463,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       createdAt: now,
       updatedAt: now,
     };
-    setPortfolios((prev) => [tempPort, ...prev]);
+    savePortfolios([tempPort, ...portfolios]);
 
     try {
       const res = await fetch('/api/portfolio', {
@@ -365,7 +473,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       });
       const data = await res.json();
       if (data.success && data.data) {
-        setPortfolios((prev) => prev.map((p) => (p.id === tempPort.id ? data.data : p)));
+        savePortfolios(portfolios.map((p) => (p.id === tempPort.id ? data.data : p)));
         showNotification('Portofolio disimpan ke database Prisma & Supabase!', 'success');
         return data.data;
       }
@@ -378,9 +486,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updatePortfolio = async (id: string, item: Partial<Portfolio>) => {
-    setPortfolios((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, ...item, updatedAt: new Date().toISOString() } : p))
-    );
+    savePortfolios(portfolios.map((p) => (p.id === id ? { ...p, ...item, updatedAt: new Date().toISOString() } : p)));
     try {
       await fetch('/api/portfolio', {
         method: 'PUT',
@@ -394,7 +500,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const deletePortfolio = async (id: string) => {
-    setPortfolios((prev) => prev.filter((p) => p.id !== id));
+    savePortfolios(portfolios.filter((p) => p.id !== id));
     try {
       await fetch(`/api/portfolio?id=${id}`, { method: 'DELETE' });
     } catch (e) {
@@ -412,7 +518,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       createdAt: now,
       updatedAt: now,
     };
-    setProjects((prev) => [tempProj, ...prev]);
+    saveProjects([tempProj, ...projects]);
 
     // Automatically generate 5 official documents (CIF, RSD, MoU, SPK, BAST)
     try {
@@ -430,7 +536,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       });
       const data = await res.json();
       if (data.success && data.data) {
-        setProjects((prev) => prev.map((p) => (p.id === tempProj.id ? data.data : p)));
+        saveProjects(projects.map((p) => (p.id === tempProj.id ? data.data : p)));
         showNotification('Proyek dicatat & 5 Dokumen Operasional (CIF, RSD, MoU, SPK, BAST) dibuat otomatis!', 'success');
         return data.data;
       }
@@ -443,9 +549,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateProject = async (id: string, proj: Partial<ClientProject>) => {
-    setProjects((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, ...proj, updatedAt: new Date().toISOString() } : p))
-    );
+    saveProjects(projects.map((p) => (p.id === id ? { ...p, ...proj, updatedAt: new Date().toISOString() } : p)));
     try {
       await fetch('/api/projects', {
         method: 'PATCH',
@@ -459,7 +563,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const deleteProject = async (id: string) => {
-    setProjects((prev) => prev.filter((p) => p.id !== id));
+    saveProjects(projects.filter((p) => p.id !== id));
     try {
       await fetch(`/api/projects?id=${id}`, { method: 'DELETE' });
     } catch (e) {
@@ -472,12 +576,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const clampedProgress = Math.max(0, Math.min(100, progress));
     const stageCfg = getStageFromProgress(clampedProgress);
     let calculatedStatus: ProjectStatus = status || stageCfg.defaultStatus;
-    if (!status) {
-      calculatedStatus = stageCfg.defaultStatus;
-    }
 
-    setProjects((prev) =>
-      prev.map((p) => {
+    saveProjects(
+      projects.map((p) => {
         if (p.id !== id) return p;
         return {
           ...p,
@@ -502,8 +603,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Pricing Tiers CRUD
   const updatePricingTier = async (id: string, updatedFields: Partial<PricingTier>) => {
-    setPricingTiers((prev) =>
-      prev.map((tier) =>
+    savePricingTiers(
+      pricingTiers.map((tier) =>
         tier.id === id
           ? {
               ...tier,
@@ -526,7 +627,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const resetPricingTiersToDefault = () => {
-    setPricingTiers(INITIAL_PRICING_TIERS);
+    savePricingTiers(INITIAL_PRICING_TIERS);
     showNotification('Pricelist dikembalikan ke spesifikasi default', 'info');
   };
 
@@ -553,12 +654,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const resetAllDataToDefaults = () => {
-    setLeads(INITIAL_LEADS);
-    setPortfolios(INITIAL_PORTFOLIOS);
-    setProjects(INITIAL_PROJECTS);
-    setPricingTiers(INITIAL_PRICING_TIERS);
-    setUsers(INITIAL_USERS);
+    saveLeads(INITIAL_LEADS);
+    savePortfolios(INITIAL_PORTFOLIOS);
+    saveProjects(INITIAL_PROJECTS);
+    savePricingTiers(INITIAL_PRICING_TIERS);
+    saveUsers(INITIAL_USERS);
     setCurrentUser(INITIAL_USER);
+
+    try {
+      localStorage.removeItem(STORAGE_KEYS.PROJECTS);
+      localStorage.removeItem(STORAGE_KEYS.LEADS);
+      localStorage.removeItem(STORAGE_KEYS.PORTFOLIOS);
+      localStorage.removeItem(STORAGE_KEYS.PRICING);
+      localStorage.removeItem(STORAGE_KEYS.USERS_LIST);
+      localStorage.removeItem(STORAGE_KEYS.USER);
+    } catch (e) {
+      console.error(e);
+    }
+
     showNotification('Basis data & akun pengguna berhasil direset ke data sampel awal', 'info');
   };
 
