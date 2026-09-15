@@ -222,7 +222,7 @@ export const DocumentFormDialog: React.FC<DocumentFormDialogProps> = ({
                 <TextField
                   fullWidth
                   multiline
-                  rows={2}
+                  minRows={3}
                   size="small"
                   label="Ringkasan Proyek"
                   value={formData?.projectSummary || ''}
@@ -232,6 +232,8 @@ export const DocumentFormDialog: React.FC<DocumentFormDialogProps> = ({
               <Grid item xs={12}>
                 <TextField
                   fullWidth
+                  multiline
+                  minRows={3}
                   size="small"
                   label="Tujuan Utama Pembuatan Website"
                   value={formData?.primaryGoals || ''}
@@ -241,6 +243,8 @@ export const DocumentFormDialog: React.FC<DocumentFormDialogProps> = ({
               <Grid item xs={12}>
                 <TextField
                   fullWidth
+                  multiline
+                  minRows={3}
                   size="small"
                   label="Struktur Halaman (Sitemap)"
                   value={formData?.pageStructure || ''}
@@ -250,6 +254,8 @@ export const DocumentFormDialog: React.FC<DocumentFormDialogProps> = ({
               <Grid item xs={12}>
                 <TextField
                   fullWidth
+                  multiline
+                  minRows={3}
                   size="small"
                   label="Fitur Utama yang Diminta"
                   value={formData?.mainFeatures || ''}
@@ -403,7 +409,7 @@ export const DocumentFormDialog: React.FC<DocumentFormDialogProps> = ({
                 <TextField
                   fullWidth
                   multiline
-                  rows={2}
+                  minRows={3}
                   size="small"
                   label="Konteks Bisnis Klien"
                   value={formData?.businessContext || ''}
@@ -414,7 +420,7 @@ export const DocumentFormDialog: React.FC<DocumentFormDialogProps> = ({
                 <TextField
                   fullWidth
                   multiline
-                  rows={2}
+                  minRows={3}
                   size="small"
                   label="Ringkasan Solusi Teknis"
                   value={formData?.solutionSummary || ''}
@@ -425,6 +431,8 @@ export const DocumentFormDialog: React.FC<DocumentFormDialogProps> = ({
               <Grid item xs={12}>
                 <TextField
                   fullWidth
+                  multiline
+                  minRows={3}
                   size="small"
                   label="Tujuan Utama Proyek (Project Goals)"
                   value={formData?.projectGoals || ''}
@@ -436,7 +444,7 @@ export const DocumentFormDialog: React.FC<DocumentFormDialogProps> = ({
                 <TextField
                   fullWidth
                   multiline
-                  rows={2}
+                  minRows={3}
                   size="small"
                   label="In Scope"
                   value={formData?.inScope || ''}
@@ -447,7 +455,7 @@ export const DocumentFormDialog: React.FC<DocumentFormDialogProps> = ({
                 <TextField
                   fullWidth
                   multiline
-                  rows={2}
+                  minRows={3}
                   size="small"
                   label="Out of Scope"
                   value={formData?.outOfScope || ''}
@@ -499,6 +507,8 @@ export const DocumentFormDialog: React.FC<DocumentFormDialogProps> = ({
                           <TextField
                             size="small"
                             fullWidth
+                            multiline
+                            minRows={3}
                             label="Deskripsi Fitur"
                             value={feat.nameAndDesc || ''}
                             onChange={(e) => handleUpdateRsdFeature(idx, 'nameAndDesc', e.target.value)}
@@ -589,6 +599,8 @@ export const DocumentFormDialog: React.FC<DocumentFormDialogProps> = ({
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
+                  multiline
+                  minRows={3}
                   size="small"
                   label="Alamat Klien"
                   value={formData?.clientAddress || ''}
@@ -639,6 +651,8 @@ export const DocumentFormDialog: React.FC<DocumentFormDialogProps> = ({
               <Grid item xs={12}>
                 <TextField
                   fullWidth
+                  multiline
+                  minRows={3}
                   size="small"
                   label="Total Investasi (Terbilang)"
                   value={formData?.totalInvestmentTerbilang || ''}
@@ -745,6 +759,8 @@ export const DocumentFormDialog: React.FC<DocumentFormDialogProps> = ({
               <Grid item xs={12}>
                 <TextField
                   fullWidth
+                  multiline
+                  minRows={3}
                   size="small"
                   label="Informasi Bank & No Rekening Freelancer"
                   value={formData?.freelancerBankInfo || ''}
@@ -775,6 +791,8 @@ export const DocumentFormDialog: React.FC<DocumentFormDialogProps> = ({
               <Grid item xs={12}>
                 <TextField
                   fullWidth
+                  multiline
+                  minRows={3}
                   size="small"
                   label="Total Fee (Terbilang)"
                   value={formData?.totalNominalTerbilang || ''}
@@ -833,6 +851,8 @@ export const DocumentFormDialog: React.FC<DocumentFormDialogProps> = ({
               <Grid item xs={12}>
                 <TextField
                   fullWidth
+                  multiline
+                  minRows={3}
                   size="small"
                   label="Alamat Perusahaan Klien"
                   value={formData?.clientAddress || ''}
@@ -854,6 +874,8 @@ export const DocumentFormDialog: React.FC<DocumentFormDialogProps> = ({
               <Grid item xs={12}>
                 <TextField
                   fullWidth
+                  multiline
+                  minRows={3}
                   size="small"
                   label="Akses Source Code Repository (Git)"
                   value={formData?.sourceCodeAccess || ''}
@@ -863,6 +885,8 @@ export const DocumentFormDialog: React.FC<DocumentFormDialogProps> = ({
               <Grid item xs={12}>
                 <TextField
                   fullWidth
+                  multiline
+                  minRows={3}
                   size="small"
                   label="Akses Panel Admin / Credentials"
                   value={formData?.adminPanelAccess || ''}
