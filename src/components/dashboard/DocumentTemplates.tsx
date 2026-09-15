@@ -16,8 +16,8 @@ import {
   Divider,
   Grid,
 } from '@mui/material';
-import { Print as PrintIcon, ContentCopy as CopyIcon } from '@mui/icons-material';
-import { CIFData, RSDData, MoUData, SPKData, BASTData } from '../../types';
+import { Print as PrintIcon, ContentCopy as CopyIcon, Gesture as DrawIcon, VerifiedUser as VerifiedIcon } from '@mui/icons-material';
+import { CIFData, RSDData, MoUData, SPKData, BASTData, DigitalSignatureData } from '../../types';
 import { AtasiLabsLogo } from '../common/AtasiLabsLogo';
 import { useApp } from '../../context/AppContext';
 
@@ -25,9 +25,17 @@ interface DocumentTemplateProps {
   type: 'CIF' | 'RSD' | 'MOU' | 'SPK' | 'BAST';
   data: CIFData | RSDData | MoUData | SPKData | BASTData;
   onPrint?: () => void;
+  onSignParty1?: () => void;
+  onSignParty2?: () => void;
 }
 
-export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({ type, data, onPrint }) => {
+export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
+  type,
+  data,
+  onPrint,
+  onSignParty1,
+  onSignParty2,
+}) => {
   const { showNotification } = useApp();
 
   const handlePrint = () => {
@@ -46,6 +54,157 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({ type, data,
       showNotification('Gagal menyalin teks ke clipboard', 'error');
     }
   };
+
+  // Shared Signature Block & Audit Trail Footer
+  const DocumentSignatureFooter = ({
+    locationCity = 'Subang',
+    dateStr = '',
+    party1Title = 'PIHAK PERTAMA',
+    party1Sub = 'ATASILABS',
+    party1Name = '',
+    party1Role = '',
+    party1Sig,
+    onSignParty1Cb,
+    party2Title = 'PIHAK KEDUA',
+    party2Sub = '',
+    party2Name = '',
+    party2Role = '',
+    party2Sig,
+    onSignParty2Cb,
+    isSingleSigner = false,
+  }: {
+    locationCity?: string;
+    dateStr?: string;
+    party1Title?: string;
+    party1Sub?: string;
+    party1Name?: string;
+    party1Role?: string;
+    party1Sig?: DigitalSignatureData;
+    onSignParty1Cb?: () => void;
+    party2Title?: string;
+    party2Sub?: string;
+    party2Name?: string;
+    party2Role?: string;
+    party2Sig?: DigitalSignatureData;
+    onSignParty2Cb?: () => void;
+    isSingleSigner?: boolean;
+  }) => (
+    <Box className="signature-block avoid-break" sx={{ mt: 5, pt: 2, borderTop: '1px dashed rgba(0,0,0,0.15)' }}>
+      <Typography variant="caption" display="block" textAlign="right" sx={{ mb: 1.5, color: 'text.secondary' }}>
+        {locationCity}, {dateStr}
+      </Typography>
+
+      <Grid container spacing={3} justifyContent={isSingleSigner ? 'flex-end' : 'space-between'}>
+        <Grid item xs={6} sm={isSingleSigner ? 5 : 6} textAlign="center">
+          <Typography variant="caption" display="block" color="text.secondary">{party1Title}</Typography>
+          <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>{party1Sub}</Typography>
+
+          {/* Canvas Signature Image */}
+          {party1Sig?.signatureBase64 ? (
+            <Box
+              component="img"
+              src={party1Sig.signatureBase64}
+              alt="Tanda Tangan Pihak 1"
+              sx={{ height: 60, maxWidth: 180, objectFit: 'contain', mx: 'auto', my: 0.5, display: 'block' }}
+            />
+          ) : (
+            <Box sx={{ height: 50, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {onSignParty1Cb && (
+                <Button
+                  size="small"
+                  variant="outlined"
+                  color="primary"
+                  className="no-print"
+                  startIcon={<DrawIcon sx={{ fontSize: 13 }} />}
+                  onClick={onSignParty1Cb}
+                  sx={{ fontSize: '0.68rem', py: 0.2, fontWeight: 700 }}
+                >
+                  Tanda Tangani
+                </Button>
+              )}
+            </Box>
+          )}
+
+          <Typography variant="body2" sx={{ fontWeight: 700, borderTop: '1px solid rgba(0,0,0,0.3)', pt: 0.5, display: 'inline-block', px: 1 }}>
+            ({party1Name || '....................'})
+          </Typography>
+          <Typography variant="caption" color="text.secondary" display="block">{party1Role}</Typography>
+        </Grid>
+
+        {!isSingleSigner && (
+          <Grid item xs={6} sm={6} textAlign="center">
+            <Typography variant="caption" display="block" color="text.secondary">{party2Title}</Typography>
+            <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>{party2Sub}</Typography>
+
+            {/* Canvas Signature Image */}
+            {party2Sig?.signatureBase64 ? (
+              <Box
+                component="img"
+                src={party2Sig.signatureBase64}
+                alt="Tanda Tangan Pihak 2"
+                sx={{ height: 60, maxWidth: 180, objectFit: 'contain', mx: 'auto', my: 0.5, display: 'block' }}
+              />
+            ) : (
+              <Box sx={{ height: 50, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {onSignParty2Cb && (
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    color="secondary"
+                    className="no-print"
+                    startIcon={<DrawIcon sx={{ fontSize: 13 }} />}
+                    onClick={onSignParty2Cb}
+                    sx={{ fontSize: '0.68rem', py: 0.2, fontWeight: 700 }}
+                  >
+                    Tanda Tangani
+                  </Button>
+                )}
+              </Box>
+            )}
+
+            <Typography variant="body2" sx={{ fontWeight: 700, borderTop: '1px solid rgba(0,0,0,0.3)', pt: 0.5, display: 'inline-block', px: 1 }}>
+              ({party2Name || '....................'})
+            </Typography>
+            <Typography variant="caption" color="text.secondary" display="block">{party2Role}</Typography>
+          </Grid>
+        )}
+      </Grid>
+
+      {/* Electronic Audit Trail Verification Badge */}
+      {(party1Sig?.auditTrail || party2Sig?.auditTrail) && (
+        <Paper
+          variant="outlined"
+          sx={{
+            mt: 3,
+            p: 1.5,
+            borderRadius: 2,
+            borderColor: '#10b981',
+            bgcolor: 'rgba(16, 185, 129, 0.04)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
+          }}
+        >
+          <VerifiedIcon sx={{ color: '#10b981', fontSize: 30, flexShrink: 0 }} />
+          <Box sx={{ width: '100%' }}>
+            <Typography variant="caption" sx={{ fontWeight: 800, color: '#047857', display: 'block', textTransform: 'uppercase', letterSpacing: 0.3 }}>
+              VERIFIKASI TANDA TANGAN ELEKTRONIK & AUDIT TRAIL (UU ITE PASAL 11)
+            </Typography>
+            {party1Sig?.auditTrail && (
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.68rem', display: 'block' }}>
+                • <strong>{party1Title} ({party1Sig.auditTrail.signedBy}):</strong> Waktu: {party1Sig.auditTrail.signedAt} | IP: {party1Sig.auditTrail.ipAddress} | Ref Hash: {party1Sig.auditTrail.documentHash}
+              </Typography>
+            )}
+            {party2Sig?.auditTrail && (
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.68rem', display: 'block' }}>
+                • <strong>{party2Title} ({party2Sig.auditTrail.signedBy}):</strong> Waktu: {party2Sig.auditTrail.signedAt} | IP: {party2Sig.auditTrail.ipAddress} | Ref Hash: {party2Sig.auditTrail.documentHash}
+              </Typography>
+            )}
+          </Box>
+        </Paper>
+      )}
+    </Box>
+  );
 
   // Header Letterhead Component
   const Letterhead = ({ title }: { title: string }) => (
@@ -99,7 +258,12 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({ type, data,
       >
         <Letterhead title="CLIENT INTAKE FORM (CIF)" />
 
-        <Box className="no-print" sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mb: 2 }}>
+        <Box className="no-print" sx={{ display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+          {onSignParty1 && (
+            <Button variant="outlined" color="primary" size="small" startIcon={<DrawIcon />} onClick={onSignParty1} sx={{ fontWeight: 700 }}>
+              Tanda Tangan Digital
+            </Button>
+          )}
           <Button variant="outlined" size="small" startIcon={<CopyIcon />} onClick={() => handleCopyText(copySummary)}>
             Salin Teks CIF
           </Button>
@@ -119,90 +283,66 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({ type, data,
                 <TableCell>: {cif.docNumber}</TableCell>
               </TableRow>
               <TableRow>
-                <TableCell sx={{ fontWeight: 700, bgcolor: 'action.hover' }}>Tanggal</TableCell>
+                <TableCell sx={{ fontWeight: 700, bgcolor: 'action.hover' }}>Tanggal Dokumen</TableCell>
                 <TableCell>: {cif.date}</TableCell>
-                <TableCell sx={{ fontWeight: 700, bgcolor: 'action.hover' }}>Sumber Informasi</TableCell>
-                <TableCell>: {cif.infoSource}</TableCell>
+                <TableCell sx={{ fontWeight: 700, bgcolor: 'action.hover' }}>Klaster / Tier</TableCell>
+                <TableCell>: {cif.tier}</TableCell>
               </TableRow>
             </TableBody>
           </Table>
         </TableContainer>
 
-        {/* 1. Informasi Umum Klien */}
+        {/* 1. Informasi Utama Klien */}
         <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#d97706', mb: 1 }}>
-          1. INFORMASI UMUM KLIEN DAN PROYEK
+          1. INFORMASI UTAMA KLIEN
         </Typography>
         <TableContainer component={Paper} variant="outlined" sx={{ mb: 3 }}>
           <Table size="small">
             <TableBody>
               <TableRow>
-                <TableCell sx={{ fontWeight: 700, width: '30%', bgcolor: 'action.hover' }}>Nama Klien/Perusahaan</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '30%', bgcolor: 'action.hover' }}>Nama Perusahaan / Bisnis</TableCell>
                 <TableCell>{cif.clientName}</TableCell>
               </TableRow>
               <TableRow>
-                <TableCell sx={{ fontWeight: 700, bgcolor: 'action.hover' }}>Penanggung Jawab (PIC)</TableCell>
-                <TableCell>{cif.picName}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 700, bgcolor: 'action.hover' }}>Kontak (Email/WhatsApp)</TableCell>
-                <TableCell>{cif.contact}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 700, bgcolor: 'action.hover' }}>Bidang Usaha/Industri</TableCell>
+                <TableCell sx={{ fontWeight: 700, bgcolor: 'action.hover' }}>Industri / Sektor Bisnis</TableCell>
                 <TableCell>{cif.industry}</TableCell>
               </TableRow>
               <TableRow>
-                <TableCell sx={{ fontWeight: 700, bgcolor: 'action.hover' }}>Website (jika ada)</TableCell>
-                <TableCell>{cif.websiteUrl || '-'}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 700, bgcolor: 'action.hover' }}>Lokasi Tempat Usaha</TableCell>
+                <TableCell sx={{ fontWeight: 700, bgcolor: 'action.hover' }}>Alamat Perusahaan</TableCell>
                 <TableCell>{cif.businessLocation}</TableCell>
               </TableRow>
-            </TableBody>
-          </Table>
-        </TableContainer>
-
-        {/* 2. Profil Proyek & Tujuan Bisnis */}
-        <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#d97706', mb: 1 }}>
-          2. PROFIL PROYEK & TUJUAN BISNIS
-        </Typography>
-        <TableContainer component={Paper} variant="outlined" sx={{ mb: 3 }}>
-          <Table size="small">
-            <TableBody>
               <TableRow>
-                <TableCell sx={{ fontWeight: 700, width: '30%', bgcolor: 'action.hover' }}>Ringkasan Proyek</TableCell>
-                <TableCell>{cif.projectSummary}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 700, bgcolor: 'action.hover' }}>Tujuan Utama (Primary Goals)</TableCell>
-                <TableCell>{cif.primaryGoals}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 700, bgcolor: 'action.hover' }}>Target Audiens / Perilaku</TableCell>
-                <TableCell>{cif.targetAudience}</TableCell>
+                <TableCell sx={{ fontWeight: 700, bgcolor: 'action.hover' }}>Penanggung Jawab (PIC Utama)</TableCell>
+                <TableCell>{cif.picName} — {cif.contact}</TableCell>
               </TableRow>
             </TableBody>
           </Table>
         </TableContainer>
 
-        {/* 3. Ruang Lingkup & Fitur */}
+        {/* 2. Tujuan & Lingkup Proyek */}
         <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#d97706', mb: 1 }}>
-          3. RUANG LINGKUP & FITUR WEBSITE
+          2. TUJUAN & LINGKUP PROYEK
+        </Typography>
+        <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
+          <Typography variant="caption" display="block" color="text.secondary" sx={{ fontWeight: 700 }}>Tujuan Utama Pembuatan Website:</Typography>
+          <Typography variant="body2" paragraph>{cif.primaryGoals}</Typography>
+          <Typography variant="caption" display="block" color="text.secondary" sx={{ fontWeight: 700 }}>Target Pengguna (Audience):</Typography>
+          <Typography variant="body2">{cif.targetAudience}</Typography>
+        </Paper>
+
+        {/* 3. Kebutuhan Fitur & Struktur */}
+        <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#d97706', mb: 1 }}>
+          3. KEBUTUHAN FITUR & STRUKTUR HALAMAN
         </Typography>
         <TableContainer component={Paper} variant="outlined" sx={{ mb: 3 }}>
           <Table size="small">
             <TableBody>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 700, width: '30%', bgcolor: 'action.hover' }}>Tipe Website / Tier</TableCell>
-                <TableCell><Chip label={cif.tier} color="primary" size="small" sx={{ fontWeight: 700 }} /></TableCell>
-              </TableRow>
               <TableRow>
                 <TableCell sx={{ fontWeight: 700, bgcolor: 'action.hover' }}>Struktur Halaman</TableCell>
                 <TableCell>{cif.pageStructure}</TableCell>
               </TableRow>
               <TableRow>
-                <TableCell sx={{ fontWeight: 700, bgcolor: 'action.hover' }}>Fitur Utama</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '30%', bgcolor: 'action.hover' }}>Fitur Utama</TableCell>
                 <TableCell>{cif.mainFeatures}</TableCell>
               </TableRow>
               <TableRow>
@@ -270,18 +410,17 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({ type, data,
         </TableContainer>
 
         {/* Signature Footer */}
-        <Box className="signature-block avoid-break" sx={{ mt: 4, pt: 2, borderTop: '1px dashed rgba(0,0,0,0.15)' }}>
-          <Grid container spacing={2} justifyContent="flex-end">
-            <Grid item xs={6} sm={4} textAlign="center">
-              <Typography variant="caption" display="block">Subang, {cif.date}</Typography>
-              <Typography variant="caption" display="block" sx={{ fontWeight: 700, mt: 0.5 }}>Admin/Sales ATASILABS</Typography>
-              <Box sx={{ height: 50 }} />
-              <Typography variant="body2" sx={{ fontWeight: 700, borderTop: '1px solid black', pt: 0.5 }}>
-                ({cif.adminName})
-              </Typography>
-            </Grid>
-          </Grid>
-        </Box>
+        <DocumentSignatureFooter
+          locationCity="Subang"
+          dateStr={cif.date}
+          party1Title="Admin / Sales"
+          party1Sub="ATASILABS"
+          party1Name={cif.adminName}
+          party1Role="Representatif Atasilabs"
+          party1Sig={cif.party1Signature}
+          onSignParty1Cb={onSignParty1}
+          isSingleSigner={true}
+        />
       </Paper>
     );
   }
@@ -305,7 +444,12 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({ type, data,
       >
         <Letterhead title="REQUIREMENT SPECIFICATION DOCUMENT (RSD)" />
 
-        <Box className="no-print" sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mb: 2 }}>
+        <Box className="no-print" sx={{ display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+          {onSignParty1 && (
+            <Button variant="outlined" color="primary" size="small" startIcon={<DrawIcon />} onClick={onSignParty1} sx={{ fontWeight: 700 }}>
+              Tanda Tangan Digital
+            </Button>
+          )}
           <Button variant="outlined" size="small" startIcon={<CopyIcon />} onClick={() => handleCopyText(copySummary)}>
             Salin Teks RSD
           </Button>
@@ -348,51 +492,49 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({ type, data,
           <Typography variant="caption" display="block" color="text.secondary" sx={{ fontWeight: 700 }}>Konteks Bisnis Klien:</Typography>
           <Typography variant="body2" paragraph>{rsd.businessContext}</Typography>
           <Typography variant="caption" display="block" color="text.secondary" sx={{ fontWeight: 700 }}>Penyelesaian Kebutuhan:</Typography>
-          <Typography variant="body2" paragraph>{rsd.solutionSummary}</Typography>
-          <Typography variant="caption" display="block" color="text.secondary" sx={{ fontWeight: 700 }}>Tujuan Pembuatan Website:</Typography>
-          <Typography variant="body2">{rsd.projectGoals}</Typography>
+          <Typography variant="body2">{rsd.solutionSummary}</Typography>
         </Paper>
 
-        {/* 2. Scope */}
+        {/* 2. Ruang Lingkup Pekerjaan */}
         <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#d97706', mb: 1 }}>
-          2. RUANG LINGKUP PROYEK (PROJECT SCOPE)
+          2. RUANG LINGKUP PEKERJAAN (SCOPE OF WORK)
         </Typography>
-        <Grid container spacing={2} sx={{ mb: 3 }}>
-          <Grid item xs={12} sm={6}>
-            <Paper variant="outlined" sx={{ p: 2, borderColor: '#10b981' }}>
-              <Chip label="IN SCOPE" color="success" size="small" sx={{ mb: 1, fontWeight: 700 }} />
-              <Typography variant="body2">{rsd.inScope}</Typography>
-            </Paper>
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <Paper variant="outlined" sx={{ p: 2, borderColor: '#ef4444' }}>
-              <Chip label="OUT OF SCOPE" color="error" size="small" sx={{ mb: 1, fontWeight: 700 }} />
-              <Typography variant="body2">{rsd.outOfScope}</Typography>
-            </Paper>
-          </Grid>
-        </Grid>
+        <TableContainer component={Paper} variant="outlined" sx={{ mb: 3 }}>
+          <Table size="small">
+            <TableBody>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 700, width: '30%', bgcolor: 'action.hover' }}>Dalam Scope (In-Scope)</TableCell>
+                <TableCell>{rsd.inScope}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 700, bgcolor: 'action.hover' }}>Luar Scope (Out-of-Scope)</TableCell>
+                <TableCell color="error.main">{rsd.outOfScope}</TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </TableContainer>
 
-        {/* 3. Tech Stack */}
+        {/* 3. Arsitektur Teknologi */}
         <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#d97706', mb: 1 }}>
-          3. SPESIFIKASI TECH STACK & ARSITEKTUR
+          3. ARSITEKTUR TEKNOLOGI & STACK
         </Typography>
         <TableContainer component={Paper} variant="outlined" sx={{ mb: 3 }}>
           <Table size="small">
             <TableHead sx={{ bgcolor: 'action.hover' }}>
               <TableRow>
                 <TableCell sx={{ fontWeight: 700 }}>Komponen</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Teknologi / Framework</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Teknologi & Framework</TableCell>
                 <TableCell sx={{ fontWeight: 700 }}>Versi / Spesifikasi</TableCell>
                 <TableCell sx={{ fontWeight: 700 }}>Alasan Pemilihan</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {rsd.techStack?.map((item, idx) => (
+              {rsd.techStack?.map((stack, idx) => (
                 <TableRow key={idx}>
-                  <TableCell sx={{ fontWeight: 600 }}>{item.component}</TableCell>
-                  <TableCell>{item.techFramework}</TableCell>
-                  <TableCell>{item.versionSpec}</TableCell>
-                  <TableCell>{item.reason}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{stack.component}</TableCell>
+                  <TableCell sx={{ fontWeight: 700, color: 'primary.main' }}>{stack.techFramework}</TableCell>
+                  <TableCell>{stack.versionSpec}</TableCell>
+                  <TableCell>{stack.reason}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -447,18 +589,17 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({ type, data,
         </Paper>
 
         {/* Signature */}
-        <Box className="signature-block avoid-break" sx={{ mt: 4, pt: 2, borderTop: '1px dashed rgba(0,0,0,0.15)' }}>
-          <Grid container spacing={2} justifyContent="flex-end">
-            <Grid item xs={6} sm={4} textAlign="center">
-              <Typography variant="caption" display="block">Disusun Oleh,</Typography>
-              <Box sx={{ height: 50 }} />
-              <Typography variant="body2" sx={{ fontWeight: 700, borderTop: '1px solid black', pt: 0.5 }}>
-                ({rsd.authorITLead})
-              </Typography>
-              <Typography variant="caption" color="text.secondary">IT Lead / Software Architect Atasilabs</Typography>
-            </Grid>
-          </Grid>
-        </Box>
+        <DocumentSignatureFooter
+          locationCity="Subang"
+          dateStr={rsd.issueDate}
+          party1Title="Disusun Oleh"
+          party1Sub="ATASILABS"
+          party1Name={rsd.authorITLead}
+          party1Role="IT Lead / Software Architect"
+          party1Sig={rsd.party1Signature}
+          onSignParty1Cb={onSignParty1}
+          isSingleSigner={true}
+        />
       </Paper>
     );
   }
@@ -482,7 +623,17 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({ type, data,
       >
         <Letterhead title="MEMORANDUM OF UNDERSTANDING (MoU)" />
 
-        <Box className="no-print" sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mb: 2 }}>
+        <Box className="no-print" sx={{ display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+          {onSignParty1 && (
+            <Button variant="outlined" color="primary" size="small" startIcon={<DrawIcon />} onClick={onSignParty1} sx={{ fontWeight: 700 }}>
+              Tanda Tangan Pihak 1 (AtasiLabs)
+            </Button>
+          )}
+          {onSignParty2 && (
+            <Button variant="outlined" color="secondary" size="small" startIcon={<DrawIcon />} onClick={onSignParty2} sx={{ fontWeight: 700 }}>
+              Tanda Tangan Pihak 2 (Klien)
+            </Button>
+          )}
           <Button variant="outlined" size="small" startIcon={<CopyIcon />} onClick={() => handleCopyText(copySummary)}>
             Salin Teks MoU
           </Button>
@@ -574,24 +725,22 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({ type, data,
         </Typography>
 
         {/* Signature */}
-        <Box className="signature-block avoid-break" sx={{ mt: 5, pt: 2, borderTop: '1px dashed rgba(0,0,0,0.15)' }}>
-          <Grid container spacing={3}>
-            <Grid item xs={6} textAlign="center">
-              <Typography variant="caption" display="block">PIHAK PERTAMA</Typography>
-              <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>ATASILABS</Typography>
-              <Box sx={{ height: 60 }} />
-              <Typography variant="body2" sx={{ fontWeight: 700 }}>({mou.atasilabsPic})</Typography>
-              <Typography variant="caption" color="text.secondary">{mou.atasilabsRole}</Typography>
-            </Grid>
-            <Grid item xs={6} textAlign="center">
-              <Typography variant="caption" display="block">PIHAK KEDUA</Typography>
-              <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>{mou.clientCompany}</Typography>
-              <Box sx={{ height: 60 }} />
-              <Typography variant="body2" sx={{ fontWeight: 700 }}>({mou.clientPic})</Typography>
-              <Typography variant="caption" color="text.secondary">{mou.clientRole}</Typography>
-            </Grid>
-          </Grid>
-        </Box>
+        <DocumentSignatureFooter
+          locationCity="Subang"
+          dateStr={mou.date}
+          party1Title="PIHAK PERTAMA"
+          party1Sub="ATASILABS"
+          party1Name={mou.atasilabsPic}
+          party1Role={mou.atasilabsRole}
+          party1Sig={mou.party1Signature}
+          onSignParty1Cb={onSignParty1}
+          party2Title="PIHAK KEDUA"
+          party2Sub={mou.clientCompany}
+          party2Name={mou.clientPic}
+          party2Role={mou.clientRole}
+          party2Sig={mou.party2Signature}
+          onSignParty2Cb={onSignParty2}
+        />
       </Paper>
     );
   }
@@ -615,7 +764,17 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({ type, data,
       >
         <Letterhead title="SURAT PERINTAH KERJA (SPK) FREELANCER" />
 
-        <Box className="no-print" sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mb: 2 }}>
+        <Box className="no-print" sx={{ display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+          {onSignParty1 && (
+            <Button variant="outlined" color="primary" size="small" startIcon={<DrawIcon />} onClick={onSignParty1} sx={{ fontWeight: 700 }}>
+              Tanda Tangan Pihak 1 (AtasiLabs)
+            </Button>
+          )}
+          {onSignParty2 && (
+            <Button variant="outlined" color="secondary" size="small" startIcon={<DrawIcon />} onClick={onSignParty2} sx={{ fontWeight: 700 }}>
+              Tanda Tangan Pihak 2 (Freelancer)
+            </Button>
+          )}
           <Button variant="outlined" size="small" startIcon={<CopyIcon />} onClick={() => handleCopyText(copySummary)}>
             Salin Teks SPK
           </Button>
@@ -691,22 +850,22 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({ type, data,
         </Typography>
 
         {/* Signature */}
-        <Box className="signature-block avoid-break" sx={{ mt: 4, pt: 2, borderTop: '1px dashed rgba(0,0,0,0.15)' }}>
-          <Grid container spacing={3}>
-            <Grid item xs={6} textAlign="center">
-              <Typography variant="caption" display="block">Pihak Pertama</Typography>
-              <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>ATASILABS</Typography>
-              <Box sx={{ height: 50 }} />
-              <Typography variant="body2" sx={{ fontWeight: 700 }}>({spk.atasilabsPic})</Typography>
-            </Grid>
-            <Grid item xs={6} textAlign="center">
-              <Typography variant="caption" display="block">Pihak Kedua</Typography>
-              <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>Freelancer Partner</Typography>
-              <Box sx={{ height: 50 }} />
-              <Typography variant="body2" sx={{ fontWeight: 700 }}>({spk.freelancerName})</Typography>
-            </Grid>
-          </Grid>
-        </Box>
+        <DocumentSignatureFooter
+          locationCity="Subang"
+          dateStr={spk.date}
+          party1Title="PIHAK PERTAMA"
+          party1Sub="ATASILABS"
+          party1Name={spk.atasilabsPic}
+          party1Role={spk.atasilabsRole}
+          party1Sig={spk.party1Signature}
+          onSignParty1Cb={onSignParty1}
+          party2Title="PIHAK KEDUA"
+          party2Sub="Freelancer Partner"
+          party2Name={spk.freelancerName}
+          party2Role={`NIK: ${spk.freelancerNik}`}
+          party2Sig={spk.party2Signature}
+          onSignParty2Cb={onSignParty2}
+        />
       </Paper>
     );
   }
@@ -730,7 +889,17 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({ type, data,
       >
         <Letterhead title="BERITA ACARA SERAH TERIMA (BAST)" />
 
-        <Box className="no-print" sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mb: 2 }}>
+        <Box className="no-print" sx={{ display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+          {onSignParty1 && (
+            <Button variant="outlined" color="primary" size="small" startIcon={<DrawIcon />} onClick={onSignParty1} sx={{ fontWeight: 700 }}>
+              Tanda Tangan Pihak 1 (AtasiLabs)
+            </Button>
+          )}
+          {onSignParty2 && (
+            <Button variant="outlined" color="secondary" size="small" startIcon={<DrawIcon />} onClick={onSignParty2} sx={{ fontWeight: 700 }}>
+              Tanda Tangan Pihak 2 (Klien)
+            </Button>
+          )}
           <Button variant="outlined" size="small" startIcon={<CopyIcon />} onClick={() => handleCopyText(copySummary)}>
             Salin Teks BAST
           </Button>
@@ -775,27 +944,22 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({ type, data,
         </TableContainer>
 
         {/* Signature */}
-        <Box className="signature-block avoid-break" sx={{ mt: 5, pt: 2, borderTop: '1px dashed rgba(0,0,0,0.15)' }}>
-          <Typography variant="caption" display="block" textAlign="right" sx={{ mb: 1 }}>
-            {bast.locationCity || 'Subang'}, {bast.date}
-          </Typography>
-          <Grid container spacing={3}>
-            <Grid item xs={6} textAlign="center">
-              <Typography variant="caption" display="block">Pihak Pertama</Typography>
-              <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>ATASILABS</Typography>
-              <Box sx={{ height: 60 }} />
-              <Typography variant="body2" sx={{ fontWeight: 700 }}>({bast.atasilabsPic})</Typography>
-              <Typography variant="caption" color="text.secondary">{bast.atasilabsRole}</Typography>
-            </Grid>
-            <Grid item xs={6} textAlign="center">
-              <Typography variant="caption" display="block">Pihak Kedua</Typography>
-              <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>{bast.clientCompany}</Typography>
-              <Box sx={{ height: 60 }} />
-              <Typography variant="body2" sx={{ fontWeight: 700 }}>({bast.clientPic})</Typography>
-              <Typography variant="caption" color="text.secondary">{bast.clientRole}</Typography>
-            </Grid>
-          </Grid>
-        </Box>
+        <DocumentSignatureFooter
+          locationCity={bast.locationCity || 'Subang'}
+          dateStr={bast.date}
+          party1Title="PIHAK PERTAMA"
+          party1Sub="ATASILABS"
+          party1Name={bast.atasilabsPic}
+          party1Role={bast.atasilabsRole}
+          party1Sig={bast.party1Signature}
+          onSignParty1Cb={onSignParty1}
+          party2Title="PIHAK KEDUA"
+          party2Sub={bast.clientCompany}
+          party2Name={bast.clientPic}
+          party2Role={bast.clientRole}
+          party2Sig={bast.party2Signature}
+          onSignParty2Cb={onSignParty2}
+        />
       </Paper>
     );
   }

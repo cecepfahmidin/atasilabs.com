@@ -16,6 +16,8 @@ import {
   Edit as EditIcon,
   AutoAwesome as AutoIcon,
   RestartAlt as ResetIcon,
+  Gesture as DrawIcon,
+  VerifiedUser as SecurityIcon,
 } from '@mui/icons-material';
 import {
   INITIAL_CIF_DATA,
@@ -26,7 +28,8 @@ import {
 } from '../../data/initialDocuments';
 import { DocumentTemplates } from './DocumentTemplates';
 import { DocumentFormDialog } from './DocumentFormDialog';
-import { CIFData, RSDData, MoUData, SPKData, BASTData } from '../../types';
+import { SignatureDialog } from './SignatureDialog';
+import { CIFData, RSDData, MoUData, SPKData, BASTData, DigitalSignatureData } from '../../types';
 import { useApp } from '../../context/AppContext';
 import { generateAutoDocumentsForProject } from '../../lib/documentGenerator';
 
@@ -58,8 +61,10 @@ export const DocumentsWorkflowView: React.FC = () => {
   const [spkData, setSpkData] = useState<SPKData>(INITIAL_SPK_DATA[0]);
   const [bastData, setBastData] = useState<BASTData>(INITIAL_BAST_DATA[0]);
 
-  // Dialog State
+  // Dialog States
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isSigDialogOpen, setIsSigDialogOpen] = useState(false);
+  const [sigPartyTarget, setSigPartyTarget] = useState<'Pihak Pertama' | 'Pihak Kedua'>('Pihak Pertama');
 
   // Load documents for selected project (check LocalStorage first, fallback to Auto-Gen)
   useEffect(() => {
@@ -131,6 +136,36 @@ export const DocumentsWorkflowView: React.FC = () => {
     showNotification(`Dokumen ${type} berhasil diperbarui & disimpan!`, 'success');
   };
 
+  const handleOpenSignatureDialog = (party: 'Pihak Pertama' | 'Pihak Kedua') => {
+    setSigPartyTarget(party);
+    setIsSigDialogOpen(true);
+  };
+
+  const handleSaveSignature = (sigData: DigitalSignatureData) => {
+    const currentDoc = getActiveDocData();
+    const updatedDoc = {
+      ...currentDoc,
+      [sigPartyTarget === 'Pihak Pertama' ? 'party1Signature' : 'party2Signature']: sigData,
+    };
+    handleSaveDocument(activeDocType, updatedDoc);
+    showNotification(`Tanda Tangan Canvas & Audit Trail (${sigPartyTarget}) tersimpan di ${activeDocType}!`, 'success');
+  };
+
+  const getSignerDefaultInfo = () => {
+    const doc = getActiveDocData() as any;
+    if (sigPartyTarget === 'Pihak Pertama') {
+      return {
+        name: doc?.atasilabsPic || doc?.adminName || doc?.authorITLead || 'Cecep Fahmidin',
+        role: doc?.atasilabsRole || 'Founder & CEO Atasilabs',
+      };
+    } else {
+      return {
+        name: doc?.clientPic || doc?.picName || doc?.freelancerName || 'Klien / Partner',
+        role: doc?.clientRole || doc?.picRole || 'Direktur / Penanggung Jawab',
+      };
+    }
+  };
+
   const handleResetDocumentToDefault = () => {
     const proj = projects.find((p) => p.id === selectedProjectId);
     if (!proj) return;
@@ -154,6 +189,7 @@ export const DocumentsWorkflowView: React.FC = () => {
   };
 
   const selectedProjObj = projects.find((p) => p.id === selectedProjectId);
+  const signerInfo = getSignerDefaultInfo();
 
   return (
     <Box sx={{ width: '100%' }}>
@@ -165,14 +201,14 @@ export const DocumentsWorkflowView: React.FC = () => {
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', mt: 1 }}>
           <Chip
-            icon={<AutoIcon sx={{ fontSize: '16px !important' }} />}
-            label="Kustomisasi Dokumen 100% Dinamis & Tersimpan"
+            icon={<SecurityIcon sx={{ fontSize: '16px !important' }} />}
+            label="Tanda Tangan Digital (Canvas & Audit Trail)"
             color="success"
             size="small"
             sx={{ fontWeight: 700, fontSize: '0.72rem' }}
           />
           <Typography variant="caption" color="text.secondary">
-            Setiap dokumen (CIF, RSD, MoU, SPK, BAST) dapat diubah secara bebas dan akan tersimpan secara otomatis per proyek.
+            Mendukung coretan tanda tangan visual + stempel waktu, IP address, & verifikasi metadata UU ITE.
           </Typography>
         </Box>
       </Box>
@@ -182,7 +218,7 @@ export const DocumentsWorkflowView: React.FC = () => {
         <Paper variant="outlined" sx={{ p: 2.5, mb: 3, borderRadius: 3 }}>
           {/* Project Selection Banner */}
           <Grid container spacing={2} alignItems="center" sx={{ mb: 2 }}>
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} sm={5}>
               <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 0.5 }}>
                 Pilih Proyek Klien (Dokumen Auto-Gen):
               </Typography>
@@ -201,8 +237,18 @@ export const DocumentsWorkflowView: React.FC = () => {
               </TextField>
             </Grid>
 
-            <Grid item xs={12} sm={6} textAlign={{ sm: 'right' }}>
+            <Grid item xs={12} sm={7} textAlign={{ sm: 'right' }}>
               <Box sx={{ display: 'flex', gap: 1, justifyContent: { sm: 'flex-end' }, flexWrap: 'wrap', mt: { xs: 1, sm: 2.5 } }}>
+                <Button
+                  variant="outlined"
+                  color="success"
+                  size="small"
+                  startIcon={<DrawIcon />}
+                  onClick={() => handleOpenSignatureDialog('Pihak Pertama')}
+                  sx={{ fontWeight: 700 }}
+                >
+                  Tanda Tangani ({activeDocType})
+                </Button>
                 <Button
                   variant="outlined"
                   color="secondary"
@@ -221,7 +267,7 @@ export const DocumentsWorkflowView: React.FC = () => {
                   onClick={() => setIsFormOpen(true)}
                   sx={{ fontWeight: 700 }}
                 >
-                  Kustomisasi / Edit Form ({activeDocType})
+                  Edit Form ({activeDocType})
                 </Button>
               </Box>
             </Grid>
@@ -229,7 +275,7 @@ export const DocumentsWorkflowView: React.FC = () => {
 
           {selectedProjObj && (
             <Alert severity="info" sx={{ mb: 2, fontSize: '0.78rem', py: 0.5 }}>
-              Dokumen saat ini untuk <strong>{selectedProjObj.clientName}</strong> ({selectedProjObj.title} — Budget: Rp {selectedProjObj.budget?.toLocaleString('id-ID')}). Seluruh pengubahan form akan tersimpan permanen per proyek.
+              Dokumen saat ini untuk <strong>{selectedProjObj.clientName}</strong> ({selectedProjObj.title} — Budget: Rp {selectedProjObj.budget?.toLocaleString('id-ID')}). Seluruh tanda tangan digital & kustomisasi tersimpan permanen per proyek.
             </Alert>
           )}
 
@@ -270,7 +316,12 @@ export const DocumentsWorkflowView: React.FC = () => {
         </Paper>
 
         {/* Document Preview Component */}
-        <DocumentTemplates type={activeDocType} data={getActiveDocData()} />
+        <DocumentTemplates
+          type={activeDocType}
+          data={getActiveDocData()}
+          onSignParty1={() => handleOpenSignatureDialog('Pihak Pertama')}
+          onSignParty2={() => handleOpenSignatureDialog('Pihak Kedua')}
+        />
 
         {/* Form Dialog Generator */}
         <DocumentFormDialog
@@ -279,6 +330,17 @@ export const DocumentsWorkflowView: React.FC = () => {
           type={activeDocType}
           initialData={getActiveDocData()}
           onSave={handleSaveDocument}
+        />
+
+        {/* Signature Canvas & Audit Trail Dialog */}
+        <SignatureDialog
+          open={isSigDialogOpen}
+          onClose={() => setIsSigDialogOpen(false)}
+          onSave={handleSaveSignature}
+          signerTitle={`Tanda Tangan Dokumen ${activeDocType}`}
+          defaultSignerName={signerInfo.name}
+          defaultSignerRole={signerInfo.role}
+          partyType={sigPartyTarget}
         />
       </Box>
     </Box>

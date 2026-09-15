@@ -59,6 +59,22 @@ export interface ClientProject {
   updatedAt: string;
 }
 
+// Electronic Signature & Audit Trail Data Models
+export interface SignatureAuditTrail {
+  signedAt: string;          // Tanggal & Jam (e.g. "16 September 2026, 08:30:15 WIB")
+  ipAddress: string;         // IP Address (e.g. "180.252.88.192")
+  userAgent: string;         // Browser / Device Info
+  signedBy: string;          // Nama penandatangan
+  signerRole: string;        // Jabatan / Peran (Pihak Pertama / Pihak Kedua)
+  signedEmail?: string;      // Email penandatangan (opsional)
+  documentHash: string;      // Verification Reference / Unique SHA Hash (e.g. "ATL-SIGN-K9X2-88F1")
+}
+
+export interface DigitalSignatureData {
+  signatureBase64?: string; // Data URI Base64 PNG dari Canvas Drawing
+  auditTrail?: SignatureAuditTrail;
+}
+
 // 1. Client Intake Form (CIF) Data Model
 export interface CIFData {
   id: string;
@@ -103,6 +119,8 @@ export interface CIFData {
   targetLaunchDate: string;
   additionalNotes?: string;
   updatedAt: string;
+  party1Signature?: DigitalSignatureData;
+  party2Signature?: DigitalSignatureData;
 }
 
 // 2. Requirement Specification Document (RSD) Data Model
@@ -155,6 +173,8 @@ export interface RSDData {
   };
   milestones: RSDMilestone[];
   updatedAt: string;
+  party1Signature?: DigitalSignatureData;
+  party2Signature?: DigitalSignatureData;
 }
 
 // 3. MoU (Memorandum of Understanding) Data Model
@@ -191,6 +211,8 @@ export interface MoUData {
   warrantyDays: number; // default 30
   revisionLimitDays: number;
   updatedAt: string;
+  party1Signature?: DigitalSignatureData;
+  party2Signature?: DigitalSignatureData;
 }
 
 // 4. Surat Perintah Kerja (SPK) Data Model
@@ -224,6 +246,8 @@ export interface SPKData {
   maxPenaltyPercent: number; // 10%
   revisionLimitCount: number;
   updatedAt: string;
+  party1Signature?: DigitalSignatureData;
+  party2Signature?: DigitalSignatureData;
 }
 
 // 5. Berita Acara Serah Terima (BAST) Data Model
@@ -244,6 +268,8 @@ export interface BASTData {
   warrantyDays: number;
   locationCity: string; // Subang
   updatedAt: string;
+  party1Signature?: DigitalSignatureData;
+  party2Signature?: DigitalSignatureData;
 }
 
 // 6. HPP Financial Breakdown Data Model
