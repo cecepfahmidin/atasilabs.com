@@ -26,6 +26,8 @@ import {
   AccessTime as TimeIcon,
   Public as IpIcon,
   AutoFixHigh as PresetIcon,
+  CloudUpload as UploadIcon,
+  PhotoCamera as CameraIcon,
 } from '@mui/icons-material';
 import { DigitalSignatureData, SignatureAuditTrail } from '../../types';
 
@@ -176,6 +178,41 @@ export const SignatureDialog: React.FC<SignatureDialogProps> = ({
 
   const stopDrawing = () => {
     setIsDrawing(false);
+  };
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const item = getCanvasContext();
+        if (!item) return;
+        const { canvas, ctx } = item;
+        clearCanvas();
+
+        // Fill white background
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Calculate proportional scale to fit within canvas cleanly
+        const padding = 20;
+        const scale = Math.min((canvas.width - padding * 2) / img.width, (canvas.height - padding * 2) / img.height);
+        const w = img.width * scale;
+        const h = img.height * scale;
+        const x = (canvas.width - w) / 2;
+        const y = (canvas.height - h) / 2;
+
+        ctx.drawImage(img, x, y, w, h);
+        setHasDrawn(true);
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
   };
 
   // Preset Auto Signature Generator
@@ -355,13 +392,35 @@ export const SignatureDialog: React.FC<SignatureDialogProps> = ({
           )}
         </Paper>
 
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1, mb: 2 }}>
+        {/* Hidden File Input for Image Upload / Camera Scan */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          style={{ display: 'none' }}
+          onChange={handleFileUpload}
+        />
+
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1, mt: 1, mb: 2 }}>
           <Button size="small" variant="text" color="error" startIcon={<ClearIcon />} onClick={clearCanvas}>
-            Bersihkan Canvas
+            Hapus / Reset
           </Button>
-          <Button size="small" variant="outlined" color="primary" startIcon={<PresetIcon />} onClick={generatePresetSignature}>
-            Buat Stempel Nama Otomatis
-          </Button>
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+            <Button
+              size="small"
+              variant="outlined"
+              color="secondary"
+              startIcon={<UploadIcon />}
+              onClick={() => fileInputRef.current?.click()}
+              sx={{ fontWeight: 700 }}
+            >
+              Scan / Upload Foto TTD
+            </Button>
+            <Button size="small" variant="outlined" color="primary" startIcon={<PresetIcon />} onClick={generatePresetSignature} sx={{ fontWeight: 700 }}>
+              Stempel Nama Otomatis
+            </Button>
+          </Box>
         </Box>
 
         {/* Audit Trail Metadata Preview */}
