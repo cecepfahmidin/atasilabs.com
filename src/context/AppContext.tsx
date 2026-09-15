@@ -176,68 +176,35 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [selectedServiceForInquiry, setSelectedServiceForInquiry] = useState('');
 
-  // Persistent States initialized from LocalStorage or Initial Constants
-  const [users, setUsers] = useState<User[]>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem(STORAGE_KEYS.USERS_LIST);
-        if (saved) return JSON.parse(saved);
-      } catch (e) {
-        console.error(e);
-      }
-    }
-    return INITIAL_USERS;
-  });
-
+  // Persistent States initialized from Initial Constants (to avoid SSR/Client Hydration Mismatch)
+  const [users, setUsers] = useState<User[]>(INITIAL_USERS);
   const [currentUser, setCurrentUser] = useState<User | null>(INITIAL_USER);
+  const [leads, setLeads] = useState<Lead[]>(INITIAL_LEADS);
+  const [portfolios, setPortfolios] = useState<Portfolio[]>(INITIAL_PORTFOLIOS);
+  const [projects, setProjects] = useState<ClientProject[]>(INITIAL_PROJECTS);
+  const [pricingTiers, setPricingTiers] = useState<PricingTier[]>(INITIAL_PRICING_TIERS);
 
-  const [leads, setLeads] = useState<Lead[]>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem(STORAGE_KEYS.LEADS);
-        if (saved) return JSON.parse(saved);
-      } catch (e) {
-        console.error(e);
-      }
-    }
-    return INITIAL_LEADS;
-  });
+  // Restore state from LocalStorage after initial mount (hydration complete)
+  useEffect(() => {
+    try {
+      const savedUsers = localStorage.getItem(STORAGE_KEYS.USERS_LIST);
+      if (savedUsers) setUsers(JSON.parse(savedUsers));
 
-  const [portfolios, setPortfolios] = useState<Portfolio[]>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem(STORAGE_KEYS.PORTFOLIOS);
-        if (saved) return JSON.parse(saved);
-      } catch (e) {
-        console.error(e);
-      }
-    }
-    return INITIAL_PORTFOLIOS;
-  });
+      const savedLeads = localStorage.getItem(STORAGE_KEYS.LEADS);
+      if (savedLeads) setLeads(JSON.parse(savedLeads));
 
-  const [projects, setProjects] = useState<ClientProject[]>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem(STORAGE_KEYS.PROJECTS);
-        if (saved) return JSON.parse(saved);
-      } catch (e) {
-        console.error(e);
-      }
-    }
-    return INITIAL_PROJECTS;
-  });
+      const savedPortfolios = localStorage.getItem(STORAGE_KEYS.PORTFOLIOS);
+      if (savedPortfolios) setPortfolios(JSON.parse(savedPortfolios));
 
-  const [pricingTiers, setPricingTiers] = useState<PricingTier[]>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem(STORAGE_KEYS.PRICING);
-        if (saved) return JSON.parse(saved);
-      } catch (e) {
-        console.error(e);
-      }
+      const savedProjects = localStorage.getItem(STORAGE_KEYS.PROJECTS);
+      if (savedProjects) setProjects(JSON.parse(savedProjects));
+
+      const savedPricing = localStorage.getItem(STORAGE_KEYS.PRICING);
+      if (savedPricing) setPricingTiers(JSON.parse(savedPricing));
+    } catch (e) {
+      console.error('Error restoring state from localStorage:', e);
     }
-    return INITIAL_PRICING_TIERS;
-  });
+  }, []);
 
   // Helper State Setters with Automatic LocalStorage Sync
   const saveUsers = (next: User[]) => {
