@@ -42,8 +42,10 @@ export const DocumentFormDialog: React.FC<DocumentFormDialogProps> = ({
   const [formData, setFormData] = useState<any>(initialData);
 
   useEffect(() => {
-    setFormData(initialData);
-  }, [initialData, open]);
+    if (open) {
+      setFormData(initialData);
+    }
+  }, [open, type, initialData?.id]);
 
   // Dynamic user option maps derived strictly from registered users in AppContext
   const internalTeamOptionsMap = new Map<string, { name: string; role: string; label: string }>();
