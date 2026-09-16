@@ -1,5 +1,30 @@
 @import "tailwindcss";
 
+@theme inline {
+  --font-sans: 'Space Grotesk', 'Plus Jakarta Sans', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+}
+
+:root {
+  --yellow: #FFD600;
+  --orange: #FF6B35;
+  --bg-primary: #0A0A0A;
+  --text-light: #F5F5F0;
+  --text-gray: #888888;
+  --text-muted: #555555;
+  --text-dim: #444444;
+  --border-dark: #2D2D2D;
+  --border-subtle: #1D1D1D;
+}
+
+.font-grotesk {
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.font-ibm-mono {
+  font-family: 'IBM Plex Mono', monospace;
+}
+
 /* -------------------------------------------------------------
  * PRINT STYLES FOR ATASILABS OFFICIAL DOCUMENT GENERATOR
  * ONLY PRINTS THE DOCUMENT ITSELF, STARTING FROM KOP SURAT

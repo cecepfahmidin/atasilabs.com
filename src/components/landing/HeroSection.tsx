@@ -1,266 +1,133 @@
 'use client';
 
-import React from 'react';
-import {
-  Box,
-  Container,
-  Typography,
-  Button,
-  Stack,
-  Chip,
-  Paper,
-  useTheme,
-} from '@mui/material';
-import Grid from '@mui/material/Grid2';
-import {
-  ArrowForward as ArrowForwardIcon,
-  Code as CodeIcon,
-  Security as SecurityIcon,
-  Speed as SpeedIcon,
-  CheckCircle as CheckCircleIcon,
-  Storage as StorageIcon,
-  Layers as LayersIcon,
-  Email as EmailIcon,
-} from '@mui/icons-material';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
+import { GlitchText } from './GlitchText';
+import { CollabCursors } from './CollabCursors';
 
 export const HeroSection: React.FC = () => {
-  const theme = useTheme();
   const { setActiveView } = useApp();
+  const [mounted, setMounted] = useState(false);
 
-  const handleScrollTo = (id: string) => {
-    const el = document.querySelector(id);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const scrollToContact = () => {
+    const el = document.getElementById('contact');
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const scrollToPortfolio = () => {
+    const el = document.getElementById('portfolio');
     if (el) el.scrollIntoView({ behavior: 'smooth' });
   };
 
   return (
-    <Box
-      id="hero"
-      sx={{
-        position: 'relative',
-        pt: { xs: 8, md: 12 },
-        pb: { xs: 8, md: 14 },
-        overflow: 'hidden',
-        background:
-          theme.palette.mode === 'dark'
-            ? 'radial-gradient(ellipse 80% 50% at 50% -20%, rgba(245, 158, 11, 0.15), transparent)'
-            : 'radial-gradient(ellipse 80% 50% at 50% -20%, rgba(217, 119, 6, 0.09), transparent)',
-      }}
-    >
-      <Container maxWidth="lg">
-        {/* Top Status Badge */}
-        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
-          <Stack
-            direction="row"
-            spacing={1}
-            sx={{
-              alignItems: 'center',
-              px: 2,
-              py: 0.7,
-              borderRadius: '9999px',
-              backgroundColor: theme.palette.mode === 'dark' ? 'rgba(245, 158, 11, 0.12)' : 'rgba(217, 119, 6, 0.08)',
-              border: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(245, 158, 11, 0.35)' : 'rgba(217, 119, 6, 0.25)'}`,
-            }}
-          >
-            <Box
-              sx={{
-                width: 8,
-                height: 8,
-                borderRadius: '50%',
-                backgroundColor: theme.palette.primary.main,
-                boxShadow: '0 0 0 3px rgba(245, 158, 11, 0.25)',
-              }}
-            />
-            <Typography
-              variant="caption"
-              sx={{
-                fontWeight: 700,
-                color: theme.palette.primary.main,
-                letterSpacing: '0.02em',
-                fontSize: '0.8rem',
-              }}
-            >
-              AtasiLabs • Terbuka untuk Kontrak Proyek Web & Konsultasi Sistem
-            </Typography>
-          </Stack>
-        </Box>
+    <section className="relative flex flex-col items-center w-full bg-[#0A0A0A] pt-28 pb-16 px-6 md:pt-[130px] md:pb-[90px] md:px-[80px] overflow-hidden">
+      {/* Version & Industrial System Badge */}
+      <div className="flex items-center justify-center gap-[8px] h-[34px] px-[16px] bg-[#141414] border-2 border-[#FFD600] shadow-[0_0_15px_rgba(255,214,0,0.15)]">
+        <div className="w-[8px] h-[8px] bg-[#FFD600] shrink-0 animate-pulse" />
+        <span className="font-ibm-mono text-[10px] md:text-[11px] font-bold text-[#FFD600] tracking-[1.5px] md:tracking-[2.5px] whitespace-nowrap">
+          [SYSTEM 2.0] // ATASILABS INDUSTRIAL SOP & AUTOMATION
+        </span>
+      </div>
 
-        {/* Main Headline */}
-        <Box sx={{ textAlign: 'center', maxWidth: 840, mx: 'auto', mb: 4 }}>
-          <Typography
-            variant="h1"
-            sx={{
-              fontSize: { xs: '2.4rem', sm: '3.2rem', md: '3.8rem' },
-              fontWeight: 800,
-              lineHeight: 1.15,
-              mb: 2.5,
-              letterSpacing: '-0.03em',
-            }}
-          >
-            Sistem Informasi Web Developer{' '}
-            <Box
-              component="span"
-              sx={{
-                background:
-                  theme.palette.mode === 'dark'
-                    ? 'linear-gradient(135deg, #FCD34D 0%, #F59E0B 40%, #D97706 100%)'
-                    : 'linear-gradient(135deg, #F59E0B 0%, #D97706 50%, #88481A 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                display: 'inline-block',
-              }}
-            >
-              Portofolio & Manajemen Proyek
-            </Box>
-          </Typography>
+      <div className="h-8 md:h-[28px]" />
 
-          <Typography
-            variant="body1"
-            sx={{
-              fontSize: { xs: '1rem', md: '1.2rem' },
-              color: theme.palette.text.secondary,
-              lineHeight: 1.7,
-              maxWidth: 720,
-              mx: 'auto',
-            }}
-          >
-            Arsitektur modern berbasis <strong>Next.js (App Router)</strong>, komponen antarmuka presisi <strong>Material UI (MUI)</strong>, komunikasi database type-safe <strong>Prisma ORM</strong>, serta penyimpanan & otentikasi <strong>Supabase (PostgreSQL)</strong>.
-          </Typography>
-        </Box>
+      {/* Main Glitch Headlines */}
+      <h1 className="font-grotesk text-[clamp(32px,7vw,84px)] font-bold text-[#F5F5F0] tracking-[-1px] leading-none text-center w-full max-w-[1150px]">
+        <GlitchText text="BUILD WITHOUT LIMITS." speed={40} delay={100} />
+      </h1>
+      <h1 className="font-grotesk text-[clamp(32px,7vw,84px)] font-bold text-[#FFD600] tracking-[-1px] leading-none text-center w-full max-w-[1150px] mt-1">
+        <GlitchText text="ENTERPRISE WEB APPS." speed={40} delay={450} />
+      </h1>
 
-        {/* Action Buttons */}
-        <Stack
-          direction={{ xs: 'column', sm: 'row' }}
-          spacing={2}
-          sx={{ mb: 7, justifyContent: 'center', alignItems: 'center' }}
+      <div className="h-6 md:h-[24px]" />
+
+      {/* Subheading */}
+      <p className="font-ibm-mono text-[12px] md:text-[14px] text-[#888888] tracking-[1px] leading-[1.7] text-center w-full max-w-[850px]">
+        STUDIO PENGEMBANGAN APLIKASI WEB FULL-STACK PERFORMANCE SKALA ENTERPRISE.
+        <br />
+        NEXT.JS APP ROUTER, PRISMA ORM, SUPABASE POSTGRESQL & OTOMATISASI DOKUMEN SOP 6-STAGE.
+      </p>
+
+      <div className="h-10 md:h-[40px]" />
+
+      {/* Action CTAs */}
+      <div className="flex flex-col sm:flex-row items-center gap-4 md:gap-[16px] w-full sm:w-auto z-30">
+        <button
+          onClick={scrollToContact}
+          className="flex items-center justify-center w-full sm:w-[230px] h-[54px] bg-[#FFD600] hover:bg-[#e6c200] transition-colors border-none cursor-pointer"
         >
-          <Button
-            variant="contained"
-            size="large"
-            onClick={() => handleScrollTo('#portfolio')}
-            endIcon={<ArrowForwardIcon />}
-            sx={{
-              px: 3.5,
-              py: 1.4,
-              fontSize: '1rem',
-              fontWeight: 700,
-              borderRadius: 2.5,
-              background: theme.palette.mode === 'dark'
-                ? 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)'
-                : 'linear-gradient(135deg, #F59E0B 0%, #B45309 100%)',
-              color: theme.palette.mode === 'dark' ? '#181512' : '#ffffff',
-              boxShadow: '0 8px 24px rgba(217, 119, 6, 0.32)',
-            }}
-          >
-            Jelajahi Portofolio
-          </Button>
+          <span className="font-grotesk text-[12px] font-bold text-[#0A0A0A] tracking-[2px]">
+            KONSULTASI PROYEK FREE
+          </span>
+        </button>
 
-          <Button
-            variant="outlined"
-            size="large"
-            onClick={() => handleScrollTo('#contact')}
-            startIcon={<EmailIcon />}
-            sx={{
-              px: 3.5,
-              py: 1.4,
-              fontSize: '1rem',
-              fontWeight: 600,
-              borderRadius: 2.5,
-              borderWidth: 1.5,
-              borderColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)',
-              '&:hover': {
-                borderWidth: 1.5,
-                borderColor: theme.palette.primary.main,
-              },
-            }}
-          >
-            Konsultasi Proyek (Inquiry)
-          </Button>
+        <button
+          onClick={() => setActiveView('dashboard')}
+          className="flex items-center justify-center w-full sm:w-[230px] h-[54px] bg-[#0A0A0A] border-2 border-[#3D3D3D] hover:border-[#FFD600] transition-colors cursor-pointer text-[#F5F5F0]"
+        >
+          <span className="font-ibm-mono text-[12px] text-[#888888] hover:text-[#FFD600] tracking-[1.5px]">
+            MASUK DASHBOARD CMS &gt;
+          </span>
+        </button>
+      </div>
 
-          <Button
-            variant="text"
-            size="large"
-            onClick={() => setActiveView('dashboard')}
-            sx={{
-              px: 2.5,
-              py: 1.4,
-              fontSize: '0.95rem',
-              fontWeight: 600,
-              color: theme.palette.primary.main,
-            }}
-          >
-            Buka Dashboard Admin →
-          </Button>
-        </Stack>
+      <div className="h-6 md:h-[20px]" />
 
-        {/* Tech Stack Banner Cards */}
-        <Grid container spacing={2} sx={{ maxWidth: 960, mx: 'auto', justifyContent: 'center' }}>
-          {[
-            {
-              title: 'Next.js App Router',
-              subtitle: 'Server Actions & ISR',
-              icon: <CodeIcon fontSize="small" sx={{ color: theme.palette.primary.main }} />,
-            },
-            {
-              title: 'Material UI (MUI)',
-              subtitle: 'Design System & DataGrid',
-              icon: <LayersIcon fontSize="small" sx={{ color: '#0ea5e9' }} />,
-            },
-            {
-              title: 'Prisma ORM',
-              subtitle: 'Type-Safe SQL Schemas',
-              icon: <StorageIcon fontSize="small" sx={{ color: '#10b981' }} />,
-            },
-            {
-              title: 'Supabase PostgreSQL',
-              subtitle: 'RLS Security & Storage',
-              icon: <SecurityIcon fontSize="small" sx={{ color: '#34d399' }} />,
-            },
-          ].map((item, idx) => (
-            <Grid size={{ xs: 6, sm: 3 }} key={idx}>
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 2,
-                  textAlign: 'center',
-                  borderRadius: 3,
-                  backgroundColor:
-                    theme.palette.mode === 'dark' ? 'rgba(18, 18, 18, 0.7)' : 'rgba(255, 255, 255, 0.8)',
-                  border: `1px solid ${theme.palette.divider}`,
-                  backdropFilter: 'blur(8px)',
-                  transition: 'transform 0.2s ease, border-color 0.2s ease',
-                  '&:hover': {
-                    transform: 'translateY(-3px)',
-                    borderColor: theme.palette.primary.main,
-                  },
-                }}
-              >
-                <Box
-                  sx={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 2,
-                    mx: 'auto',
-                    mb: 1.2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
-                  }}
-                >
-                  {item.icon}
-                </Box>
-                <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.9rem', mb: 0.3 }}>
-                  {item.title}
-                </Typography>
-                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-                  {item.subtitle}
-                </Typography>
-              </Paper>
-            </Grid>
-          ))}
-        </Grid>
-      </Container>
-    </Box>
+      <p className="font-ibm-mono text-[11px] text-[#555555] tracking-[2px] text-center">
+        UU ITE E-SIGNATURE VERIFIED // GARANSI BUG 30-90 HARI // 100% TYPE-SAFE
+      </p>
+
+      <div className="h-10 md:h-[48px]" />
+
+      {/* Interactive Code & Architecture Canvas */}
+      <div
+        className="w-full max-w-[1100px] bg-[#0F0F0F] rounded-lg overflow-hidden relative z-10"
+        style={{ border: '2px solid #2D2D2D' }}
+      >
+        <div className="flex items-center justify-between px-4 py-2.5 bg-[#141414] border-b border-[#2D2D2D]">
+          <div className="flex items-center gap-2">
+            <span className="w-3 h-3 rounded-full bg-[#EF4444]" />
+            <span className="w-3 h-3 rounded-full bg-[#F59E0B]" />
+            <span className="w-3 h-3 rounded-full bg-[#10B981]" />
+            <span className="font-ibm-mono text-[11px] text-[#888888] ml-2">
+              atasilabs-core.ts — Next.js App Router + Prisma ORM + Supabase RLS
+            </span>
+          </div>
+          <span className="font-ibm-mono text-[10px] text-[#FFD600] bg-[#1A1A1A] px-2 py-0.5 border border-[#FFD600]">
+            LIVE REPL // 99.9% UPTIME
+          </span>
+        </div>
+
+        <div className="p-6 font-ibm-mono text-[12px] leading-relaxed text-[#A0A0A0] overflow-x-auto bg-[#0A0A0A]">
+          <div className="text-[#FF6B35]">// 1. Arsitektur Relasional Prisma & Supabase RLS</div>
+          <div>
+            <span className="text-[#60A5FA]">export async function</span> <span className="text-[#FFD600]">generateEnterpriseProject</span>(params: ProjectSpec) &#123;
+          </div>
+          <div className="pl-4">
+            <span className="text-[#4ADE80]">const</span> project = <span className="text-[#60A5FA]">await</span> prisma.clientProject.<span className="text-[#FFD600]">create</span>(&#123;
+          </div>
+          <div className="pl-8 text-[#888888]">
+            data: &#123; title: params.title, status: <span className="text-[#FFD600]">'IN_PROGRESS'</span>, ipwStage: <span className="text-[#FFD600]">'STAGE_5_EXECUTION'</span> &#125;
+          </div>
+          <div className="pl-4">&#125;);</div>
+          <br />
+          <div className="text-[#FF6B35]">// 2. Otomatisasi 5 Paket Dokumen Official (CIF, RSD, MoU, SPK, BAST)</div>
+          <div className="pl-4">
+            <span className="text-[#4ADE80]">const</span> documents = <span className="text-[#FFD600]">generateAutoDocumentsForProject</span>(project);
+          </div>
+          <div className="pl-4">
+            <span className="text-[#60A5FA]">return</span> &#123; status: <span className="text-[#4ADE80]">200</span>, contractNominal: project.budget, legalPackage: documents &#125;;
+          </div>
+          <div>&#125;</div>
+        </div>
+      </div>
+
+      {/* Collab Cursors Floating Overlay */}
+      <CollabCursors />
+    </section>
   );
 };

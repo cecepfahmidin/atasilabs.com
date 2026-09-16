@@ -6,10 +6,17 @@ import { useApp } from '@/context/AppContext';
 // Landing Page Components
 import { LandingNavbar } from '@/components/landing/LandingNavbar';
 import { HeroSection } from '@/components/landing/HeroSection';
+import { Logos } from '@/components/landing/Logos';
+import { HowItWorks } from '@/components/landing/HowItWorks';
+import { Stats } from '@/components/landing/Stats';
 import { ServicesSection } from '@/components/landing/ServicesSection';
-import { PricingSection } from '@/components/landing/PricingSection';
-import { PortfolioSection } from '@/components/landing/PortfolioSection';
+import { Bento } from '@/components/landing/Bento';
 import { TechStackArchitectureSection } from '@/components/landing/TechStackArchitectureSection';
+import { Comparison } from '@/components/landing/Comparison';
+import { PortfolioSection } from '@/components/landing/PortfolioSection';
+import { PricingSection } from '@/components/landing/PricingSection';
+import { FAQSection } from '@/components/landing/FAQSection';
+import { FinalCTA } from '@/components/landing/FinalCTA';
 import { ContactSection } from '@/components/landing/ContactSection';
 import { Footer } from '@/components/landing/Footer';
 
@@ -39,17 +46,24 @@ export default function MainPage() {
   }
 
   return (
-    <>
+    <div className="bg-[#0A0A0A] text-[#F5F5F0] min-h-screen selection:bg-[#FFD600] selection:text-[#0A0A0A]">
       <LandingNavbar />
-      <main>
+      <main className="w-full overflow-hidden">
         <HeroSection />
+        <Logos />
+        <HowItWorks />
+        <Stats />
         <ServicesSection />
-        <PricingSection />
-        <PortfolioSection />
+        <Bento />
         <TechStackArchitectureSection />
+        <Comparison />
+        <PortfolioSection />
+        <PricingSection />
+        <FAQSection />
+        <FinalCTA />
         <ContactSection />
       </main>
       <Footer />
-    </>
+    </div>
   );
 }

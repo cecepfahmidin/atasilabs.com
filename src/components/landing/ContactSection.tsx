@@ -1,36 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import {
-  Box,
-  Container,
-  Typography,
-  Paper,
-  TextField,
-  Button,
-  MenuItem,
-  Alert,
-  Snackbar,
-  Stack,
-  Chip,
-  useTheme,
-  CircularProgress,
-} from '@mui/material';
-import Grid from '@mui/material/Grid2';
-import {
-  Send as SendIcon,
-  CheckCircle as CheckCircleIcon,
-  Email as EmailIcon,
-  Phone as PhoneIcon,
-  LocationOn as LocationOnIcon,
-  Schedule as ScheduleIcon,
-  Lock as LockIcon,
-  ArrowForward as ArrowForwardIcon,
-} from '@mui/icons-material';
+import SectionHeader from './SectionHeader';
 import { useApp } from '../../context/AppContext';
 
 export const ContactSection: React.FC = () => {
-  const theme = useTheme();
   const { addLead, selectedServiceForInquiry, setActiveView, setDashboardTab, pricingTiers } = useApp();
 
   const [formData, setFormData] = useState({
@@ -110,359 +84,226 @@ export const ContactSection: React.FC = () => {
   };
 
   return (
-    <Box
-      id="contact"
-      sx={{
-        py: { xs: 8, md: 12 },
-        backgroundColor: theme.palette.mode === 'dark' ? '#09090b' : '#ffffff',
-        borderTop: `1px solid ${theme.palette.divider}`,
-      }}
-    >
-      <Container maxWidth="lg">
-        <Grid container spacing={5}>
-          {/* Left Column: Contact Info & Value Prop */}
-          <Grid size={{ xs: 12, md: 5 }}>
-            <Box sx={{ mb: 4 }}>
-              <Chip
-                label="FORMULIR INQUIRY PROYEK"
-                size="small"
-                color="primary"
-                variant="outlined"
-                sx={{ fontWeight: 700, mb: 1.5, fontSize: '0.75rem', letterSpacing: '0.05em' }}
-              />
-              <Typography
-                variant="h2"
-                sx={{
-                  fontSize: { xs: '1.8rem', md: '2.4rem' },
-                  fontWeight: 800,
-                  mb: 2,
-                  letterSpacing: '-0.02em',
-                }}
-              >
-                Mulai Diskusi & Konsultasi Teknis
-              </Typography>
-              <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.7, mb: 4 }}>
-                Punya rencana membangun aplikasi web, sistem enterprise dashboard, atau migrasi basis data? Kirimkan spesifikasi kebutuhan Anda dan dapatkan estimasi teknis dalam 1x24 jam.
-              </Typography>
-            </Box>
+    <section id="contact" className="flex flex-col w-full bg-[#050505] py-16 px-6 md:py-[100px] md:px-[120px] gap-12 md:gap-[64px] border-t border-[#1D1D1D]">
+      <SectionHeader
+        label="[10] // GET IN TOUCH"
+        title={"MULAI PROYEK\nSOFTWARE ANDA."}
+        subtitle="KIRIMKAN RINCIAN PROYEK. TIM ARCHITECT ATASILABS AKAN MERESPONS DALAM 24 JAM BERSAMA ESTIMASI SOW."
+      />
 
-            {/* Direct Contact Cards */}
-            <Stack spacing={2.5} sx={{ mb: 4 }}>
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 2,
-                  borderRadius: 2.5,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 2,
-                  border: `1px solid ${theme.palette.divider}`,
-                  backgroundColor:
-                    theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
-                }}
-              >
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: theme.palette.mode === 'dark' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(217, 119, 6, 0.1)',
-                    color: theme.palette.primary.main,
-                  }}
-                >
-                  <EmailIcon fontSize="small" />
-                </Box>
-                <Box>
-                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-                    Email Bisnis & Kolaborasi
-                  </Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                    cecepfahmidin@gmail.com
-                  </Typography>
-                </Box>
-              </Paper>
+      {submittedLeadId ? (
+        <div className="flex flex-col items-center justify-center p-8 md:p-12 bg-[#111111] border-2 border-[#FFD600] gap-6 text-center max-w-[800px] mx-auto w-full">
+          <div className="w-16 h-16 bg-[#FFD600] text-[#0A0A0A] flex items-center justify-center font-grotesk text-2xl font-bold">
+            ✓
+          </div>
+          <div className="flex flex-col gap-2">
+            <span className="font-ibm-mono text-[11px] text-[#FFD600] tracking-[2px]">
+              [PESAN TERKIRIM // LEAD ID: {submittedLeadId}]
+            </span>
+            <h3 className="font-grotesk text-[28px] font-bold text-[#F5F5F0]">
+              Terima Kasih! Inquiry Anda Telah Diterima.
+            </h3>
+            <p className="font-ibm-mono text-[12px] text-[#888888] max-w-[600px] mx-auto leading-[1.6]">
+              Tim Software Engineer kami sedang meninjau detail proyek Anda. Kami akan menghubungi Anda via email atau WhatsApp yang terdaftar.
+            </p>
+          </div>
 
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 2,
-                  borderRadius: 2.5,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 2,
-                  border: `1px solid ${theme.palette.divider}`,
-                  backgroundColor:
-                    theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
-                }}
-              >
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                    color: '#10b981',
-                  }}
-                >
-                  <LocationOnIcon fontSize="small" />
-                </Box>
-                <Box>
-                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-                    Lokasi & Zona Waktu
-                  </Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                    Jakarta / Bandung, Indonesia (GMT+7)
-                  </Typography>
-                </Box>
-              </Paper>
+          <div className="flex flex-col sm:flex-row gap-4 pt-4">
+            <button
+              onClick={() => {
+                setActiveView('dashboard');
+                setDashboardTab('leads');
+              }}
+              className="flex items-center justify-center px-6 h-12 bg-[#FFD600] text-[#0A0A0A] font-grotesk font-bold text-[12px] tracking-[1px] hover:bg-[#e6c200] transition-colors"
+            >
+              PANTAU LEAD DI DASHBOARD →
+            </button>
+            <button
+              onClick={() => setSubmittedLeadId(null)}
+              className="flex items-center justify-center px-6 h-12 bg-[#1A1A1A] text-[#888888] border border-[#3D3D3D] font-ibm-mono text-[11px] tracking-[1px] hover:text-[#F5F5F0]"
+            >
+              KIRIM PESAN LAIN
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+          {/* Left Column: Direct Info */}
+          <div className="lg:col-span-5 flex flex-col gap-8 bg-[#0F0F0F] p-8 border border-[#2D2D2D]">
+            <div className="flex flex-col gap-2">
+              <span className="font-ibm-mono text-[10px] text-[#FFD600] tracking-[2px] font-bold">
+                [CONTACT DIRECTORY]
+              </span>
+              <h3 className="font-grotesk text-[22px] font-bold text-[#F5F5F0]">
+                ATASILABS HQ & STUDIO
+              </h3>
+              <p className="font-ibm-mono text-[11px] text-[#888888] leading-[1.6]">
+                Siap mendiskusikan kebutuhan arsitektur Next.js, Material UI, Prisma ORM, maupun integrasi workflow internal perusahaan Anda.
+              </p>
+            </div>
 
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 2,
-                  borderRadius: 2.5,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 2,
-                  border: `1px solid ${theme.palette.divider}`,
-                  backgroundColor:
-                    theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
-                }}
-              >
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: 'rgba(139, 92, 246, 0.1)',
-                    color: '#8b5cf6',
-                  }}
-                >
-                  <ScheduleIcon fontSize="small" />
-                </Box>
-                <Box>
-                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-                    Kecepatan Tanggapan
-                  </Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                    Maksimal 24 Jam Kerja
-                  </Typography>
-                </Box>
-              </Paper>
-            </Stack>
+            <div className="flex flex-col gap-6 pt-4 border-t border-[#1D1D1D]">
+              <div className="flex flex-col gap-1">
+                <span className="font-ibm-mono text-[9px] text-[#555555] tracking-[2px] font-bold">EMAIL SUPPORT</span>
+                <span className="font-ibm-mono text-[13px] text-[#F5F5F0] font-bold">contact@atasilabs.com</span>
+              </div>
 
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: theme.palette.text.secondary }}>
-              <LockIcon sx={{ fontSize: 16 }} />
-              <Typography variant="caption">
-                Data disimpan aman di Supabase PostgreSQL dengan proteksi Row Level Security (RLS).
-              </Typography>
-            </Box>
-          </Grid>
+              <div className="flex flex-col gap-1">
+                <span className="font-ibm-mono text-[9px] text-[#555555] tracking-[2px] font-bold">WHATSAPP / CONSULTATION</span>
+                <span className="font-ibm-mono text-[13px] text-[#FFD600] font-bold">+62 812-3456-7890</span>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <span className="font-ibm-mono text-[9px] text-[#555555] tracking-[2px] font-bold">STUDIO LOCATION</span>
+                <span className="font-ibm-mono text-[12px] text-[#CCCCCC]">Jakarta & Bandung, Indonesia (Remote First)</span>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <span className="font-ibm-mono text-[9px] text-[#555555] tracking-[2px] font-bold">WORKING HOURS</span>
+                <span className="font-ibm-mono text-[12px] text-[#CCCCCC]">Senin - Jumat // 09:00 - 18:00 WIB</span>
+              </div>
+            </div>
+
+            {/* NDA Guarantee Tag */}
+            <div className="flex items-center gap-3 p-4 bg-[#141414] border border-[#2D2D2D] mt-auto">
+              <span className="font-ibm-mono text-[14px] text-[#FFD600]">🔒</span>
+              <span className="font-ibm-mono text-[10px] text-[#888888] leading-[1.4]">
+                100% Non-Disclosure Agreement (NDA) Dijamin. Kerahasiaan Ide & Codebase Proyek Terjaga.
+              </span>
+            </div>
+          </div>
 
           {/* Right Column: Inquiry Form */}
-          <Grid size={{ xs: 12, md: 7 }}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: { xs: 3, md: 4.5 },
-                borderRadius: 3.5,
-                border: `1px solid ${theme.palette.divider}`,
-                backgroundColor: theme.palette.background.paper,
-                boxShadow:
-                  theme.palette.mode === 'dark'
-                    ? '0 10px 30px rgba(0,0,0,0.3)'
-                    : '0 10px 30px rgba(0,0,0,0.02)',
-              }}
-            >
-              {submittedLeadId ? (
-                <Box sx={{ py: 3, textAlign: 'center' }}>
-                  <Box
-                    sx={{
-                      width: 60,
-                      height: 60,
-                      borderRadius: '50%',
-                      backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                      color: '#10b981',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      mx: 'auto',
-                      mb: 2,
-                    }}
-                  >
-                    <CheckCircleIcon sx={{ fontSize: 36 }} />
-                  </Box>
-                  <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
-                    Pesan Berhasil Terkirim & Tersimpan!
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 460, mx: 'auto', mb: 3 }}>
-                    Data inquiry Anda telah berhasil masuk ke basis data <strong>Supabase</strong> pada tabel <strong>Lead</strong> dengan ID <code>{submittedLeadId}</code> melalui integrasi Prisma Client.
-                  </Typography>
-
-                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ justifyContent: 'center' }}>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      endIcon={<ArrowForwardIcon />}
-                      onClick={() => {
-                        setActiveView('dashboard');
-                        setDashboardTab('leads');
-                      }}
-                    >
-                      Lihat di Dashboard (Tabel Lead)
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      onClick={() => setSubmittedLeadId(null)}
-                    >
-                      Kirim Pesan Lain
-                    </Button>
-                  </Stack>
-                </Box>
-              ) : (
-                <Box component="form" onSubmit={handleSubmit} noValidate>
-                  <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
-                    Formulir Inquiry Proyek
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                    Isi detail rencana proyek Anda untuk ditinjau oleh developer.
-                  </Typography>
-
-                  {errorMsg && (
-                    <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
-                      {errorMsg}
-                    </Alert>
-                  )}
-
-                  <Grid container spacing={2.5}>
-                    <Grid size={{ xs: 12, sm: 6 }}>
-                      <TextField
-                        required
-                        fullWidth
-                        label="Nama Lengkap"
-                        placeholder="Contoh: Budi Santoso"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        disabled={loading}
-                      />
-                    </Grid>
-
-                    <Grid size={{ xs: 12, sm: 6 }}>
-                      <TextField
-                        required
-                        fullWidth
-                        type="email"
-                        label="Alamat Email"
-                        placeholder="contoh@perusahaan.com"
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        disabled={loading}
-                      />
-                    </Grid>
-
-                    <Grid size={{ xs: 12, sm: 6 }}>
-                      <TextField
-                        fullWidth
-                        label="Perusahaan / Instansi (Opsional)"
-                        placeholder="PT Maju Bersama"
-                        value={formData.company}
-                        onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                        disabled={loading}
-                      />
-                    </Grid>
-
-                    <Grid size={{ xs: 12, sm: 6 }}>
-                      <TextField
-                        select
-                        fullWidth
-                        label="Kategori Layanan / Paket"
-                        value={formData.serviceType}
-                        onChange={(e) => setFormData({ ...formData, serviceType: e.target.value })}
-                        disabled={loading}
-                      >
-                        {formData.serviceType && !serviceOptions.includes(formData.serviceType) && (
-                          <MenuItem value={formData.serviceType}>
-                            {formData.serviceType}
-                          </MenuItem>
-                        )}
-                        {serviceOptions.map((opt) => (
-                          <MenuItem key={opt} value={opt}>
-                            {opt}
-                          </MenuItem>
-                        ))}
-                      </TextField>
-                    </Grid>
-
-                    <Grid size={12}>
-                      <TextField
-                        select
-                        fullWidth
-                        label="Estimasi Anggaran Proyek"
-                        value={formData.budget}
-                        onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
-                        disabled={loading}
-                      >
-                        {budgetOptions.map((opt) => (
-                          <MenuItem key={opt} value={opt}>
-                            {opt}
-                          </MenuItem>
-                        ))}
-                      </TextField>
-                    </Grid>
-
-                    <Grid size={12}>
-                      <TextField
-                        required
-                        fullWidth
-                        multiline
-                        rows={4}
-                        label="Detail Kebutuhan / Pesan Proyek"
-                        placeholder="Jelaskan fitur yang diinginkan, target peluncuran, atau tautan referensi..."
-                        value={formData.message}
-                        onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                        disabled={loading}
-                      />
-                    </Grid>
-
-                    <Grid size={12}>
-                      <Button
-                        type="submit"
-                        fullWidth
-                        variant="contained"
-                        size="large"
-                        disabled={loading}
-                        startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SendIcon />}
-                        sx={{
-                          py: 1.5,
-                          fontSize: '1rem',
-                          fontWeight: 700,
-                          borderRadius: 2.5,
-                          background: theme.palette.mode === 'dark'
-                            ? 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)'
-                            : 'linear-gradient(135deg, #F59E0B 0%, #B45309 100%)',
-                          color: theme.palette.mode === 'dark' ? '#181512' : '#ffffff',
-                          boxShadow: '0 6px 20px rgba(217, 119, 6, 0.28)',
-                        }}
-                      >
-                        {loading ? 'Mengirim Data via Server Actions...' : 'Kirim Pesan (Simpan ke Lead Supabase)'}
-                      </Button>
-                    </Grid>
-                  </Grid>
-                </Box>
+          <div className="lg:col-span-7 bg-[#111111] p-8 md:p-10 border-2 border-[#2D2D2D]">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+              {errorMsg && (
+                <div className="p-4 bg-[#FF6B35]/10 border border-[#FF6B35] font-ibm-mono text-[11px] text-[#FF6B35]">
+                  ⚠️ {errorMsg}
+                </div>
               )}
-            </Paper>
-          </Grid>
-        </Grid>
-      </Container>
-    </Box>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Name */}
+                <div className="flex flex-col gap-2">
+                  <label className="font-ibm-mono text-[10px] text-[#888888] tracking-[1.5px] font-bold uppercase">
+                    NAMA LENGKAP *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="e.g. John Doe"
+                    className="w-full h-12 bg-[#0A0A0A] border border-[#2D2D2D] focus:border-[#FFD600] px-4 font-ibm-mono text-[12px] text-[#F5F5F0] outline-none transition-colors"
+                  />
+                </div>
+
+                {/* Email */}
+                <div className="flex flex-col gap-2">
+                  <label className="font-ibm-mono text-[10px] text-[#888888] tracking-[1.5px] font-bold uppercase">
+                    EMAIL BISNIS *
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="john@company.com"
+                    className="w-full h-12 bg-[#0A0A0A] border border-[#2D2D2D] focus:border-[#FFD600] px-4 font-ibm-mono text-[12px] text-[#F5F5F0] outline-none transition-colors"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Company */}
+                <div className="flex flex-col gap-2">
+                  <label className="font-ibm-mono text-[10px] text-[#888888] tracking-[1.5px] font-bold uppercase">
+                    NAMA PERUSAHAAN / STARTUP
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.company}
+                    onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                    placeholder="PT Tech Innovation"
+                    className="w-full h-12 bg-[#0A0A0A] border border-[#2D2D2D] focus:border-[#FFD600] px-4 font-ibm-mono text-[12px] text-[#F5F5F0] outline-none transition-colors"
+                  />
+                </div>
+
+                {/* Service Type */}
+                <div className="flex flex-col gap-2">
+                  <label className="font-ibm-mono text-[10px] text-[#888888] tracking-[1.5px] font-bold uppercase">
+                    JENIS LAYANAN / PAKET
+                  </label>
+                  <select
+                    value={formData.serviceType}
+                    onChange={(e) => setFormData({ ...formData, serviceType: e.target.value })}
+                    className="w-full h-12 bg-[#0A0A0A] border border-[#2D2D2D] focus:border-[#FFD600] px-4 font-ibm-mono text-[12px] text-[#F5F5F0] outline-none transition-colors"
+                  >
+                    <option value="">-- Pilih Layanan --</option>
+                    {serviceOptions.map((opt) => (
+                      <option key={opt} value={opt} className="bg-[#0A0A0A] text-[#F5F5F0]">
+                        {opt}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Budget */}
+              <div className="flex flex-col gap-2">
+                <label className="font-ibm-mono text-[10px] text-[#888888] tracking-[1.5px] font-bold uppercase">
+                  ESTIMASI ANGGARAN (BUDGET)
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {budgetOptions.map((b) => {
+                    const isSelected = formData.budget === b;
+                    return (
+                      <button
+                        type="button"
+                        key={b}
+                        onClick={() => setFormData({ ...formData, budget: b })}
+                        className={`h-10 px-3 font-ibm-mono text-[10px] tracking-[0.5px] border transition-colors ${
+                          isSelected
+                            ? 'bg-[#FFD600] text-[#0A0A0A] font-bold border-[#FFD600]'
+                            : 'bg-[#0A0A0A] text-[#888888] border-[#2D2D2D] hover:border-[#888888]'
+                        }`}
+                      >
+                        {b}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Message */}
+              <div className="flex flex-col gap-2">
+                <label className="font-ibm-mono text-[10px] text-[#888888] tracking-[1.5px] font-bold uppercase">
+                  RINGKASAN PROYEK & KEBUTUHAN UTAMA *
+                </label>
+                <textarea
+                  required
+                  rows={4}
+                  value={formData.message}
+                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                  placeholder="Jelaskan kebutuhan aplikasi, target launching, atau integrasi yang diinginkan..."
+                  className="w-full bg-[#0A0A0A] border border-[#2D2D2D] focus:border-[#FFD600] p-4 font-ibm-mono text-[12px] text-[#F5F5F0] outline-none transition-colors resize-none"
+                />
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full h-14 bg-[#FFD600] hover:bg-[#e6c200] disabled:bg-[#333333] text-[#0A0A0A] font-grotesk font-bold text-[13px] tracking-[2px] transition-colors flex items-center justify-center gap-2"
+              >
+                {loading ? 'SENDING INQUIRY...' : 'KIRIM INQUIRY PROYEK →'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+    </section>
   );
 };
+
+export default ContactSection;

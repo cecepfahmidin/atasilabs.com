@@ -1,298 +1,155 @@
 'use client';
 
-import React, { useState } from 'react';
-import {
-  AppBar,
-  Toolbar,
-  Typography,
-  Button,
-  IconButton,
-  Box,
-  Container,
-  Drawer,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemText,
-  Badge,
-  useTheme,
-  useScrollTrigger,
-  Slide,
-} from '@mui/material';
-import {
-  Brightness4 as DarkIcon,
-  Brightness7 as LightIcon,
-  Menu as MenuIcon,
-  Close as CloseIcon,
-  Dashboard as DashboardIcon,
-  Send as SendIcon,
-  Terminal as TerminalIcon,
-  Code as CodeIcon,
-  Layers as LayersIcon,
-  Email as EmailIcon,
-  Bolt as BoltIcon,
-} from '@mui/icons-material';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { AtasiLabsLogo } from '../common/AtasiLabsLogo';
 
+const links = [
+  { label: 'LAYANAN', section: 'services' },
+  { label: 'WORKFLOW', section: 'workflow' },
+  { label: 'PORTOFOLIO', section: 'portfolio' },
+  { label: 'PRICING', section: 'pricing' },
+  { label: 'ARSITEKTUR', section: 'architecture' },
+  { label: 'FAQ', section: 'faq' },
+  { label: 'KONTAK', section: 'contact' },
+];
+
+function scrollTo(id: string) {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 export const LandingNavbar: React.FC = () => {
-  const theme = useTheme();
-  const { themeMode, toggleTheme, setActiveView, unreadLeadsCount, currentUser, setIsLoginModalOpen } = useApp();
-  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [active, setActive] = useState('');
+  const [menuOpen, setMenuOpen] = useState(false);
+  const { setActiveView, currentUser, setIsLoginModalOpen } = useApp();
 
-  const navLinks = [
-    { label: 'Beranda', href: '#hero', icon: <TerminalIcon fontSize="small" /> },
-    { label: 'Layanan', href: '#services', icon: <LayersIcon fontSize="small" /> },
-    { label: 'Pricelist', href: '#pricing', icon: <BoltIcon fontSize="small" /> },
-    { label: 'Portofolio', href: '#portfolio', icon: <CodeIcon fontSize="small" /> },
-    { label: 'Arsitektur', href: '#architecture', icon: <TerminalIcon fontSize="small" /> },
-    { label: 'Kontak', href: '#contact', icon: <EmailIcon fontSize="small" /> },
-  ];
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
-  const handleNavClick = (href: string) => {
-    setMobileDrawerOpen(false);
-    const element = document.querySelector(href);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
+  useEffect(() => {
+    const ids = links.map((l) => l.section);
+    const obs: IntersectionObserver[] = [];
 
-  const handleOpenDashboard = () => {
-    if (currentUser) {
-      setActiveView('dashboard');
-    } else {
-      setIsLoginModalOpen(true);
-    }
+    ids.forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const o = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) setActive(id);
+        },
+        { rootMargin: '-35% 0px -60% 0px' }
+      );
+      o.observe(el);
+      obs.push(o);
+    });
+
+    return () => obs.forEach((o) => o.disconnect());
+  }, []);
+
+  const handleDashboardClick = () => {
+    setActiveView('dashboard');
   };
 
   return (
-    <>
-      <AppBar
-        position="sticky"
-        elevation={0}
-        sx={{
-          backgroundColor: theme.palette.mode === 'dark' ? 'rgba(9, 9, 11, 0.85)' : 'rgba(255, 255, 255, 0.88)',
-          backdropFilter: 'blur(12px)',
-          borderBottom: `1px solid ${theme.palette.divider}`,
-          color: theme.palette.text.primary,
-          transition: 'all 0.2s ease',
-          zIndex: (t) => t.zIndex.drawer + 1,
-        }}
-      >
-        <Container maxWidth="lg">
-          <Toolbar disableGutters sx={{ justifyContent: 'space-between', height: 72 }}>
-            {/* Logo */}
-            <Box
-              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1.5,
-                cursor: 'pointer',
-                userSelect: 'none',
-              }}
-            >
-              <AtasiLabsLogo height={38} />
-              <Typography
-                variant="caption"
-                sx={{
-                  color: theme.palette.text.secondary,
-                  fontSize: '0.72rem',
-                  fontWeight: 600,
-                  letterSpacing: '0.04em',
-                  display: { xs: 'none', lg: 'block' },
-                  pl: 1,
-                  borderLeft: `1px solid ${theme.palette.divider}`,
+    <header
+      className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
+      style={{
+        background: scrolled ? 'rgba(10,10,10,0.92)' : 'rgba(10,10,10,0.6)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        borderBottom: scrolled ? '1px solid #1E1E1E' : '1px solid rgba(255,255,255,0.05)',
+      }}
+    >
+      <div className="flex items-center justify-between h-[64px] px-6 md:px-[48px] max-w-[1400px] mx-auto">
+        {/* Brand Logo */}
+        <a href="#" className="flex items-center gap-[10px] shrink-0 group">
+          <span className="w-[10px] h-[10px] bg-[#FFD600] group-hover:scale-125 transition-transform" />
+          <span className="font-grotesk text-[14px] font-bold text-[#F5F5F0] tracking-[2.5px] uppercase">
+            ATASILABS <span className="text-[#FFD600]">STUDIO</span>
+          </span>
+        </a>
+
+        {/* Desktop Nav */}
+        <nav className="hidden lg:flex items-center gap-[32px]">
+          {links.map(({ label, section }) => {
+            const isActive = active === section;
+            return (
+              <button
+                key={label}
+                onClick={() => scrollTo(section)}
+                className="relative font-ibm-mono text-[11px] tracking-[1.5px] transition-colors duration-150 bg-transparent border-none cursor-pointer"
+                style={{ color: isActive ? '#FFD600' : '#888888' }}
+                onMouseEnter={(e) => {
+                  if (!isActive) (e.currentTarget as HTMLButtonElement).style.color = '#F5F5F0';
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.color = isActive ? '#FFD600' : '#888888';
                 }}
               >
-                Web Dev & Project Management
-              </Typography>
-            </Box>
-
-            {/* Desktop Navigation Links */}
-            <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 1 }}>
-              {navLinks.map((item) => (
-                <Button
-                  key={item.label}
-                  onClick={() => handleNavClick(item.href)}
-                  sx={{
-                    color: theme.palette.text.secondary,
-                    fontWeight: 500,
-                    fontSize: '0.92rem',
-                    px: 1.8,
-                    py: 0.8,
-                    borderRadius: 2,
-                    '&:hover': {
-                      color: theme.palette.text.primary,
-                      backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                    },
-                  }}
-                >
-                  {item.label}
-                </Button>
-              ))}
-            </Box>
-
-            {/* Actions: Theme Toggle & Dashboard CTA */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2 }}>
-              {/* Theme Toggle Button */}
-              <IconButton
-                onClick={toggleTheme}
-                color="inherit"
-                aria-label="Ganti mode terang/gelap"
-                sx={{
-                  border: `1px solid ${theme.palette.divider}`,
-                  p: 0.9,
-                  borderRadius: 2,
-                }}
-              >
-                {themeMode === 'dark' ? (
-                  <LightIcon sx={{ color: '#fbbf24', fontSize: 20 }} />
-                ) : (
-                  <DarkIcon sx={{ color: '#475569', fontSize: 20 }} />
-                )}
-              </IconButton>
-
-              {/* Consultation / Contact Quick CTA (Desktop) */}
-              <Button
-                variant="outlined"
-                color="primary"
-                onClick={() => handleNavClick('#contact')}
-                startIcon={<SendIcon sx={{ fontSize: 16 }} />}
-                sx={{
-                  display: { xs: 'none', sm: 'inline-flex' },
-                  fontSize: '0.88rem',
-                  py: 0.9,
-                }}
-              >
-                Konsultasi
-              </Button>
-
-              {/* Dashboard Admin Button */}
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handleOpenDashboard}
-                startIcon={
-                  <Badge
-                    badgeContent={unreadLeadsCount}
-                    color="error"
-                    invisible={unreadLeadsCount === 0}
-                    sx={{
-                      '& .MuiBadge-badge': {
-                        fontSize: 10,
-                        height: 16,
-                        minWidth: 16,
-                        top: 2,
-                        right: 2,
-                      },
-                    }}
-                  >
-                    <DashboardIcon sx={{ fontSize: 18 }} />
-                  </Badge>
-                }
-                sx={{
-                  background: theme.palette.mode === 'dark'
-                    ? 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)'
-                    : 'linear-gradient(135deg, #F59E0B 0%, #B45309 100%)',
-                  color: theme.palette.mode === 'dark' ? '#181512' : '#ffffff',
-                  fontWeight: 700,
-                  fontSize: '0.88rem',
-                  py: 0.9,
-                  px: 2,
-                  boxShadow: '0 4px 14px rgba(217, 119, 6, 0.3)',
-                }}
-              >
-                Dashboard
-              </Button>
-
-              {/* Mobile Hamburger Menu */}
-              <IconButton
-                color="inherit"
-                onClick={() => setMobileDrawerOpen(true)}
-                sx={{ display: { xs: 'flex', md: 'none' }, ml: 0.5 }}
-                aria-label="Buka navigasi menu"
-              >
-                <MenuIcon />
-              </IconButton>
-            </Box>
-          </Toolbar>
-        </Container>
-      </AppBar>
-
-      {/* Mobile Drawer Navigation */}
-      <Drawer
-        anchor="right"
-        open={mobileDrawerOpen}
-        onClose={() => setMobileDrawerOpen(false)}
-        slotProps={{
-          paper: {
-            sx: {
-              width: 280,
-              p: 2.5,
-              backgroundColor: theme.palette.background.paper,
-            },
-          },
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <AtasiLabsLogo height={32} />
-          </Box>
-          <IconButton onClick={() => setMobileDrawerOpen(false)} size="small">
-            <CloseIcon fontSize="small" />
-          </IconButton>
-        </Box>
-
-        <List sx={{ mb: 2 }}>
-          {navLinks.map((item) => (
-            <ListItem key={item.label} disablePadding sx={{ mb: 0.5 }}>
-              <ListItemButton
-                onClick={() => handleNavClick(item.href)}
-                sx={{ borderRadius: 2, py: 1.2 }}
-              >
-                <Box sx={{ mr: 1.5, color: theme.palette.primary.main, display: 'flex' }}>
-                  {item.icon}
-                </Box>
-                <ListItemText
-                  primary={
-                    <Typography sx={{ fontWeight: 600, fontSize: '0.95rem' }}>
-                      {item.label}
-                    </Typography>
-                  }
+                {label}
+                <span
+                  className="absolute left-0 -bottom-[3px] h-[2px] bg-[#FFD600] transition-all duration-300"
+                  style={{ width: isActive ? '100%' : '0%' }}
                 />
-              </ListItemButton>
-            </ListItem>
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Action Buttons */}
+        <div className="hidden md:flex items-center gap-[14px]">
+          <button
+            onClick={handleDashboardClick}
+            className="flex items-center gap-2 h-[38px] px-4 bg-[#FFD600] hover:bg-[#e6c200] text-[#0A0A0A] font-grotesk text-[11px] font-bold tracking-[1.5px] transition-all cursor-pointer border-none"
+          >
+            <span className="w-2 h-2 rounded-full bg-[#0A0A0A] animate-pulse" />
+            MASUK DASHBOARD CMS
+          </button>
+        </div>
+
+        {/* Mobile Hamburger */}
+        <button
+          onClick={() => setMenuOpen(!menuOpen)}
+          className="lg:hidden flex flex-col justify-center gap-[5px] w-8 h-8 bg-transparent border-none cursor-pointer text-[#F5F5F0]"
+          aria-label="Toggle Menu"
+        >
+          <span className={`h-[2px] bg-[#FFD600] transition-transform ${menuOpen ? 'rotate-45 translate-y-[7px]' : ''}`} />
+          <span className={`h-[2px] bg-[#F5F5F0] ${menuOpen ? 'opacity-0' : ''}`} />
+          <span className={`h-[2px] bg-[#FFD600] transition-transform ${menuOpen ? '-rotate-45 -translate-y-[7px]' : ''}`} />
+        </button>
+      </div>
+
+      {/* Mobile Drawer */}
+      {menuOpen && (
+        <div className="lg:hidden flex flex-col bg-[#0A0A0A] border-b border-[#2D2D2D] px-6 py-6 gap-4">
+          {links.map(({ label, section }) => (
+            <button
+              key={label}
+              onClick={() => {
+                scrollTo(section);
+                setMenuOpen(false);
+              }}
+              className="text-left font-ibm-mono text-[12px] text-[#F5F5F0] tracking-[2px] py-2 border-b border-[#1A1A1A] bg-transparent"
+            >
+              // {label}
+            </button>
           ))}
-        </List>
-
-        <Box sx={{ mt: 'auto', display: 'flex', flexDirection: 'column', gap: 1.5, pt: 2, borderTop: `1px solid ${theme.palette.divider}` }}>
-          <Button
-            fullWidth
-            variant="contained"
-            color="primary"
-            startIcon={<DashboardIcon />}
+          <button
             onClick={() => {
-              setMobileDrawerOpen(false);
-              handleOpenDashboard();
+              handleDashboardClick();
+              setMenuOpen(false);
             }}
+            className="mt-2 h-[44px] bg-[#FFD600] text-[#0A0A0A] font-grotesk text-[12px] font-bold tracking-[2px] border-none"
           >
-            Buka Panel Dashboard {unreadLeadsCount > 0 ? `(${unreadLeadsCount} Baru)` : ''}
-          </Button>
-
-          <Button
-            fullWidth
-            variant="outlined"
-            onClick={() => {
-              setMobileDrawerOpen(false);
-              handleNavClick('#contact');
-            }}
-            startIcon={<SendIcon />}
-          >
-            Konsultasi Proyek
-          </Button>
-        </Box>
-      </Drawer>
-    </>
+            MASUK DASHBOARD CMS
+          </button>
+        </div>
+      )}
+    </header>
   );
 };
