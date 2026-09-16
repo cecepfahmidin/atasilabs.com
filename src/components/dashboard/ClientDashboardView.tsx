@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box,
   Paper,
@@ -71,20 +71,20 @@ export const ClientDashboardView: React.FC = () => {
     updateProject,
   } = useApp();
 
-  // Filter projects available to the client
   const isClientRole = currentUser?.role === 'CLIENT';
-  
-  // Projects list filtered by client email or company, or all projects if admin previewing
-  const clientProjects = isClientRole
-    ? projects.filter(
-        (p) =>
-          p.clientEmail?.toLowerCase() === currentUser?.email?.toLowerCase() ||
-          p.clientName?.toLowerCase().includes(currentUser?.company?.toLowerCase() || '___')
-      )
-    : projects;
 
-  // Fallback if no specific project matched
-  const availableProjects = clientProjects.length > 0 ? clientProjects : projects;
+  // Filter projects available to the client
+  const availableProjects = useMemo(() => {
+    const clientProjects = isClientRole
+      ? projects.filter(
+          (p) =>
+            p.clientEmail?.toLowerCase() === currentUser?.email?.toLowerCase() ||
+            p.clientName?.toLowerCase().includes(currentUser?.company?.toLowerCase() || '___')
+        )
+      : projects;
+
+    return clientProjects.length > 0 ? clientProjects : projects;
+  }, [projects, currentUser, isClientRole]);
 
   // Selected Project State
   const [selectedProjectId, setSelectedProjectId] = useState<string>(

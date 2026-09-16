@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box,
   Paper,
@@ -59,16 +59,17 @@ export const ProjectsView: React.FC = () => {
     setSelectedDocumentType,
   } = useApp();
 
-  const isClientRole = currentUser?.role === 'CLIENT';
-  const filteredProjects = isClientRole
-    ? rawProjects.filter(
-        (p) =>
-          p.clientEmail?.toLowerCase() === currentUser?.email?.toLowerCase() ||
-          p.clientName?.toLowerCase().includes(currentUser?.company?.toLowerCase() || '___')
-      )
-    : rawProjects;
-
-  const projects = filteredProjects.length > 0 ? filteredProjects : rawProjects;
+  const projects = useMemo(() => {
+    const isClientRole = currentUser?.role === 'CLIENT';
+    const filteredProjects = isClientRole
+      ? rawProjects.filter(
+          (p) =>
+            p.clientEmail?.toLowerCase() === currentUser?.email?.toLowerCase() ||
+            p.clientName?.toLowerCase().includes(currentUser?.company?.toLowerCase() || '___')
+        )
+      : rawProjects;
+    return filteredProjects.length > 0 ? filteredProjects : rawProjects;
+  }, [rawProjects, currentUser]);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProj, setEditingProj] = useState<ClientProject | null>(null);

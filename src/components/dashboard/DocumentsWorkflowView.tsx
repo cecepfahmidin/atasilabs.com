@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -63,15 +63,17 @@ export const DocumentsWorkflowView: React.FC = () => {
   } = useApp();
 
   const isClientRole = currentUser?.role === 'CLIENT';
-  const filteredProjects = isClientRole
-    ? rawProjects.filter(
-        (p) =>
-          p.clientEmail?.toLowerCase() === currentUser?.email?.toLowerCase() ||
-          p.clientName?.toLowerCase().includes(currentUser?.company?.toLowerCase() || '___')
-      )
-    : rawProjects;
 
-  const projects = filteredProjects.length > 0 ? filteredProjects : rawProjects;
+  const projects = useMemo(() => {
+    const filteredProjects = isClientRole
+      ? rawProjects.filter(
+          (p) =>
+            p.clientEmail?.toLowerCase() === currentUser?.email?.toLowerCase() ||
+            p.clientName?.toLowerCase().includes(currentUser?.company?.toLowerCase() || '___')
+        )
+      : rawProjects;
+    return filteredProjects.length > 0 ? filteredProjects : rawProjects;
+  }, [rawProjects, currentUser, isClientRole]);
 
   const searchParams = useSearchParams();
 
@@ -91,22 +93,22 @@ export const DocumentsWorkflowView: React.FC = () => {
     const qDocType = searchParams.get('docType');
 
     if (qProjId && projects.some((p) => p.id === qProjId)) {
-      setSelectedProjectId(qProjId);
+      setSelectedProjectId((prev) => (prev !== qProjId ? qProjId : prev));
       setSelectedDocumentProjectId(qProjId);
     } else if (selectedDocumentProjectId && projects.some((p) => p.id === selectedDocumentProjectId)) {
-      setSelectedProjectId(selectedDocumentProjectId);
+      setSelectedProjectId((prev) => (prev !== selectedDocumentProjectId ? selectedDocumentProjectId : prev));
     }
 
     if (qDocType) {
       const upper = qDocType.toUpperCase();
       if (['CIF', 'RSD', 'MOU', 'SPK', 'BAST', 'QA'].includes(upper)) {
-        setActiveDocType(upper as any);
+        setActiveDocType((prev) => (prev !== upper ? (upper as any) : prev));
         setSelectedDocumentType(upper as any);
       }
     } else if (selectedDocumentType) {
-      setActiveDocType(selectedDocumentType);
+      setActiveDocType((prev) => (prev !== selectedDocumentType ? (selectedDocumentType as any) : prev));
     }
-  }, [searchParams, projects]);
+  }, [searchParams, projects, selectedDocumentProjectId, selectedDocumentType, setSelectedDocumentProjectId, setSelectedDocumentType]);
   const [cifData, setCifData] = useState<CIFData>(INITIAL_CIF_DATA[0]);
   const [rsdData, setRsdData] = useState<RSDData>(INITIAL_RSD_DATA[0]);
   const [mouData, setMouData] = useState<MoUData>(INITIAL_MOU_DATA[0]);
