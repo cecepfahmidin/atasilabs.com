@@ -6,10 +6,12 @@ import { useApp } from '@/context/AppContext';
 // Landing Page Components
 import { LandingNavbar } from '@/components/landing/LandingNavbar';
 import { HeroSection } from '@/components/landing/HeroSection';
+import { PixelDivider } from '@/components/landing/PixelDivider';
 import { Logos } from '@/components/landing/Logos';
+import { ServicesSection } from '@/components/landing/ServicesSection';
 import { HowItWorks } from '@/components/landing/HowItWorks';
 import { Stats } from '@/components/landing/Stats';
-import { ServicesSection } from '@/components/landing/ServicesSection';
+import { TestimonialsSection } from '@/components/landing/TestimonialsSection';
 import { Bento } from '@/components/landing/Bento';
 import { TechStackArchitectureSection } from '@/components/landing/TechStackArchitectureSection';
 import { Comparison } from '@/components/landing/Comparison';
@@ -48,12 +50,14 @@ export default function MainPage() {
   return (
     <div className="bg-[#0A0A0A] text-[#F5F5F0] min-h-screen selection:bg-[#FFD600] selection:text-[#0A0A0A]">
       <LandingNavbar />
-      <main className="w-full overflow-hidden">
+      <main className="flex flex-col w-full bg-[#0A0A0A] pt-[60px]">
         <HeroSection />
+        <PixelDivider />
         <Logos />
+        <ServicesSection />
         <HowItWorks />
         <Stats />
-        <ServicesSection />
+        <TestimonialsSection />
         <Bento />
         <TechStackArchitectureSection />
         <Comparison />

@@ -1,83 +1,109 @@
 'use client';
 
 import React from 'react';
-import { SERVICES_DATA } from '../../data/initialData';
+import SectionHeader from './SectionHeader';
 import { useApp } from '../../context/AppContext';
-import { SectionHeader } from './SectionHeader';
 
-export const ServicesSection: React.FC = () => {
+interface FeatureCardProps {
+  iconColor: string;
+  title: string;
+  description: string;
+  tag: string;
+  tagColor: string;
+  bgColor?: string;
+  borderColor?: string;
+  serviceName: string;
+}
+
+function FeatureCard({
+  iconColor,
+  title,
+  description,
+  tag,
+  tagColor,
+  bgColor = '#111111',
+  borderColor = '#2D2D2D',
+  serviceName,
+}: FeatureCardProps) {
   const { setSelectedServiceForInquiry } = useApp();
 
-  const handleSelectService = (title: string) => {
-    setSelectedServiceForInquiry(title);
-    const el = document.getElementById('contact');
-    if (el) el.scrollIntoView({ behavior: 'smooth' });
+  const handleClick = () => {
+    setSelectedServiceForInquiry(serviceName);
+    const elem = document.getElementById('contact');
+    if (elem) elem.scrollIntoView({ behavior: 'smooth' });
   };
 
   return (
-    <section id="services" className="flex flex-col w-full bg-[#0D0D0D] py-16 px-6 md:py-[100px] md:px-[80px] gap-10 md:gap-[48px]">
+    <div
+      onClick={handleClick}
+      className="flex flex-col gap-5 p-8 md:p-[32px] border w-full md:flex-1 md:h-[340px] cursor-pointer hover:border-[#FFD600] transition-colors group"
+      style={{ backgroundColor: bgColor, borderColor }}
+    >
+      <div className="w-[40px] h-[40px] shrink-0 font-grotesk font-extrabold text-[#0A0A0A] flex items-center justify-center text-lg" style={{ backgroundColor: iconColor }}>
+        ★
+      </div>
+      <h3 className="font-grotesk text-[18px] font-bold text-[#F5F5F0] tracking-[1px] leading-[1.2] whitespace-pre-line group-hover:text-[#FFD600] transition-colors">
+        {title}
+      </h3>
+      <p className="font-ibm-mono text-[12px] text-[#888888] tracking-[1px] leading-[1.6]">
+        {description}
+      </p>
+      <div
+        className="flex items-center justify-center h-[28px] px-[12px] bg-[#1A1A1A] border w-fit mt-auto"
+        style={{ borderColor: tagColor }}
+      >
+        <span className="font-ibm-mono text-[11px] tracking-[2px]" style={{ color: tagColor }}>
+          {tag}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+export const ServicesSection: React.FC = () => {
+  return (
+    <section
+      id="services"
+      className="flex flex-col w-full bg-[#0A0A0A] py-16 px-6 md:py-[100px] md:px-[120px] gap-12 md:gap-[64px]"
+    >
       <SectionHeader
-        label="[02] // CORE CAPABILITIES"
-        title={'LAYANAN TEKNOLOGI FULL-STACK.\nSKALA HIGH-PERFORMANCE.'}
-        subtitle="Pembangunan aplikasi web modern dari hulu ke hilir dengan Next.js App Router, Prisma ORM, Supabase Auth/Storage, dan Material UI."
-        titleWidth="w-full max-w-[850px]"
+        label="[01] // LAYANAN UTAMA"
+        title={"SEGALA YANG ANDA BUTUHKAN.\nTANPA KOMPROMI."}
+        subtitle="ARSITEKTUR NEXT.JS APP ROUTER PRESISI TINGGI. SUPABASE POSTGRESQL & OTOMATISASI LEGAL DOKUMEN INTEGRATED."
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
-        {SERVICES_DATA.map((srv, index) => (
-          <div
-            key={srv.id}
-            className="flex flex-col justify-between p-8 bg-[#111111] border border-[#2D2D2D] hover:border-[#FFD600] transition-all group"
-          >
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <span className="font-ibm-mono text-[11px] font-bold text-[#FFD600] tracking-[2px]">
-                  [0{index + 1}]
-                </span>
-                <span className="font-ibm-mono text-[10px] text-[#888888] bg-[#1A1A1A] px-2 py-0.5 border border-[#333]">
-                  {srv.subtitle}
-                </span>
-              </div>
-
-              <h3 className="font-grotesk text-[22px] font-bold text-[#F5F5F0] group-hover:text-[#FFD600] transition-colors mb-3 leading-snug">
-                {srv.title}
-              </h3>
-
-              <p className="font-ibm-mono text-[12px] text-[#888888] leading-[1.6] mb-6">
-                {srv.description}
-              </p>
-
-              <ul className="flex flex-col gap-2 mb-6">
-                {srv.features.map((feat, fIdx) => (
-                  <li key={fIdx} className="font-ibm-mono text-[11px] text-[#A0A0A0] flex items-center gap-2">
-                    <span className="text-[#FFD600]">✓</span> {feat}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div>
-              <div className="flex flex-wrap gap-1.5 mb-6">
-                {srv.techTags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="font-ibm-mono text-[10px] text-[#FFD600] bg-[#1A180E] border border-[#FFD600]/30 px-2 py-0.5"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-
-              <button
-                onClick={() => handleSelectService(srv.title)}
-                className="w-full h-[42px] bg-[#1A1A1A] hover:bg-[#FFD600] text-[#F5F5F0] hover:text-[#0A0A0A] font-grotesk text-[11px] font-bold tracking-[1.5px] border border-[#3D3D3D] transition-all cursor-pointer"
-              >
-                KONSULTASI FITUR INI &gt;
-              </button>
-            </div>
-          </div>
-        ))}
+      <div className="flex flex-col md:flex-row w-full gap-[2px]">
+        <FeatureCard
+          iconColor="#FFD600"
+          title={"FULL-STACK WEB APP\n& SAAS PLATFORM"}
+          description="PENGEMBANGAN APLIKASI WEB NEXT.JS 15 + PRISMA ORM BERKAPASITAS HIGH-TRAFFIC DEPLOYMENT."
+          tag="CORE APP"
+          tagColor="#FFD600"
+          borderColor="#FFD600"
+          serviceName="Full-Stack Web App (Next.js & Supabase)"
+        />
+        <FeatureCard
+          iconColor="#FF6B35"
+          title={"ENTERPRISE DASHBOARD\n& WORKFLOW CMS"}
+          description="INTEGRASI MATERIAL UI V6 DASHBOARD UNTUK MANAJEMEN WORKFLOW KLIEN, PROYEK, DAN E-SIGNATURE."
+          tag="ENTERPRISE"
+          tagColor="#FF6B35"
+          bgColor="#0F0F0F"
+          borderColor="#FF6B35"
+          serviceName="SaaS & Enterprise Dashboard UI (Material UI)"
+        />
+        <FeatureCard
+          iconColor="#F5F5F0"
+          title={"DATABASE ORM & AUTOMATED\nDOCS WORKFLOW"}
+          description="OTOMATISASI 5 PAKET DOKUMEN SOP (CIF, RSD, MOU, SPK, BAST) BER-KOP RESMI RESMI DAN VERIFIED E-SIGN."
+          tag="WORKFLOW"
+          tagColor="#888888"
+          borderColor="#555555"
+          serviceName="Database Architecture & ORM Migration (Prisma)"
+        />
       </div>
     </section>
   );
 };
+
+export default ServicesSection;
