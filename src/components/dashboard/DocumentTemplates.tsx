@@ -270,9 +270,14 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
         <Letterhead title="CLIENT INTAKE FORM (CIF)" />
 
         <Box className="no-print" sx={{ display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-          {onSignParty1 && (
+          {!isClientRole && onSignParty1 && (
             <Button variant="outlined" color="primary" size="small" startIcon={<DrawIcon />} onClick={onSignParty1} sx={{ fontWeight: 700 }}>
-              Tanda Tangan Digital
+              Tanda Tangan Pihak 1 (Atasilabs)
+            </Button>
+          )}
+          {onSignParty2 && (
+            <Button variant="outlined" color="secondary" size="small" startIcon={<DrawIcon />} onClick={onSignParty2} sx={{ fontWeight: 700 }}>
+              Tanda Tangan Klien
             </Button>
           )}
           <Button variant="outlined" size="small" startIcon={<CopyIcon />} onClick={() => handleCopyText(copySummary)}>
@@ -456,9 +461,14 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
         <Letterhead title="REQUIREMENT SPECIFICATION DOCUMENT (RSD)" />
 
         <Box className="no-print" sx={{ display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-          {onSignParty1 && (
+          {!isClientRole && onSignParty1 && (
             <Button variant="outlined" color="primary" size="small" startIcon={<DrawIcon />} onClick={onSignParty1} sx={{ fontWeight: 700 }}>
-              Tanda Tangan Digital
+              Tanda Tangan Pihak 1 (Atasilabs)
+            </Button>
+          )}
+          {onSignParty2 && (
+            <Button variant="outlined" color="secondary" size="small" startIcon={<DrawIcon />} onClick={onSignParty2} sx={{ fontWeight: 700 }}>
+              Tanda Tangan Klien
             </Button>
           )}
           <Button variant="outlined" size="small" startIcon={<CopyIcon />} onClick={() => handleCopyText(copySummary)}>
@@ -640,7 +650,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
         <Letterhead title="MEMORANDUM OF UNDERSTANDING (MoU)" />
 
         <Box className="no-print" sx={{ display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-          {onSignParty1 && (
+          {!isClientRole && onSignParty1 && (
             <Button variant="outlined" color="primary" size="small" startIcon={<DrawIcon />} onClick={onSignParty1} sx={{ fontWeight: 700 }}>
               Tanda Tangan Pihak 1 (AtasiLabs)
             </Button>
@@ -781,7 +791,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
         <Letterhead title="SURAT PERINTAH KERJA (SPK) FREELANCER" />
 
         <Box className="no-print" sx={{ display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-          {onSignParty1 && (
+          {!isClientRole && onSignParty1 && (
             <Button variant="outlined" color="primary" size="small" startIcon={<DrawIcon />} onClick={onSignParty1} sx={{ fontWeight: 700 }}>
               Tanda Tangan Pihak 1 (AtasiLabs)
             </Button>
@@ -906,7 +916,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
         <Letterhead title="BERITA ACARA SERAH TERIMA (BAST)" />
 
         <Box className="no-print" sx={{ display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-          {onSignParty1 && (
+          {!isClientRole && onSignParty1 && (
             <Button variant="outlined" color="primary" size="small" startIcon={<DrawIcon />} onClick={onSignParty1} sx={{ fontWeight: 700 }}>
               Tanda Tangan Pihak 1 (AtasiLabs)
             </Button>

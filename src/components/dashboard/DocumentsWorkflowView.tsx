@@ -400,15 +400,27 @@ export const DocumentsWorkflowView: React.FC = () => {
                     Sync dari RSD
                   </Button>
                 )}
+                {!isClientRole && (
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    size="small"
+                    startIcon={<DrawIcon />}
+                    onClick={() => handleOpenSignatureDialog('Pihak Pertama')}
+                    sx={{ fontWeight: 700 }}
+                  >
+                    Tanda Tangan Pihak 1 (Atasilabs)
+                  </Button>
+                )}
                 <Button
                   variant="outlined"
                   color="success"
                   size="small"
                   startIcon={<DrawIcon />}
-                  onClick={() => handleOpenSignatureDialog(isClientRole ? 'Pihak Kedua' : 'Pihak Pertama')}
+                  onClick={() => handleOpenSignatureDialog('Pihak Kedua')}
                   sx={{ fontWeight: 700 }}
                 >
-                  {isClientRole ? `Tanda Tangan Klien (${activeDocType})` : `Tanda Tangani (${activeDocType})`}
+                  {isClientRole ? `Tanda Tangan Klien (${activeDocType})` : `Tanda Tangan Pihak 2 (Klien)`}
                 </Button>
                 {!isClientRole && (
                   <Button
