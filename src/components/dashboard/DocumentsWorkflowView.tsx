@@ -87,28 +87,34 @@ export const DocumentsWorkflowView: React.FC = () => {
     selectedDocumentType || 'CIF'
   );
 
-  // Sync project selection from search params or AppContext
+  const [hasSyncUrlParams, setHasSyncUrlParams] = useState(false);
+
+  // Sync project selection from search params or AppContext ONCE on initial load
   useEffect(() => {
-    const qProjId = searchParams.get('projectId');
-    const qDocType = searchParams.get('docType');
+    if (!hasSyncUrlParams) {
+      const qProjId = searchParams.get('projectId');
+      const qDocType = searchParams.get('docType');
 
-    if (qProjId && projects.some((p) => p.id === qProjId)) {
-      setSelectedProjectId((prev) => (prev !== qProjId ? qProjId : prev));
-      setSelectedDocumentProjectId(qProjId);
-    } else if (selectedDocumentProjectId && projects.some((p) => p.id === selectedDocumentProjectId)) {
-      setSelectedProjectId((prev) => (prev !== selectedDocumentProjectId ? selectedDocumentProjectId : prev));
-    }
-
-    if (qDocType) {
-      const upper = qDocType.toUpperCase();
-      if (['CIF', 'RSD', 'MOU', 'SPK', 'BAST', 'QA'].includes(upper)) {
-        setActiveDocType((prev) => (prev !== upper ? (upper as any) : prev));
-        setSelectedDocumentType(upper as any);
+      if (qProjId && projects.some((p) => p.id === qProjId)) {
+        setSelectedProjectId(qProjId);
+        setSelectedDocumentProjectId(qProjId);
+      } else if (selectedDocumentProjectId && projects.some((p) => p.id === selectedDocumentProjectId)) {
+        setSelectedProjectId(selectedDocumentProjectId);
       }
-    } else if (selectedDocumentType) {
-      setActiveDocType((prev) => (prev !== selectedDocumentType ? (selectedDocumentType as any) : prev));
+
+      if (qDocType) {
+        const upper = qDocType.toUpperCase();
+        if (['CIF', 'RSD', 'MOU', 'SPK', 'BAST', 'QA'].includes(upper)) {
+          setActiveDocType(upper as any);
+          setSelectedDocumentType(upper as any);
+        }
+      } else if (selectedDocumentType) {
+        setActiveDocType(selectedDocumentType as any);
+      }
+
+      setHasSyncUrlParams(true);
     }
-  }, [searchParams, projects, selectedDocumentProjectId, selectedDocumentType, setSelectedDocumentProjectId, setSelectedDocumentType]);
+  }, [searchParams, projects, selectedDocumentProjectId, selectedDocumentType, hasSyncUrlParams]);
   const [cifData, setCifData] = useState<CIFData>(INITIAL_CIF_DATA[0]);
   const [rsdData, setRsdData] = useState<RSDData>(INITIAL_RSD_DATA[0]);
   const [mouData, setMouData] = useState<MoUData>(INITIAL_MOU_DATA[0]);
@@ -376,7 +382,11 @@ export const DocumentsWorkflowView: React.FC = () => {
                 fullWidth
                 size="small"
                 value={selectedProjectId}
-                onChange={(e) => setSelectedProjectId(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setSelectedProjectId(val);
+                  setSelectedDocumentProjectId(val);
+                }}
               >
                 {projects.map((proj) => (
                   <MenuItem key={proj.id} value={proj.id}>
