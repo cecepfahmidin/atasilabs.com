@@ -7,13 +7,14 @@ import { useApp } from '@/context/AppContext';
 import { LoginDialog } from '@/components/auth/LoginDialog';
 
 export function ThemeWrapper({ children }: { children: React.ReactNode }) {
-  const { themeMode, notification, closeNotification } = useApp();
-  const theme = useMemo(() => createAppTheme(themeMode), [themeMode]);
+  const { themeMode, activeView, notification, closeNotification } = useApp();
+  const effectiveMode = activeView === 'landing' ? 'dark' : themeMode;
+  const theme = useMemo(() => createAppTheme(effectiveMode), [effectiveMode]);
 
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: activeView === 'landing' ? '#0A0A0A' : 'transparent' }}>
         {children}
 
         {/* Global Login Dialog */}
