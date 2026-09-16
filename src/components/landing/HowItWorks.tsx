@@ -56,32 +56,39 @@ export function HowItWorks() {
         subtitle="Setiap proyek diproses mengikuti 6 tahap SOP operasional bergaransi dengan penerbitan 5 paket dokumen legal otomatis ber-kop resmi."
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full items-stretch">
         {stages.map((stg) => (
           <div
             key={stg.num}
-            className="flex flex-col p-8 bg-[#111111] border border-[#2D2D2D] hover:border-[#FFD600] transition-all relative"
+            className="flex flex-col justify-between p-8 bg-[#111111] border border-[#2D2D2D] hover:border-[#FFD600] hover:scale-[1.01] hover:shadow-[0_0_20px_rgba(255,214,0,0.1)] transition-all duration-300 relative group min-h-[260px]"
           >
-            <div className="flex items-center justify-between mb-4">
-              <span className="font-ibm-mono text-[20px] font-bold text-[#FFD600] tracking-[2px]">
-                [{stg.num}]
-              </span>
-              <span className="font-ibm-mono text-[10px] text-[#FFD600] bg-[#1A180E] px-2 py-0.5 border border-[#FFD600]/30 font-bold">
-                {stg.badge}
-              </span>
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <span className="font-ibm-mono text-[20px] font-bold text-[#FFD600] tracking-[2px]">
+                  [{stg.num}]
+                </span>
+                <span className="font-ibm-mono text-[10px] text-[#FFD600] bg-[#1A180E] px-2.5 py-1 border border-[#FFD600]/40 font-bold tracking-[1px]">
+                  {stg.badge}
+                </span>
+              </div>
+
+              <h3 className="font-grotesk text-[18px] md:text-[19px] font-bold text-[#F5F5F0] mb-3 leading-snug group-hover:text-[#FFD600] transition-colors">
+                {stg.title}
+              </h3>
+
+              <p className="font-ibm-mono text-[12px] text-[#888888] leading-[1.65] mb-6">
+                {stg.desc}
+              </p>
             </div>
 
-            <h3 className="font-grotesk text-[18px] font-bold text-[#F5F5F0] mb-2 leading-snug">
-              {stg.title}
-            </h3>
-
-            <p className="font-ibm-mono text-[12px] text-[#888888] leading-[1.6] mb-6 flex-grow">
-              {stg.desc}
-            </p>
-
-            <div className="pt-4 border-t border-[#222222]">
-              <span className="font-ibm-mono text-[10px] text-[#555555] block mb-1">DOKUMEN RESMI SOP:</span>
-              <span className="font-ibm-mono text-[11px] text-[#A0A0A0] font-semibold">{stg.doc}</span>
+            <div className="pt-4 border-t border-[#222222] flex items-center justify-between">
+              <div>
+                <span className="font-ibm-mono text-[9px] text-[#555555] block tracking-[1px] uppercase">DOKUMEN RESMI SOP:</span>
+                <span className="font-ibm-mono text-[11px] text-[#A0A0A0] font-semibold group-hover:text-[#F5F5F0] transition-colors">{stg.doc}</span>
+              </div>
+              <span className="font-ibm-mono text-[10px] text-[#FFD600] opacity-0 group-hover:opacity-100 transition-opacity font-bold">
+                →
+              </span>
             </div>
           </div>
         ))}
