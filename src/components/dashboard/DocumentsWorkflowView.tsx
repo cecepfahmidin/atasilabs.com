@@ -53,13 +53,25 @@ const getSavedCustomDocs = (): Record<string, any> => {
 
 export const DocumentsWorkflowView: React.FC = () => {
   const {
-    projects,
+    projects: rawProjects,
+    currentUser,
     showNotification,
     selectedDocumentProjectId,
     setSelectedDocumentProjectId,
     selectedDocumentType,
     setSelectedDocumentType,
   } = useApp();
+
+  const isClientRole = currentUser?.role === 'CLIENT';
+  const filteredProjects = isClientRole
+    ? rawProjects.filter(
+        (p) =>
+          p.clientEmail?.toLowerCase() === currentUser?.email?.toLowerCase() ||
+          p.clientName?.toLowerCase().includes(currentUser?.company?.toLowerCase() || '___')
+      )
+    : rawProjects;
+
+  const projects = filteredProjects.length > 0 ? filteredProjects : rawProjects;
 
   const searchParams = useSearchParams();
 
@@ -434,10 +446,12 @@ export const DocumentsWorkflowView: React.FC = () => {
               { id: 'CIF', label: '1. CIF Intake', color: '#64748b' },
               { id: 'RSD', label: '2. RSD Spec', color: '#06b6d4' },
               { id: 'MOU', label: '3. MoU Kontrak', color: '#f59e0b' },
-              { id: 'SPK', label: '4. SPK Freelancer', color: '#3b82f6' },
+              { id: 'SPK', label: '4. SPK Freelancer', color: '#3b82f6', internalOnly: true },
               { id: 'QA', label: '5. QA & UAT', color: '#ec4899' },
               { id: 'BAST', label: '6. BAST Selesai', color: '#10b981' },
-            ].map((doc) => (
+            ]
+              .filter((doc) => !isClientRole || !doc.internalOnly)
+              .map((doc) => (
               <Grid item xs={6} sm={2} key={doc.id}>
                 <Button
                   fullWidth

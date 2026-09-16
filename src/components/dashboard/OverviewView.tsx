@@ -37,6 +37,7 @@ import {
   FolderSpecial as FolderIcon,
 } from '@mui/icons-material';
 import { useApp } from '../../context/AppContext';
+import { ClientDashboardView } from './ClientDashboardView';
 
 export const OverviewView: React.FC = () => {
   const theme = useTheme();
@@ -47,7 +48,34 @@ export const OverviewView: React.FC = () => {
     pricingTiers,
     setDashboardTab,
     unreadLeadsCount,
+    currentUser,
   } = useApp();
+
+  const [previewClientPortal, setPreviewClientPortal] = React.useState(false);
+
+  // If user role is CLIENT or if admin activated preview mode, render ClientDashboardView
+  if (currentUser?.role === 'CLIENT' || previewClientPortal) {
+    return (
+      <Box sx={{ width: '100%' }}>
+        {currentUser?.role !== 'CLIENT' && (
+          <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Alert severity="info" sx={{ flexGrow: 1, mr: 2, borderRadius: 2 }}>
+              <strong>Mode Preview Admin:</strong> Anda sedang melihat tampilan Portal Klien.
+            </Alert>
+            <Button
+              variant="outlined"
+              color="primary"
+              onClick={() => setPreviewClientPortal(false)}
+              sx={{ fontWeight: 700, borderRadius: 2 }}
+            >
+              Kembali ke Studio Control Center
+            </Button>
+          </Box>
+        )}
+        <ClientDashboardView />
+      </Box>
+    );
+  }
 
   const activeProjects = projects.filter((p) => p.status === 'IN_PROGRESS' || p.status === 'PLANNING' || p.status === 'REVIEW');
   const completedProjects = projects.filter((p) => p.status === 'COMPLETED');
@@ -154,6 +182,15 @@ export const OverviewView: React.FC = () => {
               sx={{ fontWeight: 700, borderRadius: 2.5 }}
             >
               Cetak / Kelola Dokumen
+            </Button>
+            <Button
+              variant="outlined"
+              color="success"
+              startIcon={<VisibilityIcon />}
+              onClick={() => setPreviewClientPortal(true)}
+              sx={{ fontWeight: 700, borderRadius: 2.5 }}
+            >
+              Preview Portal Klien
             </Button>
             <Button
               variant="outlined"

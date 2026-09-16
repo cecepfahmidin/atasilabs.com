@@ -47,8 +47,9 @@ export const ProjectsView: React.FC = () => {
   const theme = useTheme();
   const router = useRouter();
   const {
-    projects,
+    projects: rawProjects,
     users,
+    currentUser,
     addProject,
     updateProject,
     deleteProject,
@@ -57,6 +58,17 @@ export const ProjectsView: React.FC = () => {
     setSelectedDocumentProjectId,
     setSelectedDocumentType,
   } = useApp();
+
+  const isClientRole = currentUser?.role === 'CLIENT';
+  const filteredProjects = isClientRole
+    ? rawProjects.filter(
+        (p) =>
+          p.clientEmail?.toLowerCase() === currentUser?.email?.toLowerCase() ||
+          p.clientName?.toLowerCase().includes(currentUser?.company?.toLowerCase() || '___')
+      )
+    : rawProjects;
+
+  const projects = filteredProjects.length > 0 ? filteredProjects : rawProjects;
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProj, setEditingProj] = useState<ClientProject | null>(null);
