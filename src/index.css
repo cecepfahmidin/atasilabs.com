@@ -1,8 +1,12 @@
 @import "tailwindcss";
 
-@theme inline {
-  --font-sans: 'Space Grotesk', 'Plus Jakarta Sans', sans-serif;
-  --font-mono: 'IBM Plex Mono', monospace;
+@layer utilities {
+  .font-grotesk {
+    font-family: 'Space Grotesk', sans-serif;
+  }
+  .font-ibm-mono {
+    font-family: 'IBM Plex Mono', monospace;
+  }
 }
 
 :root {
@@ -10,25 +14,13 @@
   --orange: #FF6B35;
   --bg-primary: #0A0A0A;
   --text-light: #F5F5F0;
-  --text-gray: #888888;
-  --text-muted: #555555;
-  --text-dim: #444444;
   --border-dark: #2D2D2D;
-  --border-subtle: #1D1D1D;
-}
-
-@utility font-grotesk {
-  font-family: 'Space Grotesk', sans-serif;
-}
-
-@utility font-ibm-mono {
-  font-family: 'IBM Plex Mono', monospace;
 }
 
 /* Base Body Styles */
 html, body {
   background-color: #0A0A0A !important;
-  color: #F5F5F0;
+  color: #F5F5F0 !important;
   font-family: 'Space Grotesk', sans-serif;
   margin: 0;
   padding: 0;
@@ -37,7 +29,6 @@ html, body {
 
 /* -------------------------------------------------------------
  * PRINT STYLES FOR ATASILABS OFFICIAL DOCUMENT GENERATOR
- * ONLY PRINTS THE DOCUMENT ITSELF, STARTING FROM KOP SURAT
  * ------------------------------------------------------------- */
 @media print {
   @page {
@@ -45,7 +36,6 @@ html, body {
     margin: 10mm 12mm 12mm 12mm;
   }
 
-  /* Reset global backgrounds to pure white paper & dark text */
   html, body {
     background-color: #ffffff !important;
     color: #0f172a !important;
@@ -56,18 +46,15 @@ html, body {
     padding: 0 !important;
   }
 
-  /* Hide EVERYTHING on the entire web page by default */
   body * {
     visibility: hidden !important;
   }
 
-  /* Unhide ONLY the printable document container and its child elements */
   .printable-document,
   .printable-document * {
     visibility: visible !important;
   }
 
-  /* Absolute position the printable document right at top-left (0,0) of the paper */
   .printable-document {
     position: absolute !important;
     left: 0 !important;
@@ -82,7 +69,6 @@ html, body {
     display: block !important;
   }
 
-  /* Explicitly hide non-printable buttons or action bars inside printable-document */
   .printable-document .no-print,
   .printable-document button,
   .printable-document .MuiButton-root,
@@ -91,7 +77,6 @@ html, body {
     visibility: hidden !important;
   }
 
-  /* Tables formatting for print */
   .printable-document table {
     width: 100% !important;
     border-collapse: collapse !important;
@@ -119,7 +104,6 @@ html, body {
     color: #0f172a !important;
   }
 
-  /* Headings & Typography */
   .printable-document h6,
   .printable-document .MuiTypography-h6 {
     color: #b45309 !important;
@@ -143,7 +127,6 @@ html, body {
     color: #475569 !important;
   }
 
-  /* Signature & Footer Section */
   .printable-document .signature-block {
     page-break-inside: avoid !important;
     margin-top: 24px !important;
