@@ -5,9 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 interface TypewriterTextProps {
   text: string;
   className?: string;
-  /** ms before typing starts after entering viewport */
   delay?: number;
-  /** ms between each character */
   speed?: number;
 }
 
@@ -15,10 +13,10 @@ export function GlitchText({
   text,
   className = '',
   delay = 0,
-  speed = 40,
+  speed = 30,
 }: TypewriterTextProps) {
   const ref = useRef<HTMLSpanElement>(null);
-  const [displayed, setDisplayed] = useState('');
+  const [displayed, setDisplayed] = useState(text);
   const [started, setStarted] = useState(false);
   const [done, setDone] = useState(false);
   const hasRun = useRef(false);
@@ -27,29 +25,41 @@ export function GlitchText({
     const el = ref.current;
     if (!el) return;
 
+    const startTyping = () => {
+      if (hasRun.current) return;
+      hasRun.current = true;
+      setDisplayed('');
+      setTimeout(() => {
+        setStarted(true);
+        let i = 0;
+        const interval = setInterval(() => {
+          i++;
+          setDisplayed(text.slice(0, i));
+          if (i >= text.length) {
+            clearInterval(interval);
+            setTimeout(() => setDone(true), 800);
+          }
+        }, speed);
+      }, delay);
+    };
+
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && !hasRun.current) {
-          hasRun.current = true;
-          setTimeout(() => {
-            setStarted(true);
-            let i = 0;
-            const interval = setInterval(() => {
-              i++;
-              setDisplayed(text.slice(0, i));
-              if (i >= text.length) {
-                clearInterval(interval);
-                setTimeout(() => setDone(true), 800);
-              }
-            }, speed);
-          }, delay);
+        if (entry.isIntersecting) {
+          startTyping();
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.01 }
     );
 
     observer.observe(el);
-    return () => observer.disconnect();
+
+    const fallbackTimer = setTimeout(startTyping, delay + 300);
+
+    return () => {
+      observer.disconnect();
+      clearTimeout(fallbackTimer);
+    };
   }, [text, speed, delay]);
 
   return (
@@ -66,7 +76,7 @@ export function GlitchText({
           whiteSpace: 'pre-wrap',
         }}
       >
-        {started ? displayed : ''}
+        {started ? displayed : text}
         {started && !done && (
           <span
             style={{

@@ -14,11 +14,11 @@ export function Logos() {
       <span className="font-ibm-mono text-[10px] md:text-[11px] text-[#666666] tracking-[3px]">
         [01] // DUKUNGAN KEMITRAAN & EKOSISTEM KLIEN AKTIF
       </span>
-      <div className="flex flex-wrap items-center justify-center gap-6 md:gap-[48px] w-full">
+      <div className="flex flex-wrap items-center justify-center gap-4 md:gap-[36px] w-full">
         {logos.map((logo) => (
           <span
             key={logo}
-            className="font-grotesk text-[12px] md:text-[14px] font-bold text-[#888888] hover:text-[#FFD600] transition-colors tracking-[2px]"
+            className="inline-block font-grotesk text-[11px] md:text-[13px] font-bold text-[#888888] hover:text-[#FFD600] transition-colors tracking-[2px] px-3 py-1.5 bg-[#141414] border border-[#262626]"
           >
             {logo}
           </span>
@@ -27,3 +27,5 @@ export function Logos() {
     </section>
   );
 }
+
+export default Logos;
