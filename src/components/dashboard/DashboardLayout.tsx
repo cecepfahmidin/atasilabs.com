@@ -34,7 +34,6 @@ import {
   Brightness7 as LightIcon,
   ExitToApp as LogoutIcon,
   Person as PersonIcon,
-  RestartAlt as ResetIcon,
   Description as DescriptionIcon,
   People as PeopleIcon,
   Calculate as CalculateIcon,
@@ -67,7 +66,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
     currentUser,
     logout,
     unreadLeadsCount,
-    resetAllDataToDefaults,
     users,
     switchUserRole,
     hasRolePermission,
@@ -234,26 +232,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
           );
         })}
       </List>
-
-      <Divider sx={{ my: 2 }} />
-
-      {/* Database State Reset Helper */}
-      <Box sx={{ px: 1, mb: 2 }}>
-        <Button
-          fullWidth
-          size="small"
-          startIcon={<ResetIcon sx={{ fontSize: 16 }} />}
-          onClick={resetAllDataToDefaults}
-          sx={{
-            fontSize: '0.75rem',
-            color: theme.palette.text.secondary,
-            justifyContent: 'flex-start',
-            textTransform: 'none',
-          }}
-        >
-          Reset Sampel Database
-        </Button>
-      </Box>
 
       {/* User Footer Profile Card */}
       <Box
