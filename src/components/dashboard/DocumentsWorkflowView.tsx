@@ -18,6 +18,7 @@ import {
   RestartAlt as ResetIcon,
   Gesture as DrawIcon,
   VerifiedUser as SecurityIcon,
+  Sync as SyncIcon,
 } from '@mui/icons-material';
 import {
   INITIAL_CIF_DATA,
@@ -25,13 +26,16 @@ import {
   INITIAL_MOU_DATA,
   INITIAL_SPK_DATA,
   INITIAL_BAST_DATA,
+  INITIAL_QA_DATA,
 } from '../../data/initialDocuments';
 import { DocumentTemplates } from './DocumentTemplates';
 import { DocumentFormDialog } from './DocumentFormDialog';
 import { SignatureDialog } from './SignatureDialog';
-import { CIFData, RSDData, MoUData, SPKData, BASTData, DigitalSignatureData } from '../../types';
+import { CIFData, RSDData, MoUData, SPKData, BASTData, DigitalSignatureData, QAData } from '../../types';
 import { useApp } from '../../context/AppContext';
-import { generateAutoDocumentsForProject } from '../../lib/documentGenerator';
+import { generateAutoDocumentsForProject, generateQAFromRSD } from '../../lib/documentGenerator';
+
+import { useSearchParams } from 'next/navigation';
 
 const LOCAL_STORAGE_KEY_CUSTOM_DOCS = 'atasilabs_custom_project_documents';
 
@@ -48,18 +52,55 @@ const getSavedCustomDocs = (): Record<string, any> => {
 };
 
 export const DocumentsWorkflowView: React.FC = () => {
-  const { projects, showNotification } = useApp();
+  const {
+    projects,
+    showNotification,
+    selectedDocumentProjectId,
+    setSelectedDocumentProjectId,
+    selectedDocumentType,
+    setSelectedDocumentType,
+  } = useApp();
+
+  const searchParams = useSearchParams();
 
   // Active Project Selection
-  const [selectedProjectId, setSelectedProjectId] = useState<string>(projects[0]?.id || 'proj-1');
+  const [selectedProjectId, setSelectedProjectId] = useState<string>(
+    selectedDocumentProjectId || projects[0]?.id || 'proj-1'
+  );
 
   // Document states
-  const [activeDocType, setActiveDocType] = useState<'CIF' | 'RSD' | 'MOU' | 'SPK' | 'BAST'>('CIF');
+  const [activeDocType, setActiveDocType] = useState<'CIF' | 'RSD' | 'MOU' | 'SPK' | 'BAST' | 'QA'>(
+    selectedDocumentType || 'CIF'
+  );
+
+  // Sync project selection from search params or AppContext
+  useEffect(() => {
+    const qProjId = searchParams.get('projectId');
+    const qDocType = searchParams.get('docType');
+
+    if (qProjId && projects.some((p) => p.id === qProjId)) {
+      setSelectedProjectId(qProjId);
+      setSelectedDocumentProjectId(qProjId);
+    } else if (selectedDocumentProjectId && projects.some((p) => p.id === selectedDocumentProjectId)) {
+      setSelectedProjectId(selectedDocumentProjectId);
+    }
+
+    if (qDocType) {
+      const upper = qDocType.toUpperCase();
+      if (['CIF', 'RSD', 'MOU', 'SPK', 'BAST', 'QA'].includes(upper)) {
+        setActiveDocType(upper as any);
+        setSelectedDocumentType(upper as any);
+      }
+    } else if (selectedDocumentType) {
+      setActiveDocType(selectedDocumentType);
+    }
+  }, [searchParams, projects]);
   const [cifData, setCifData] = useState<CIFData>(INITIAL_CIF_DATA[0]);
   const [rsdData, setRsdData] = useState<RSDData>(INITIAL_RSD_DATA[0]);
   const [mouData, setMouData] = useState<MoUData>(INITIAL_MOU_DATA[0]);
   const [spkData, setSpkData] = useState<SPKData>(INITIAL_SPK_DATA[0]);
   const [bastData, setBastData] = useState<BASTData>(INITIAL_BAST_DATA[0]);
+  const [qaData, setQaData] = useState<QAData>(INITIAL_QA_DATA[0]);
 
   // Dialog States
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -74,11 +115,15 @@ export const DocumentsWorkflowView: React.FC = () => {
       const allCustom = getSavedCustomDocs();
       const projCustom = allCustom[selectedProjectId] || {};
 
+      const activeRsd = projCustom.rsd || autoDocs.rsd;
+      const syncedQa = generateQAFromRSD(activeRsd, proj, projCustom.qa || autoDocs.qa);
+
       setCifData(projCustom.cif || autoDocs.cif);
-      setRsdData(projCustom.rsd || autoDocs.rsd);
+      setRsdData(activeRsd);
       setMouData(projCustom.mou || autoDocs.mou);
       setSpkData(projCustom.spk || autoDocs.spk);
       setBastData(projCustom.bast || autoDocs.bast);
+      setQaData(syncedQa);
     }
   }, [selectedProjectId, projects]);
 
@@ -95,11 +140,14 @@ export const DocumentsWorkflowView: React.FC = () => {
         return spkData;
       case 'BAST':
         return bastData;
+      case 'QA':
+        return qaData;
     }
   };
 
-  const handleSaveDocument = (type: 'CIF' | 'RSD' | 'MOU' | 'SPK' | 'BAST', data: any) => {
+  const handleSaveDocument = (type: 'CIF' | 'RSD' | 'MOU' | 'SPK' | 'BAST' | 'QA', data: any) => {
     const docKey = type.toLowerCase();
+    const proj = projects.find((p) => p.id === selectedProjectId);
 
     // 1. Update React State
     switch (type) {
@@ -108,6 +156,10 @@ export const DocumentsWorkflowView: React.FC = () => {
         break;
       case 'RSD':
         setRsdData(data);
+        if (proj) {
+          const syncedQa = generateQAFromRSD(data, proj, qaData);
+          setQaData(syncedQa);
+        }
         break;
       case 'MOU':
         setMouData(data);
@@ -118,16 +170,25 @@ export const DocumentsWorkflowView: React.FC = () => {
       case 'BAST':
         setBastData(data);
         break;
+      case 'QA':
+        setQaData(data);
+        break;
     }
 
     // 2. Persist to LocalStorage for selectedProjectId
     try {
       const allCustomDocs = getSavedCustomDocs();
       const projectDocs = allCustomDocs[selectedProjectId] || {};
-      allCustomDocs[selectedProjectId] = {
+      const updatedDocs = {
         ...projectDocs,
         [docKey]: data,
       };
+
+      if (type === 'RSD' && proj) {
+        updatedDocs.qa = generateQAFromRSD(data, proj, qaData);
+      }
+
+      allCustomDocs[selectedProjectId] = updatedDocs;
       localStorage.setItem(LOCAL_STORAGE_KEY_CUSTOM_DOCS, JSON.stringify(allCustomDocs));
     } catch (e) {
       console.error(e);
@@ -136,17 +197,74 @@ export const DocumentsWorkflowView: React.FC = () => {
     showNotification(`Dokumen ${type} berhasil diperbarui & disimpan!`, 'success');
   };
 
+  const handleSyncQAFromRSD = () => {
+    const proj = projects.find((p) => p.id === selectedProjectId);
+    if (!proj) return;
+
+    const freshQa = generateQAFromRSD(rsdData, proj);
+    setQaData(freshQa);
+
+    try {
+      const allCustomDocs = getSavedCustomDocs();
+      const projectDocs = allCustomDocs[selectedProjectId] || {};
+      allCustomDocs[selectedProjectId] = {
+        ...projectDocs,
+        qa: freshQa,
+      };
+      localStorage.setItem(LOCAL_STORAGE_KEY_CUSTOM_DOCS, JSON.stringify(allCustomDocs));
+    } catch (e) {
+      console.error(e);
+    }
+
+    showNotification(`Dokumen QA berhasil di-sync ulang 100% dari spesifikasi RSD (${rsdData.functionalFeatures?.length || 0} fitur)!`, 'success');
+  };
+
   const handleOpenSignatureDialog = (party: 'Pihak Pertama' | 'Pihak Kedua') => {
     setSigPartyTarget(party);
     setIsSigDialogOpen(true);
   };
 
   const handleSaveSignature = (sigData: DigitalSignatureData) => {
-    const currentDoc = getActiveDocData();
-    const updatedDoc = {
+    const currentDoc = getActiveDocData() as any;
+    if (!currentDoc) return;
+
+    const isParty1 = sigPartyTarget === 'Pihak Pertama';
+    const updatedDoc: any = {
       ...currentDoc,
-      [sigPartyTarget === 'Pihak Pertama' ? 'party1Signature' : 'party2Signature']: sigData,
+      [isParty1 ? 'party1Signature' : 'party2Signature']: sigData,
     };
+
+    const newName = sigData.auditTrail?.signedBy;
+    const newRole = sigData.auditTrail?.signerRole;
+
+    if (newName) {
+      if (activeDocType === 'MOU' || activeDocType === 'BAST') {
+        if (isParty1) {
+          updatedDoc.atasilabsPic = newName;
+          if (newRole) updatedDoc.atasilabsRole = newRole;
+        } else {
+          updatedDoc.clientPic = newName;
+          if (newRole) updatedDoc.clientRole = newRole;
+        }
+      } else if (activeDocType === 'SPK') {
+        if (isParty1) {
+          updatedDoc.atasilabsPic = newName;
+          if (newRole) updatedDoc.atasilabsRole = newRole;
+        } else {
+          updatedDoc.freelancerName = newName;
+        }
+      } else if (activeDocType === 'CIF') {
+        if (isParty1) updatedDoc.adminName = newName;
+        else updatedDoc.picName = newName;
+      } else if (activeDocType === 'RSD') {
+        if (isParty1) updatedDoc.authorITLead = newName;
+        else updatedDoc.freelancerName = newName;
+      } else if (activeDocType === 'QA') {
+        if (isParty1) updatedDoc.qaLeadName = newName;
+        else updatedDoc.clientPic = newName;
+      }
+    }
+
     handleSaveDocument(activeDocType, updatedDoc);
     showNotification(`Tanda Tangan Canvas & Audit Trail (${sigPartyTarget}) tersimpan di ${activeDocType}!`, 'success');
   };
@@ -155,13 +273,13 @@ export const DocumentsWorkflowView: React.FC = () => {
     const doc = getActiveDocData() as any;
     if (sigPartyTarget === 'Pihak Pertama') {
       return {
-        name: doc?.atasilabsPic || doc?.adminName || doc?.authorITLead || 'Cecep Fahmidin',
-        role: doc?.atasilabsRole || 'Founder & CEO Atasilabs',
+        name: doc?.party1Signature?.auditTrail?.signedBy || doc?.atasilabsPic || doc?.adminName || doc?.authorITLead || doc?.qaLeadName || 'Cecep Fahmidin',
+        role: doc?.party1Signature?.auditTrail?.signerRole || doc?.atasilabsRole || (activeDocType === 'QA' ? 'QA Lead / Tech Lead' : 'Founder & CEO Atasilabs'),
       };
     } else {
       return {
-        name: doc?.clientPic || doc?.picName || doc?.freelancerName || 'Klien / Partner',
-        role: doc?.clientRole || doc?.picRole || 'Direktur / Penanggung Jawab',
+        name: doc?.party2Signature?.auditTrail?.signedBy || doc?.clientPic || doc?.picName || doc?.freelancerName || doc?.testerName || 'Klien / Partner',
+        role: doc?.party2Signature?.auditTrail?.signerRole || doc?.clientRole || doc?.picRole || 'Direktur / Penanggung Jawab',
       };
     }
   };
@@ -176,6 +294,7 @@ export const DocumentsWorkflowView: React.FC = () => {
     setMouData(autoDocs.mou);
     setSpkData(autoDocs.spk);
     setBastData(autoDocs.bast);
+    setQaData(autoDocs.qa);
 
     try {
       const allCustomDocs = getSavedCustomDocs();
@@ -188,8 +307,24 @@ export const DocumentsWorkflowView: React.FC = () => {
     showNotification(`Seluruh dokumen untuk ${proj.clientName} dikembalikan ke standar otomatis!`, 'info');
   };
 
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   const selectedProjObj = projects.find((p) => p.id === selectedProjectId);
   const signerInfo = getSignerDefaultInfo();
+
+  if (!isMounted) {
+    return (
+      <Box sx={{ width: '100%', p: 4, textAlign: 'center' }}>
+        <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
+          Memuat Dokumen & Administrasi Proyek...
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ width: '100%' }}>
@@ -239,6 +374,18 @@ export const DocumentsWorkflowView: React.FC = () => {
 
             <Grid item xs={12} sm={7} textAlign={{ sm: 'right' }}>
               <Box sx={{ display: 'flex', gap: 1, justifyContent: { sm: 'flex-end' }, flexWrap: 'wrap', mt: { xs: 1, sm: 2.5 } }}>
+                {activeDocType === 'QA' && (
+                  <Button
+                    variant="outlined"
+                    color="secondary"
+                    size="small"
+                    startIcon={<SyncIcon />}
+                    onClick={handleSyncQAFromRSD}
+                    sx={{ fontWeight: 700 }}
+                  >
+                    Sync dari RSD
+                  </Button>
+                )}
                 <Button
                   variant="outlined"
                   color="success"
@@ -280,24 +427,28 @@ export const DocumentsWorkflowView: React.FC = () => {
           )}
 
           <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 1 }}>
-            Pilih Dokumen Administrasi:
+            Pilih Dokumen Administrasi Operasional (SOP 6-Stage IPW):
           </Typography>
           <Grid container spacing={1.5}>
             {[
-              { id: 'CIF', label: '1. CIF (Client Intake)', color: '#3b82f6' },
-              { id: 'RSD', label: '2. RSD (Technical Spec)', color: '#10b981' },
-              { id: 'MOU', label: '3. MoU / Kontrak Klien', color: '#f59e0b' },
-              { id: 'SPK', label: '4. SPK (Kontrak Freelancer)', color: '#8b5cf6' },
-              { id: 'BAST', label: '5. BAST (Serah Terima)', color: '#ec4899' },
+              { id: 'CIF', label: '1. CIF Intake', color: '#64748b' },
+              { id: 'RSD', label: '2. RSD Spec', color: '#06b6d4' },
+              { id: 'MOU', label: '3. MoU Kontrak', color: '#f59e0b' },
+              { id: 'SPK', label: '4. SPK Freelancer', color: '#3b82f6' },
+              { id: 'QA', label: '5. QA & UAT', color: '#ec4899' },
+              { id: 'BAST', label: '6. BAST Selesai', color: '#10b981' },
             ].map((doc) => (
-              <Grid item xs={6} sm={2.4} key={doc.id}>
+              <Grid item xs={6} sm={2} key={doc.id}>
                 <Button
                   fullWidth
                   variant={activeDocType === doc.id ? 'contained' : 'outlined'}
-                  onClick={() => setActiveDocType(doc.id as any)}
+                  onClick={() => {
+                    setActiveDocType(doc.id as any);
+                    setSelectedDocumentType(doc.id as any);
+                  }}
                   sx={{
                     fontWeight: 700,
-                    fontSize: '0.8rem',
+                    fontSize: '0.78rem',
                     py: 1,
                     borderColor: doc.color,
                     bgcolor: activeDocType === doc.id ? doc.color : 'transparent',
@@ -321,6 +472,7 @@ export const DocumentsWorkflowView: React.FC = () => {
           data={getActiveDocData()}
           onSignParty1={() => handleOpenSignatureDialog('Pihak Pertama')}
           onSignParty2={() => handleOpenSignatureDialog('Pihak Kedua')}
+          onUpdateQA={(updatedQA) => handleSaveDocument('QA', updatedQA)}
         />
 
         {/* Form Dialog Generator */}

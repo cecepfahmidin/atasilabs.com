@@ -46,29 +46,39 @@ import {
   Save as SaveIcon,
   Close as CloseIcon,
   Sync as SyncIcon,
+  Add as AddIcon,
+  Delete as DeleteIcon,
+  Palette as PaletteIcon,
 } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
 import { INITIAL_HPP_MATRIX } from '../../data/initialDocuments';
 import { HPPItem } from '../../types';
 import { useApp } from '../../context/AppContext';
 
-interface AllocationItem {
-  key: string;
+export interface DynamicAllocationItem {
+  id: string;
   label: string;
   percent: number;
   nominal: number;
   color: string;
 }
 
-const DEFAULT_SOP_PERCENTAGES = {
-  marketing: 17.5,
-  operational: 5.0,
-  businessDev: 10.0,
-  mitigation: 5.0,
-  zakat: 2.5,
-};
-
 const LOCAL_STORAGE_KEY_HPP = 'atasilabs_hpp_matrix_custom';
+const LOCAL_STORAGE_KEY_ALLOCATIONS = 'atasilabs_profit_allocations_custom';
+
+const DEFAULT_ALLOCATION_POINTS: DynamicAllocationItem[] = [
+  { id: 'alloc-1', label: 'Pemasaran / CMO', percent: 17.5, nominal: 2450000, color: '#3b82f6' },
+  { id: 'alloc-2', label: 'Operasional Kantor', percent: 5.0, nominal: 700000, color: '#10b981' },
+  { id: 'alloc-3', label: 'Pengembangan Usaha', percent: 10.0, nominal: 1400000, color: '#f59e0b' },
+  { id: 'alloc-4', label: 'Dana Mitigasi/Taktis', percent: 5.0, nominal: 700000, color: '#8b5cf6' },
+  { id: 'alloc-5', label: 'Zakat / Sosial', percent: 2.5, nominal: 350000, color: '#ec4899' },
+];
+
+const PRESET_COLORS = [
+  '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899',
+  '#6366f1', '#ef4444', '#14b8a6', '#f97316', '#84cc16',
+  '#06b6d4', '#d97706', '#059669', '#2563eb', '#db2777'
+];
 
 export const HPPCalculatorView: React.FC = () => {
   const theme = useTheme();
@@ -136,15 +146,31 @@ export const HPPCalculatorView: React.FC = () => {
   // Allocation calculation mode: 'percent' or 'nominal'
   const [allocationMode, setAllocationMode] = useState<'percent' | 'nominal'>('percent');
 
-  // Allocation state (% or Rp values)
-  const [percentages, setPercentages] = useState(DEFAULT_SOP_PERCENTAGES);
-  const [nominals, setNominals] = useState({
-    marketing: 2450000,
-    operational: 700000,
-    businessDev: 1400000,
-    mitigation: 700000,
-    zakat: 350000,
-  });
+  // Dynamic Profit Allocation Points with LocalStorage persistence
+  const [allocationPoints, setAllocationPoints] = useState<DynamicAllocationItem[]>(DEFAULT_ALLOCATION_POINTS);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(LOCAL_STORAGE_KEY_ALLOCATIONS);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setAllocationPoints(parsed);
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
+
+  const saveAllocationsToStorage = (updated: DynamicAllocationItem[]) => {
+    setAllocationPoints(updated);
+    try {
+      localStorage.setItem(LOCAL_STORAGE_KEY_ALLOCATIONS, JSON.stringify(updated));
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   // Active HPP calculation
   const selectedTierHPP = activeHppMatrix.find((item) => item.tierNumber === selectedTierNumber) || activeHppMatrix[2];
@@ -153,108 +179,117 @@ export const HPPCalculatorView: React.FC = () => {
   const simulatedGrossProfit = Math.max(0, customPriceInput - activeHppValue);
   const simulatedGrossMargin = customPriceInput > 0 ? ((simulatedGrossProfit / customPriceInput) * 100).toFixed(1) : '0';
 
-  // Compute actual allocations based on mode
-  const computedAllocations: AllocationItem[] = [
-    {
-      key: 'marketing',
-      label: 'Pemasaran / CMO',
-      percent: allocationMode === 'percent'
-        ? percentages.marketing
-        : (simulatedGrossProfit > 0 ? Number(((nominals.marketing / simulatedGrossProfit) * 100).toFixed(2)) : 0),
-      nominal: allocationMode === 'percent'
-        ? Math.round(simulatedGrossProfit * (percentages.marketing / 100))
-        : nominals.marketing,
-      color: '#3b82f6',
-    },
-    {
-      key: 'operational',
-      label: 'Operasional Kantor',
-      percent: allocationMode === 'percent'
-        ? percentages.operational
-        : (simulatedGrossProfit > 0 ? Number(((nominals.operational / simulatedGrossProfit) * 100).toFixed(2)) : 0),
-      nominal: allocationMode === 'percent'
-        ? Math.round(simulatedGrossProfit * (percentages.operational / 100))
-        : nominals.operational,
-      color: '#10b981',
-    },
-    {
-      key: 'businessDev',
-      label: 'Pengembangan Usaha',
-      percent: allocationMode === 'percent'
-        ? percentages.businessDev
-        : (simulatedGrossProfit > 0 ? Number(((nominals.businessDev / simulatedGrossProfit) * 100).toFixed(2)) : 0),
-      nominal: allocationMode === 'percent'
-        ? Math.round(simulatedGrossProfit * (percentages.businessDev / 100))
-        : nominals.businessDev,
-      color: '#f59e0b',
-    },
-    {
-      key: 'mitigation',
-      label: 'Dana Mitigasi/Taktis',
-      percent: allocationMode === 'percent'
-        ? percentages.mitigation
-        : (simulatedGrossProfit > 0 ? Number(((nominals.mitigation / simulatedGrossProfit) * 100).toFixed(2)) : 0),
-      nominal: allocationMode === 'percent'
-        ? Math.round(simulatedGrossProfit * (percentages.mitigation / 100))
-        : nominals.mitigation,
-      color: '#8b5cf6',
-    },
-    {
-      key: 'zakat',
-      label: 'Zakat / Sosial',
-      percent: allocationMode === 'percent'
-        ? percentages.zakat
-        : (simulatedGrossProfit > 0 ? Number(((nominals.zakat / simulatedGrossProfit) * 100).toFixed(2)) : 0),
-      nominal: allocationMode === 'percent'
-        ? Math.round(simulatedGrossProfit * (percentages.zakat / 100))
-        : nominals.zakat,
-      color: '#ec4899',
-    },
-  ];
+  // Compute actual allocations dynamically based on mode and simulated gross profit
+  const computedAllocations = allocationPoints.map((item) => {
+    let percent = item.percent;
+    let nominal = item.nominal;
+
+    if (allocationMode === 'percent') {
+      nominal = Math.round(simulatedGrossProfit * (percent / 100));
+    } else {
+      percent = simulatedGrossProfit > 0 ? Number(((nominal / simulatedGrossProfit) * 100).toFixed(2)) : 0;
+    }
+
+    return {
+      ...item,
+      percent,
+      nominal,
+    };
+  });
 
   const totalAllocatedNominal = computedAllocations.reduce((acc, curr) => acc + curr.nominal, 0);
   const totalAllocatedPercent = computedAllocations.reduce((acc, curr) => acc + curr.percent, 0);
   const netRetainedProfit = Math.max(0, simulatedGrossProfit - totalAllocatedNominal);
   const netRetainedProfitPercent = simulatedGrossProfit > 0 ? Number(((netRetainedProfit / simulatedGrossProfit) * 100).toFixed(1)) : 0;
 
+  // Add a new profit allocation point
+  const handleAddAllocationPoint = () => {
+    const newId = `alloc-${Date.now()}`;
+    const nextColor = PRESET_COLORS[allocationPoints.length % PRESET_COLORS.length];
+    const newPoint: DynamicAllocationItem = {
+      id: newId,
+      label: 'Point Alokasi Baru',
+      percent: 5.0,
+      nominal: Math.round(simulatedGrossProfit * 0.05),
+      color: nextColor,
+    };
+    const updated = [...allocationPoints, newPoint];
+    saveAllocationsToStorage(updated);
+    showNotification('Point alokasi profit baru berhasil ditambahkan.', 'success');
+  };
+
+  // Delete a profit allocation point
+  const handleDeleteAllocationPoint = (id: string) => {
+    if (allocationPoints.length <= 1) {
+      showNotification('Minimal harus ada 1 point alokasi profit.', 'warning');
+      return;
+    }
+    const updated = allocationPoints.filter((p) => p.id !== id);
+    saveAllocationsToStorage(updated);
+    showNotification('Point alokasi profit berhasil dihapus.', 'info');
+  };
+
+  // Update allocation point label
+  const handleUpdatePointLabel = (id: string, label: string) => {
+    const updated = allocationPoints.map((p) => (p.id === id ? { ...p, label } : p));
+    saveAllocationsToStorage(updated);
+  };
+
+  // Update allocation point percent
+  const handleUpdatePointPercent = (id: string, percent: number) => {
+    const updated = allocationPoints.map((p) => {
+      if (p.id === id) {
+        const nominal = Math.round(simulatedGrossProfit * (percent / 100));
+        return { ...p, percent, nominal };
+      }
+      return p;
+    });
+    saveAllocationsToStorage(updated);
+  };
+
+  // Update allocation point nominal
+  const handleUpdatePointNominal = (id: string, nominal: number) => {
+    const updated = allocationPoints.map((p) => {
+      if (p.id === id) {
+        const percent = simulatedGrossProfit > 0 ? Number(((nominal / simulatedGrossProfit) * 100).toFixed(2)) : 0;
+        return { ...p, nominal, percent };
+      }
+      return p;
+    });
+    saveAllocationsToStorage(updated);
+  };
+
+  // Update allocation point color
+  const handleUpdatePointColor = (id: string, color: string) => {
+    const updated = allocationPoints.map((p) => (p.id === id ? { ...p, color } : p));
+    saveAllocationsToStorage(updated);
+  };
+
   // Handle Mode Change & sync computed values
   const handleModeChange = (_: any, newMode: 'percent' | 'nominal' | null) => {
     if (!newMode) return;
-    if (newMode === 'nominal') {
-      const syncedNominals = {
-        marketing: Math.round(simulatedGrossProfit * (percentages.marketing / 100)),
-        operational: Math.round(simulatedGrossProfit * (percentages.operational / 100)),
-        businessDev: Math.round(simulatedGrossProfit * (percentages.businessDev / 100)),
-        mitigation: Math.round(simulatedGrossProfit * (percentages.mitigation / 100)),
-        zakat: Math.round(simulatedGrossProfit * (percentages.zakat / 100)),
-      };
-      setNominals(syncedNominals);
-    } else {
-      if (simulatedGrossProfit > 0) {
-        setPercentages({
-          marketing: Number(((nominals.marketing / simulatedGrossProfit) * 100).toFixed(2)),
-          operational: Number(((nominals.operational / simulatedGrossProfit) * 100).toFixed(2)),
-          businessDev: Number(((nominals.businessDev / simulatedGrossProfit) * 100).toFixed(2)),
-          mitigation: Number(((nominals.mitigation / simulatedGrossProfit) * 100).toFixed(2)),
-          zakat: Number(((nominals.zakat / simulatedGrossProfit) * 100).toFixed(2)),
-        });
+    const updated = allocationPoints.map((p) => {
+      if (newMode === 'nominal') {
+        const nominal = Math.round(simulatedGrossProfit * (p.percent / 100));
+        return { ...p, nominal };
+      } else {
+        const percent = simulatedGrossProfit > 0 ? Number(((p.nominal / simulatedGrossProfit) * 100).toFixed(2)) : 0;
+        return { ...p, percent };
       }
-    }
+    });
+    saveAllocationsToStorage(updated);
     setAllocationMode(newMode);
   };
 
-  // Reset to SOP Default
+  // Reset to Default SOP
   const handleResetToDefaultSOP = () => {
     setAllocationMode('percent');
-    setPercentages(DEFAULT_SOP_PERCENTAGES);
-    const defaultNominals = {
-      marketing: Math.round(simulatedGrossProfit * (DEFAULT_SOP_PERCENTAGES.marketing / 100)),
-      operational: Math.round(simulatedGrossProfit * (DEFAULT_SOP_PERCENTAGES.operational / 100)),
-      businessDev: Math.round(simulatedGrossProfit * (DEFAULT_SOP_PERCENTAGES.businessDev / 100)),
-      mitigation: Math.round(simulatedGrossProfit * (DEFAULT_SOP_PERCENTAGES.mitigation / 100)),
-      zakat: Math.round(simulatedGrossProfit * (DEFAULT_SOP_PERCENTAGES.zakat / 100)),
-    };
-    setNominals(defaultNominals);
+    const resetted = DEFAULT_ALLOCATION_POINTS.map((p) => ({
+      ...p,
+      nominal: Math.round(simulatedGrossProfit * (p.percent / 100)),
+    }));
+    saveAllocationsToStorage(resetted);
+    showNotification('Point alokasi dikembalikan ke standar persentase SOP Atasilabs.', 'info');
   };
 
   const handleNavigateToPricing = () => {
@@ -640,136 +675,174 @@ export const HPPCalculatorView: React.FC = () => {
           {/* Allocation Breakdown Section */}
           <Grid item xs={12} md={6}>
             {/* Dynamic Allocation Header & Mode Selector */}
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2, flexWrap: 'wrap', gap: 1 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <TuneIcon color="primary" fontSize="small" />
                 <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
                   Pembagian Alokasi Laba Kotor:
                 </Typography>
+                <Chip label={`${allocationPoints.length} Point`} size="small" color="primary" variant="outlined" sx={{ fontWeight: 700, height: 20, fontSize: '0.68rem' }} />
               </Box>
 
-              <ToggleButtonGroup
-                value={allocationMode}
-                exclusive
-                onChange={handleModeChange}
-                size="small"
-                sx={{ height: 28 }}
-              >
-                <ToggleButton value="percent" sx={{ px: 1.2, py: 0, fontSize: '0.72rem', fontWeight: 700 }}>
-                  <PercentIcon sx={{ fontSize: 14, mr: 0.5 }} /> Persentase (%)
-                </ToggleButton>
-                <ToggleButton value="nominal" sx={{ px: 1.2, py: 0, fontSize: '0.72rem', fontWeight: 700 }}>
-                  <DollarIcon sx={{ fontSize: 14, mr: 0.5 }} /> Nominal (Rp)
-                </ToggleButton>
-              </ToggleButtonGroup>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <ToggleButtonGroup
+                  value={allocationMode}
+                  exclusive
+                  onChange={handleModeChange}
+                  size="small"
+                  sx={{ height: 28 }}
+                >
+                  <ToggleButton value="percent" sx={{ px: 1.2, py: 0, fontSize: '0.72rem', fontWeight: 700 }}>
+                    <PercentIcon sx={{ fontSize: 14, mr: 0.5 }} /> Persentase (%)
+                  </ToggleButton>
+                  <ToggleButton value="nominal" sx={{ px: 1.2, py: 0, fontSize: '0.72rem', fontWeight: 700 }}>
+                    <DollarIcon sx={{ fontSize: 14, mr: 0.5 }} /> Nominal (Rp)
+                  </ToggleButton>
+                </ToggleButtonGroup>
+              </Box>
             </Box>
 
             {/* Dynamic Inputs List */}
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mb: 2.5 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mb: 2 }}>
               {computedAllocations.map((item) => (
                 <Box
-                  key={item.key}
+                  key={item.id}
                   sx={{
                     display: 'flex',
                     alignItems: 'center',
                     justify: 'space-between',
-                    gap: 1.5,
+                    gap: 1,
                     p: 1.2,
                     borderRadius: 2,
                     bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)',
                     border: `1px solid ${theme.palette.divider}`,
                   }}
                 >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 160 }}>
-                    <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: item.color }} />
-                    <Typography variant="body2" sx={{ fontWeight: 700, fontSize: '0.82rem' }}>
-                      {item.label}
-                    </Typography>
-                  </Box>
+                  {/* Color Picker Indicator */}
+                  <Tooltip title="Klik untuk ubah warna point">
+                    <Box
+                      component="label"
+                      sx={{
+                        width: 16,
+                        height: 16,
+                        borderRadius: '50%',
+                        bgcolor: item.color,
+                        cursor: 'pointer',
+                        display: 'inline-block',
+                        flexShrink: 0,
+                        border: '2px solid rgba(255,255,255,0.8)',
+                        boxShadow: '0 0 2px rgba(0,0,0,0.3)',
+                        position: 'relative',
+                        '&:hover': { transform: 'scale(1.15)', transition: 'transform 0.15s' },
+                      }}
+                    >
+                      <input
+                        type="color"
+                        value={item.color}
+                        onChange={(e) => handleUpdatePointColor(item.id, e.target.value)}
+                        style={{ position: 'absolute', opacity: 0, width: 0, height: 0, cursor: 'pointer' }}
+                      />
+                    </Box>
+                  </Tooltip>
 
-                  {/* Dynamic Editable Input based on Mode */}
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexGrow: 1, justifyContent: 'flex-end' }}>
+                  {/* Editable Label Input */}
+                  <TextField
+                    size="small"
+                    value={item.label}
+                    onChange={(e) => handleUpdatePointLabel(item.id, e.target.value)}
+                    placeholder="Nama Point Alokasi"
+                    variant="standard"
+                    InputProps={{ disableUnderline: true }}
+                    sx={{
+                      flexGrow: 1,
+                      minWidth: 120,
+                      '& input': {
+                        fontSize: '0.82rem',
+                        fontWeight: 700,
+                        py: 0.3,
+                        px: 0.8,
+                        borderRadius: 1,
+                        bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+                        '&:focus': {
+                          bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+                        },
+                      },
+                    }}
+                  />
+
+                  {/* Dynamic Editable Value Input (% or Rp) based on Mode */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
                     {allocationMode === 'percent' ? (
                       <TextField
                         size="small"
                         type="number"
-                        value={percentages[item.key as keyof typeof percentages]}
-                        onChange={(e) => {
-                          const val = Number(e.target.value);
-                          setPercentages((prev) => ({ ...prev, [item.key]: val }));
-                        }}
+                        value={item.percent}
+                        onChange={(e) => handleUpdatePointPercent(item.id, Number(e.target.value))}
                         InputProps={{
                           endAdornment: <InputAdornment position="end">%</InputAdornment>,
                         }}
-                        sx={{ width: 95, '& input': { py: 0.5, px: 1, fontSize: '0.82rem', fontWeight: 700 } }}
+                        sx={{ width: 90, '& input': { py: 0.5, px: 1, fontSize: '0.82rem', fontWeight: 700 } }}
                       />
                     ) : (
                       <TextField
                         size="small"
                         type="number"
-                        value={nominals[item.key as keyof typeof nominals]}
-                        onChange={(e) => {
-                          const val = Number(e.target.value);
-                          setNominals((prev) => ({ ...prev, [item.key]: val }));
-                        }}
+                        value={item.nominal}
+                        onChange={(e) => handleUpdatePointNominal(item.id, Number(e.target.value))}
                         InputProps={{
                           startAdornment: <InputAdornment position="start">Rp</InputAdornment>,
                         }}
-                        sx={{ width: 135, '& input': { py: 0.5, px: 1, fontSize: '0.82rem', fontWeight: 700 } }}
+                        sx={{ width: 130, '& input': { py: 0.5, px: 1, fontSize: '0.82rem', fontWeight: 700 } }}
                       />
                     )}
 
-                    {/* Calculated Output Display */}
-                    <Box sx={{ textAlign: 'right', minWidth: 105 }}>
-                      <Typography variant="body2" sx={{ fontWeight: 800, color: 'text.primary', fontSize: '0.82rem' }}>
+                    {/* Calculated Opposite Output Display */}
+                    <Box sx={{ textAlign: 'right', minWidth: 95 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 800, color: 'text.primary', fontSize: '0.8rem' }}>
                         Rp {item.nominal.toLocaleString('id-ID')}
                       </Typography>
-                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.68rem', display: 'block' }}>
                         ({item.percent.toFixed(1)}%)
                       </Typography>
                     </Box>
+
+                    {/* Delete Icon Button */}
+                    <Tooltip title="Hapus Point Alokasi Ini">
+                      <IconButton
+                        size="small"
+                        color="error"
+                        onClick={() => handleDeleteAllocationPoint(item.id)}
+                        sx={{ p: 0.5 }}
+                      >
+                        <DeleteIcon fontSize="small" sx={{ fontSize: 18 }} />
+                      </IconButton>
+                    </Tooltip>
                   </Box>
                 </Box>
               ))}
             </Box>
 
-            {/* Total Allocation & Retained Profit Summary */}
-            <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)' }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                  Total Alokasi Ditentukan:
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 800, color: 'primary.main' }}>
-                  Rp {totalAllocatedNominal.toLocaleString('id-ID')} ({totalAllocatedPercent.toFixed(1)}%)
-                </Typography>
-              </Box>
+            {/* Add New Point Button */}
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Button
+                size="small"
+                variant="outlined"
+                color="primary"
+                startIcon={<AddIcon />}
+                onClick={handleAddAllocationPoint}
+                sx={{ fontSize: '0.75rem', fontWeight: 700, borderRadius: 2 }}
+              >
+                Tambah Point Alokasi Profit
+              </Button>
 
-              <LinearProgress
-                variant="determinate"
-                value={Math.min(100, totalAllocatedPercent)}
-                sx={{ height: 6, borderRadius: 3, mb: 1.5, bgcolor: theme.palette.divider }}
-              />
-
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                  Sisa Laba Bersih Ditahan (Atasilabs):
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 800, color: 'success.main' }}>
-                  Rp {netRetainedProfit.toLocaleString('id-ID')} ({netRetainedProfitPercent.toFixed(1)}%)
-                </Typography>
-              </Box>
-            </Paper>
-
-            {/* Reset SOP Button */}
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1.5 }}>
               <Button
                 size="small"
                 variant="text"
                 startIcon={<ResetIcon />}
                 onClick={handleResetToDefaultSOP}
-                sx={{ fontSize: '0.75rem', textTransform: 'none', color: 'text.secondary' }}
+                sx={{ fontSize: '0.72rem', textTransform: 'none', color: 'text.secondary' }}
               >
-                Reset ke Standar Persentase SOP Atasilabs (17.5%, 5%, 10%, 5%, 2.5%)
+                Reset ke SOP Standard
               </Button>
             </Box>
           </Grid>

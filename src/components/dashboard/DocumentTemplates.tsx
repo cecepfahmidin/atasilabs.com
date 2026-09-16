@@ -15,18 +15,20 @@ import {
   Button,
   Divider,
   Grid,
+  Tooltip,
 } from '@mui/material';
-import { Print as PrintIcon, ContentCopy as CopyIcon, Gesture as DrawIcon, VerifiedUser as VerifiedIcon } from '@mui/icons-material';
-import { CIFData, RSDData, MoUData, SPKData, BASTData, DigitalSignatureData } from '../../types';
+import { Print as PrintIcon, ContentCopy as CopyIcon, Gesture as DrawIcon, VerifiedUser as VerifiedIcon, CheckCircle as CheckIcon } from '@mui/icons-material';
+import { CIFData, RSDData, MoUData, SPKData, BASTData, DigitalSignatureData, QAData } from '../../types';
 import { AtasiLabsLogo } from '../common/AtasiLabsLogo';
 import { useApp } from '../../context/AppContext';
 
 interface DocumentTemplateProps {
-  type: 'CIF' | 'RSD' | 'MOU' | 'SPK' | 'BAST';
-  data: CIFData | RSDData | MoUData | SPKData | BASTData;
+  type: 'CIF' | 'RSD' | 'MOU' | 'SPK' | 'BAST' | 'QA';
+  data: CIFData | RSDData | MoUData | SPKData | BASTData | QAData;
   onPrint?: () => void;
   onSignParty1?: () => void;
   onSignParty2?: () => void;
+  onUpdateQA?: (updatedQa: QAData) => void;
 }
 
 export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
@@ -35,6 +37,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
   onPrint,
   onSignParty1,
   onSignParty2,
+  onUpdateQA,
 }) => {
   const { showNotification } = useApp();
 
@@ -88,72 +91,41 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
     party2Sig?: DigitalSignatureData;
     onSignParty2Cb?: () => void;
     isSingleSigner?: boolean;
-  }) => (
-    <Box className="signature-block avoid-break" sx={{ mt: 5, pt: 2, borderTop: '1px dashed rgba(0,0,0,0.15)' }}>
-      <Typography variant="caption" display="block" textAlign="right" sx={{ mb: 1.5, color: 'text.secondary' }}>
-        {locationCity}, {dateStr}
-      </Typography>
+  }) => {
+    const finalParty1Name = party1Sig?.auditTrail?.signedBy || party1Name;
+    const finalParty1Role = party1Sig?.auditTrail?.signerRole || party1Role;
+    const finalParty2Name = party2Sig?.auditTrail?.signedBy || party2Name;
+    const finalParty2Role = party2Sig?.auditTrail?.signerRole || party2Role;
 
-      <Grid container spacing={3} justifyContent={isSingleSigner ? 'flex-end' : 'space-between'}>
-        <Grid item xs={6} sm={isSingleSigner ? 5 : 6} textAlign="center">
-          <Typography variant="caption" display="block" color="text.secondary">{party1Title}</Typography>
-          <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>{party1Sub}</Typography>
+    return (
+      <Box className="signature-block avoid-break" sx={{ mt: 5, pt: 2, borderTop: '1px dashed rgba(0,0,0,0.15)' }}>
+        <Typography variant="caption" display="block" textAlign="right" sx={{ mb: 1.5, color: 'text.secondary' }}>
+          {locationCity}, {dateStr}
+        </Typography>
 
-          {/* Canvas Signature Image */}
-          {party1Sig?.signatureBase64 ? (
-            <Box
-              component="img"
-              src={party1Sig.signatureBase64}
-              alt="Tanda Tangan Pihak 1"
-              sx={{ height: 60, maxWidth: 180, objectFit: 'contain', mx: 'auto', my: 0.5, display: 'block' }}
-            />
-          ) : (
-            <Box sx={{ height: 50, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {onSignParty1Cb && (
-                <Button
-                  size="small"
-                  variant="outlined"
-                  color="primary"
-                  className="no-print"
-                  startIcon={<DrawIcon sx={{ fontSize: 13 }} />}
-                  onClick={onSignParty1Cb}
-                  sx={{ fontSize: '0.68rem', py: 0.2, fontWeight: 700 }}
-                >
-                  Tanda Tangani
-                </Button>
-              )}
-            </Box>
-          )}
-
-          <Typography variant="body2" sx={{ fontWeight: 700, borderTop: '1px solid rgba(0,0,0,0.3)', pt: 0.5, display: 'inline-block', px: 1 }}>
-            ({party1Name || '....................'})
-          </Typography>
-          <Typography variant="caption" color="text.secondary" display="block">{party1Role}</Typography>
-        </Grid>
-
-        {!isSingleSigner && (
-          <Grid item xs={6} sm={6} textAlign="center">
-            <Typography variant="caption" display="block" color="text.secondary">{party2Title}</Typography>
-            <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>{party2Sub}</Typography>
+        <Grid container spacing={3} justifyContent={isSingleSigner ? 'flex-end' : 'space-between'}>
+          <Grid item xs={6} sm={isSingleSigner ? 5 : 6} textAlign="center">
+            <Typography variant="caption" display="block" color="text.secondary">{party1Title}</Typography>
+            <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>{party1Sub}</Typography>
 
             {/* Canvas Signature Image */}
-            {party2Sig?.signatureBase64 ? (
+            {party1Sig?.signatureBase64 ? (
               <Box
                 component="img"
-                src={party2Sig.signatureBase64}
-                alt="Tanda Tangan Pihak 2"
+                src={party1Sig.signatureBase64}
+                alt="Tanda Tangan Pihak 1"
                 sx={{ height: 60, maxWidth: 180, objectFit: 'contain', mx: 'auto', my: 0.5, display: 'block' }}
               />
             ) : (
               <Box sx={{ height: 50, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {onSignParty2Cb && (
+                {onSignParty1Cb && (
                   <Button
                     size="small"
                     variant="outlined"
-                    color="secondary"
+                    color="primary"
                     className="no-print"
                     startIcon={<DrawIcon sx={{ fontSize: 13 }} />}
-                    onClick={onSignParty2Cb}
+                    onClick={onSignParty1Cb}
                     sx={{ fontSize: '0.68rem', py: 0.2, fontWeight: 700 }}
                   >
                     Tanda Tangani
@@ -163,12 +135,49 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
             )}
 
             <Typography variant="body2" sx={{ fontWeight: 700, borderTop: '1px solid rgba(0,0,0,0.3)', pt: 0.5, display: 'inline-block', px: 1 }}>
-              ({party2Name || '....................'})
+              ({finalParty1Name || '....................'})
             </Typography>
-            <Typography variant="caption" color="text.secondary" display="block">{party2Role}</Typography>
+            <Typography variant="caption" color="text.secondary" display="block">{finalParty1Role}</Typography>
           </Grid>
-        )}
-      </Grid>
+
+          {!isSingleSigner && (
+            <Grid item xs={6} sm={6} textAlign="center">
+              <Typography variant="caption" display="block" color="text.secondary">{party2Title}</Typography>
+              <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>{party2Sub}</Typography>
+
+              {/* Canvas Signature Image */}
+              {party2Sig?.signatureBase64 ? (
+                <Box
+                  component="img"
+                  src={party2Sig.signatureBase64}
+                  alt="Tanda Tangan Pihak 2"
+                  sx={{ height: 60, maxWidth: 180, objectFit: 'contain', mx: 'auto', my: 0.5, display: 'block' }}
+                />
+              ) : (
+                <Box sx={{ height: 50, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {onSignParty2Cb && (
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      color="secondary"
+                      className="no-print"
+                      startIcon={<DrawIcon sx={{ fontSize: 13 }} />}
+                      onClick={onSignParty2Cb}
+                      sx={{ fontSize: '0.68rem', py: 0.2, fontWeight: 700 }}
+                    >
+                      Tanda Tangani
+                    </Button>
+                  )}
+                </Box>
+              )}
+
+              <Typography variant="body2" sx={{ fontWeight: 700, borderTop: '1px solid rgba(0,0,0,0.3)', pt: 0.5, display: 'inline-block', px: 1 }}>
+                ({finalParty2Name || '....................'})
+              </Typography>
+              <Typography variant="caption" color="text.secondary" display="block">{finalParty2Role}</Typography>
+            </Grid>
+          )}
+        </Grid>
 
       {/* Electronic Audit Trail Verification Badge */}
       {(party1Sig?.auditTrail || party2Sig?.auditTrail) && (
@@ -205,6 +214,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
       )}
     </Box>
   );
+};
 
   // Header Letterhead Component
   const Letterhead = ({ title }: { title: string }) => (
@@ -607,7 +617,12 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
   // Render MoU Contract
   if (type === 'MOU') {
     const mou = data as MoUData;
-    const copySummary = `[MEMORANDUM OF UNDERSTANDING (MoU)]\nNomor: ${mou.docNumber}\nPihak 1: ATASILABS (${mou.atasilabsPic})\nPihak 2: ${mou.clientCompany} (${mou.clientPic})\nTotal Investasi: Rp ${mou.totalInvestment?.toLocaleString('id-ID')} (${mou.totalInvestmentTerbilang})\nBank: ${mou.bankAccount?.bankName} - ${mou.bankAccount?.accountNumber} a.n. ${mou.bankAccount?.accountHolder}`;
+    const party1Name = mou.party1Signature?.auditTrail?.signedBy || mou.atasilabsPic;
+    const party1Role = mou.party1Signature?.auditTrail?.signerRole || mou.atasilabsRole;
+    const party2Name = mou.party2Signature?.auditTrail?.signedBy || mou.clientPic;
+    const party2Role = mou.party2Signature?.auditTrail?.signerRole || mou.clientRole;
+
+    const copySummary = `[MEMORANDUM OF UNDERSTANDING (MoU)]\nNomor: ${mou.docNumber}\nPihak 1: ATASILABS (${party1Name})\nPihak 2: ${mou.clientCompany} (${party2Name})\nTotal Investasi: Rp ${mou.totalInvestment?.toLocaleString('id-ID')} (${mou.totalInvestmentTerbilang})\nBank: ${mou.bankAccount?.bankName} - ${mou.bankAccount?.accountNumber} a.n. ${mou.bankAccount?.accountHolder}`;
 
     return (
       <Paper
@@ -652,10 +667,10 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
 
         <Box sx={{ pl: 2, mb: 2 }}>
           <Typography variant="body2" paragraph>
-            1. <strong>ATASILABS</strong>, penyedia layanan pengembangan teknologi dan produk digital, berkedudukan di Subang, Jawa Barat, diwakili oleh <strong>{mou.atasilabsPic}</strong> ({mou.atasilabsRole}) yang selanjutnya disebut <strong>PIHAK PERTAMA</strong>.
+            1. <strong>ATASILABS</strong>, penyedia layanan pengembangan teknologi dan produk digital, berkedudukan di Subang, Jawa Barat, diwakili oleh <strong>{party1Name}</strong> ({party1Role}) yang selanjutnya disebut <strong>PIHAK PERTAMA</strong>.
           </Typography>
           <Typography variant="body2" paragraph>
-            2. <strong>{mou.clientCompany}</strong>, berkedudukan di {mou.clientAddress}, diwakili oleh <strong>{mou.clientPic}</strong> ({mou.clientRole}) yang selanjutnya disebut <strong>PIHAK KEDUA</strong>.
+            2. <strong>{mou.clientCompany}</strong>, berkedudukan di {mou.clientAddress}, diwakili oleh <strong>{party2Name}</strong> ({party2Role}) yang selanjutnya disebut <strong>PIHAK KEDUA</strong>.
           </Typography>
         </Box>
 
@@ -709,16 +724,16 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
         </TableContainer>
 
         <Paper variant="outlined" sx={{ p: 2, mb: 3, bgcolor: 'action.hover' }}>
-          <Typography variant="caption" display="block" sx={{ fontWeight: 700, color: 'primary.main' }}>
-            Rekening Pembayaran Resmi ATASILABS:
+          <Typography variant="caption" display="block" sx={{ fontWeight: 700, mb: 0.5 }}>
+            Rekening Resmi Pembayaran:
           </Typography>
-          <Typography variant="body2" sx={{ fontWeight: 700 }}>
+          <Typography variant="body2" sx={{ fontWeight: 800 }}>
             {mou.bankAccount?.bankName} — {mou.bankAccount?.accountNumber} a.n. {mou.bankAccount?.accountHolder}
           </Typography>
         </Paper>
 
         <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#d97706', mt: 3, mb: 1 }}>
-          PASAL 3: SERAH TERIMA & MASA GARANSI
+          PASAL 3: KETENTUAN GARANSI & PEMELIHARAAN
         </Typography>
         <Typography variant="body2" paragraph>
           PIHAK PERTAMA memberikan garansi perbaikan bug/error selama <strong>{mou.warrantyDays || 30} hari kalender</strong> setelah penyerahan hasil pengerjaan & kredensial secara lengkap.
@@ -730,14 +745,14 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
           dateStr={mou.date}
           party1Title="PIHAK PERTAMA"
           party1Sub="ATASILABS"
-          party1Name={mou.atasilabsPic}
-          party1Role={mou.atasilabsRole}
+          party1Name={party1Name}
+          party1Role={party1Role}
           party1Sig={mou.party1Signature}
           onSignParty1Cb={onSignParty1}
           party2Title="PIHAK KEDUA"
           party2Sub={mou.clientCompany}
-          party2Name={mou.clientPic}
-          party2Role={mou.clientRole}
+          party2Name={party2Name}
+          party2Role={party2Role}
           party2Sig={mou.party2Signature}
           onSignParty2Cb={onSignParty2}
         />
@@ -958,6 +973,244 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
           party2Name={bast.clientPic}
           party2Role={bast.clientRole}
           party2Sig={bast.party2Signature}
+          onSignParty2Cb={onSignParty2}
+        />
+      </Paper>
+    );
+  }
+
+  if (type === 'QA') {
+    const qa = data as QAData;
+    const copySummary = `[LAPORAN QA & CHECKLIST UAT]\nNo: ${qa.docNumber}\nProyek: ${qa.projectTitle}\nKlien: ${qa.clientName}\nStatus Akhir: ${qa.overallStatus}\nStaging: ${qa.stagingUrl}`;
+
+    const toggleOverallStatus = () => {
+      if (!onUpdateQA) return;
+      const nextMap: Record<string, QAData['overallStatus']> = {
+        PASSED: 'NEEDS_REVISION',
+        NEEDS_REVISION: 'APPROVED',
+        APPROVED: 'FAILED',
+        FAILED: 'PASSED',
+      };
+      const newStatus = nextMap[qa.overallStatus] || 'PASSED';
+      onUpdateQA({ ...qa, overallStatus: newStatus, updatedAt: new Date().toISOString() });
+    };
+
+    const toggleTestItemStatus = (index: number) => {
+      if (!onUpdateQA) return;
+      const currentItems = [...(qa.testItems || [])];
+      const item = currentItems[index];
+      if (!item) return;
+
+      const nextStatusMap: Record<string, 'PASSED' | 'FAILED' | 'PENDING'> = {
+        PASSED: 'FAILED',
+        FAILED: 'PENDING',
+        PENDING: 'PASSED',
+      };
+      const newStatus = nextStatusMap[item.status] || 'PASSED';
+      currentItems[index] = { ...item, status: newStatus };
+      onUpdateQA({ ...qa, testItems: currentItems, updatedAt: new Date().toISOString() });
+    };
+
+    const setAllTestItemsPassed = () => {
+      if (!onUpdateQA) return;
+      const updated = (qa.testItems || []).map((ti) => ({ ...ti, status: 'PASSED' as const }));
+      onUpdateQA({ ...qa, testItems: updated, overallStatus: 'PASSED', updatedAt: new Date().toISOString() });
+    };
+
+    return (
+      <Paper
+        elevation={0}
+        className="printable-document"
+        sx={{ p: { xs: 3, md: 5 }, borderRadius: 3, border: '1px solid', borderColor: 'divider', bgcolor: '#fff' }}
+      >
+        {/* Document Actions Bar (Hidden on Print) */}
+        <Box
+          className="no-print"
+          sx={{
+            display: 'flex',
+            justify: 'space-between',
+            alignItems: 'center',
+            mb: 3,
+            pb: 2,
+            borderBottom: '1px solid',
+            borderColor: 'divider',
+            flexWrap: 'wrap',
+            gap: 1,
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Chip label="DOKUMEN RESMI SOP TAHAP 5 — QA & CHECKLIST UAT" color="secondary" sx={{ fontWeight: 800 }} />
+            {onUpdateQA && (
+              <Button
+                variant="outlined"
+                color="success"
+                size="small"
+                startIcon={<CheckIcon />}
+                onClick={setAllTestItemsPassed}
+                sx={{ fontSize: '0.72rem', fontWeight: 700 }}
+              >
+                Set Semua Passed
+              </Button>
+            )}
+          </Box>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<CopyIcon />}
+              onClick={() => handleCopyText(copySummary)}
+            >
+              Salin Teks QA
+            </Button>
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<PrintIcon />}
+              onClick={handlePrint}
+              sx={{ fontWeight: 700 }}
+            >
+              Cetak PDF / Print
+            </Button>
+          </Box>
+        </Box>
+
+        {/* Header Letterhead Component Standard Atasilabs */}
+        <Letterhead title="DOKUMEN QUALITY ASSURANCE & CHECKLIST UAT" />
+
+        <Typography variant="caption" display="block" textAlign="center" sx={{ fontWeight: 700, mb: 3, color: 'text.secondary' }}>
+          Nomor: {qa.docNumber} | Tanggal Pengujian: {qa.issueDate}
+        </Typography>
+
+        {/* Summary Info */}
+        <TableContainer component={Paper} variant="outlined" sx={{ mb: 3 }}>
+          <Table size="small">
+            <TableBody>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 700, width: '30%', bgcolor: 'action.hover' }}>Nama Proyek</TableCell>
+                <TableCell sx={{ fontWeight: 800 }}>{qa.projectTitle}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 700, bgcolor: 'action.hover' }}>Klien / Instansi</TableCell>
+                <TableCell>{qa.clientName}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 700, bgcolor: 'action.hover' }}>QA Lead & Tester</TableCell>
+                <TableCell>{qa.qaLeadName} / {qa.testerName}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 700, bgcolor: 'action.hover' }}>PIC UAT Klien</TableCell>
+                <TableCell>{qa.clientPic}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 700, bgcolor: 'action.hover' }}>URL Staging Test</TableCell>
+                <TableCell sx={{ color: 'primary.main', fontWeight: 600 }}>{qa.stagingUrl}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 700, bgcolor: 'action.hover' }}>Status Pengujian Akhir</TableCell>
+                <TableCell>
+                  <Tooltip title={onUpdateQA ? 'Klik untuk toggle status pengujian akhir' : ''}>
+                    <Chip
+                      label={`STATUS AKHIR: ${qa.overallStatus}`}
+                      size="small"
+                      color={
+                        qa.overallStatus === 'PASSED' || qa.overallStatus === 'APPROVED'
+                          ? 'success'
+                          : qa.overallStatus === 'FAILED'
+                          ? 'error'
+                          : 'warning'
+                      }
+                      onClick={onUpdateQA ? toggleOverallStatus : undefined}
+                      sx={{ fontWeight: 800, cursor: onUpdateQA ? 'pointer' : 'default' }}
+                    />
+                  </Tooltip>
+                  {onUpdateQA && (
+                    <Typography variant="caption" color="text.secondary" sx={{ ml: 1, fontSize: '0.68rem' }} className="no-print">
+                      (Klik chip untuk ubah status)
+                    </Typography>
+                  )}
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </TableContainer>
+
+        {/* Ringkasan Scope QA */}
+        <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#d97706', mt: 3, mb: 1 }}>
+          RINGKASAN SKENARIO PENGUJIAN & PATOKAN SPESIFIKASI RSD
+        </Typography>
+        <Paper variant="outlined" sx={{ p: 2, mb: 3, bgcolor: 'rgba(0,0,0,0.01)' }}>
+          <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.82rem' }}>
+            {qa.summary}
+          </Typography>
+        </Paper>
+
+        {/* Test Items Table */}
+        <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#d97706', mb: 1.5 }}>
+          DAFTAR CHECKLIST TESTING & VALIDASI FITUR ACUAN RSD
+        </Typography>
+        <TableContainer component={Paper} variant="outlined" sx={{ mb: 3 }}>
+          <Table size="small">
+            <TableHead sx={{ bgcolor: 'action.hover' }}>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 800, width: '5%' }}>No</TableCell>
+                <TableCell sx={{ fontWeight: 800, width: '25%' }}>Kategori & Ref RSD</TableCell>
+                <TableCell sx={{ fontWeight: 800, width: '30%' }}>Test Case & Skenario</TableCell>
+                <TableCell sx={{ fontWeight: 800, width: '25%' }}>Hasil Diharapkan</TableCell>
+                <TableCell sx={{ fontWeight: 800, width: '15%' }}>Status</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {(qa.testItems || []).map((item, idx) => (
+                <TableRow key={item.id || idx}>
+                  <TableCell>{idx + 1}</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>
+                    {item.category}
+                    {item.notes && (
+                      <Typography variant="caption" display="block" color="text.secondary" sx={{ fontSize: '0.65rem' }}>
+                        {item.notes}
+                      </Typography>
+                    )}
+                  </TableCell>
+                  <TableCell>{item.testCase}</TableCell>
+                  <TableCell>{item.expectedResult}</TableCell>
+                  <TableCell>
+                    <Tooltip title={onUpdateQA ? 'Klik untuk toggle status (PASSED -> FAILED -> PENDING)' : ''}>
+                      <Chip
+                        label={item.status}
+                        size="small"
+                        color={
+                          item.status === 'PASSED'
+                            ? 'success'
+                            : item.status === 'FAILED'
+                            ? 'error'
+                            : 'warning'
+                        }
+                        onClick={onUpdateQA ? () => toggleTestItemStatus(idx) : undefined}
+                        sx={{ fontWeight: 800, height: 22, fontSize: '0.68rem', cursor: onUpdateQA ? 'pointer' : 'default' }}
+                      />
+                    </Tooltip>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+
+        {/* Signature */}
+        <DocumentSignatureFooter
+          locationCity="Subang / Online"
+          dateStr={qa.issueDate}
+          party1Title="QA LEAD & DEVELOPER"
+          party1Sub="ATASILABS"
+          party1Name={qa.qaLeadName}
+          party1Role="QA Lead & Tech Director"
+          party1Sig={qa.party1Signature}
+          onSignParty1Cb={onSignParty1}
+          party2Title="PIC UAT KLIEN"
+          party2Sub={qa.clientName}
+          party2Name={qa.clientPic}
+          party2Role="Penanggung Jawab UAT Klien"
+          party2Sig={qa.party2Signature}
           onSignParty2Cb={onSignParty2}
         />
       </Paper>

@@ -9,9 +9,12 @@ export async function GET() {
     const items = await prisma.pricingTier.findMany({
       orderBy: { tierNumber: 'asc' },
     });
-    return NextResponse.json({ success: true, data: items.length ? items : INITIAL_PRICING_TIERS });
+    if (!items || items.length === 0) {
+      return NextResponse.json({ success: true, data: INITIAL_PRICING_TIERS, fallback: true, isInitialSeed: true });
+    }
+    return NextResponse.json({ success: true, data: items, fallback: false, isInitialSeed: false });
   } catch (error) {
-    return NextResponse.json({ success: true, data: INITIAL_PRICING_TIERS, fallback: true });
+    return NextResponse.json({ success: true, data: INITIAL_PRICING_TIERS, fallback: true, isInitialSeed: true });
   }
 }
 

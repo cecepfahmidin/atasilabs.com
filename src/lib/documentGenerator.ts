@@ -1,4 +1,4 @@
-import { ClientProject, CIFData, RSDData, MoUData, SPKData, BASTData } from '../types';
+import { ClientProject, CIFData, RSDData, MoUData, SPKData, BASTData, QAData, QATestItem } from '../types';
 
 export function numberToWordsIDR(amount: number): string {
   if (amount <= 0) return 'Nol Rupiah';
@@ -22,6 +22,85 @@ export function inferTierFromBudget(budget: number): { tierName: string; isTier1
   if (budget <= 25000000) return { tierName: 'Tier 3: Profesional', isTier1_2: false, num: 3 };
   if (budget <= 50000000) return { tierName: 'Tier 4: Enterprise', isTier1_2: false, num: 4 };
   return { tierName: 'Tier 5: Elite', isTier1_2: false, num: 5 };
+}
+
+export function generateQAFromRSD(rsd: RSDData, proj: ClientProject, existingQA?: QAData): QAData {
+  const cleanId = proj.id.replace(/\D/g, '') || '1';
+  const indexStr = cleanId.padStart(3, '0').slice(-3);
+  const year = new Date().getFullYear();
+  const dateStr = new Date().toISOString().split('T')[0];
+
+  const existingMap = new Map<string, QATestItem>();
+  if (existingQA && existingQA.testItems) {
+    existingQA.testItems.forEach((ti) => {
+      const match = ti.category?.match(/ATL-\d+/i) || ti.testCase?.match(/ATL-\d+/i);
+      if (match) {
+        existingMap.set(match[0].toUpperCase(), ti);
+      } else if (ti.id) {
+        existingMap.set(ti.id, ti);
+      }
+    });
+  }
+
+  const functionalTestItems: QATestItem[] = (rsd.functionalFeatures || []).map((f, idx) => {
+    const code = f.featureCode || `ATL-${String(idx + 1).padStart(3, '0')}`;
+    const existing = existingMap.get(code.toUpperCase());
+
+    return {
+      id: existing?.id || `tc-f-${code}`,
+      category: `RSD [${code}] - ${f.moduleArea}`,
+      testCase: `Pengujian Fitur ${code}: ${f.nameAndDesc}`,
+      expectedResult: `Fungsi ${f.moduleArea} berjalan normal untuk role ${f.roleAccess}`,
+      status: existing?.status || 'PASSED',
+      notes: existing?.notes || `Ref RSD: ${code} (Prioritas: ${f.priority})`,
+    };
+  });
+
+  const secItem: QATestItem = existingMap.get('tc-sec') || {
+    id: 'tc-sec',
+    category: 'RSD Non-Fungsional (Security)',
+    testCase: 'Keamanan HTTPS, Password Hashing, & Supabase RLS Policies',
+    expectedResult: rsd.nonFunctional?.security || 'Enkripsi HTTPS & Supabase RLS Policies',
+    status: 'PASSED',
+    notes: 'Verified Security',
+  };
+
+  const perfItem: QATestItem = existingMap.get('tc-perf') || {
+    id: 'tc-perf',
+    category: 'RSD Non-Fungsional (Performance)',
+    testCase: 'Audit Kecepatan API Response Time & Page Load',
+    expectedResult: rsd.nonFunctional?.performance || 'API Response Time <= 2s, Page Load <= 3s',
+    status: 'PASSED',
+    notes: 'Lighthouse Score 95+',
+  };
+
+  const uatItem: QATestItem = existingMap.get('tc-uat') || {
+    id: 'tc-uat',
+    category: 'Checklist UAT Klien',
+    testCase: `User Acceptance Testing (UAT) Mandiri oleh Klien (${proj.clientName})`,
+    expectedResult: 'Seluruh deliverable disetujui tanpa kendala blocker',
+    status: 'PASSED',
+    notes: 'UAT Verified',
+  };
+
+  return {
+    id: existingQA?.id || `qa-${proj.id}`,
+    projectId: proj.id,
+    docNumber: existingQA?.docNumber || `${indexStr}/ATL-QA/III/${year}`,
+    issueDate: existingQA?.issueDate || dateStr,
+    clientName: rsd.clientName || proj.clientName,
+    projectTitle: proj.title,
+    qaLeadName: existingQA?.qaLeadName || 'Rizky Ramadhan, S.Kom (CTO / QA Lead)',
+    testerName: existingQA?.testerName || proj.freelancerName || 'Senior Fullstack Developer',
+    clientPic: existingQA?.clientPic || rsd.clientName + ' (PIC UAT)',
+    stagingUrl: existingQA?.stagingUrl || `https://staging-${proj.title.toLowerCase().replace(/[^a-z0-9]/g, '')}.atasilabs.com`,
+    summary: existingQA?.summary || `Laporan Pengujian QA Sprints mengacu pada RSD (${rsd.docCode}), Security RLS, Performance Audit, & Checklist UAT Klien untuk proyek ${proj.title}.`,
+    overallStatus: existingQA?.overallStatus || 'PASSED',
+    testItems: [...functionalTestItems, secItem, perfItem, uatItem],
+    updatedAt: new Date().toISOString(),
+    party1Signature: existingQA?.party1Signature,
+    party2Signature: existingQA?.party2Signature,
+  };
 }
 
 export function generateAutoDocumentsForProject(proj: ClientProject) {
@@ -184,5 +263,7 @@ export function generateAutoDocumentsForProject(proj: ClientProject) {
     updatedAt: new Date().toISOString(),
   };
 
-  return { cif, rsd, mou, spk, bast };
+  const qa = generateQAFromRSD(rsd, proj);
+
+  return { cif, rsd, mou, spk, bast, qa };
 }

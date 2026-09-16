@@ -171,6 +171,30 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
       systemSettings: false,
     },
   },
+  DEVELOPER: {
+    role: 'DEVELOPER',
+    label: 'In-House Developer',
+    badgeColor: 'info',
+    hexColor: '#0284c7',
+    description: 'Developer Internal Atasilabs. Mengakses spesifikasi teknis (RSD), alur pengerjaan proyek, dokumen SPK, dan testing/deployment.',
+    permissions: {
+      overview: true,
+      leads: false,
+      projects: true,
+      documents: true,
+      portfolio: true,
+      pricing: false,
+      users: false,
+      schema: true,
+      hpp: false,
+      hppFinancials: false,
+      freelancerFees: true,
+      clientPricingMoU: false,
+      leadManagement: false,
+      userManagement: false,
+      systemSettings: false,
+    },
+  },
 };
 
 export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, Record<string, boolean>> = {
@@ -180,6 +204,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, Record<string, boolean>>
   ADMIN: { ...ROLE_CONFIGS.ADMIN.permissions },
   CLIENT: { ...ROLE_CONFIGS.CLIENT.permissions },
   FREELANCER: { ...ROLE_CONFIGS.FREELANCER.permissions },
+  DEVELOPER: { ...ROLE_CONFIGS.DEVELOPER.permissions },
 };
 
 export const hasPermission = (role: UserRole, key: string, customMap?: Record<UserRole, Record<string, boolean>>): boolean => {

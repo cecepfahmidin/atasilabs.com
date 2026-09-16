@@ -9,9 +9,12 @@ export async function GET() {
     const projects = await prisma.clientProject.findMany({
       orderBy: { createdAt: 'desc' },
     });
-    return NextResponse.json({ success: true, data: projects.length ? projects : INITIAL_PROJECTS });
+    if (!projects || projects.length === 0) {
+      return NextResponse.json({ success: true, data: INITIAL_PROJECTS, fallback: true, isInitialSeed: true });
+    }
+    return NextResponse.json({ success: true, data: projects, fallback: false, isInitialSeed: false });
   } catch (error) {
-    return NextResponse.json({ success: true, data: INITIAL_PROJECTS, fallback: true });
+    return NextResponse.json({ success: true, data: INITIAL_PROJECTS, fallback: true, isInitialSeed: true });
   }
 }
 
@@ -62,20 +65,31 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
   try {
     const body = await request.json();
-    const { id, ...data } = body;
+    const { id, clientName, clientEmail, title, description, deadline, budget, progress, status } = body;
 
     if (!id) {
       return NextResponse.json({ success: false, error: 'ID is required' }, { status: 400 });
     }
 
+    const prismaUpdateData: any = {};
+    if (clientName !== undefined) prismaUpdateData.clientName = clientName;
+    if (clientEmail !== undefined) prismaUpdateData.clientEmail = clientEmail;
+    if (title !== undefined) prismaUpdateData.title = title;
+    if (description !== undefined) prismaUpdateData.description = description;
+    if (deadline !== undefined) prismaUpdateData.deadline = deadline;
+    if (budget !== undefined) prismaUpdateData.budget = Number(budget);
+    if (progress !== undefined) prismaUpdateData.progress = Number(progress);
+    if (status !== undefined) prismaUpdateData.status = status;
+
     let updated;
     try {
       updated = await prisma.clientProject.update({
         where: { id },
-        data,
+        data: prismaUpdateData,
       });
+      updated = { ...body, ...updated };
     } catch (dbErr) {
-      updated = { id, ...data, updatedAt: new Date().toISOString() };
+      updated = { id, ...body, updatedAt: new Date().toISOString() };
     }
 
     return NextResponse.json({ success: true, data: updated });

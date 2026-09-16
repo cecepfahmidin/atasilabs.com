@@ -184,18 +184,6 @@ export const Footer: React.FC = () => {
               >
                 Progres Proyek & Deadline
               </Link>
-              <Link
-                component="button"
-                onClick={() => {
-                  setActiveView('dashboard');
-                  setDashboardTab('schema');
-                }}
-                color="text.secondary"
-                underline="hover"
-                sx={{ textAlign: 'left', fontSize: '0.88rem' }}
-              >
-                Skema Database Prisma
-              </Link>
             </Stack>
           </Grid>
         </Grid>

@@ -19,8 +19,8 @@ interface AppContextType {
   toggleTheme: () => void;
   activeView: 'landing' | 'dashboard';
   setActiveView: (view: 'landing' | 'dashboard') => void;
-  dashboardTab: 'overview' | 'leads' | 'portfolio' | 'projects' | 'pricing' | 'schema' | 'documents' | 'users' | 'hpp';
-  setDashboardTab: (tab: 'overview' | 'leads' | 'portfolio' | 'projects' | 'pricing' | 'schema' | 'documents' | 'users' | 'hpp') => void;
+  dashboardTab: 'overview' | 'leads' | 'portfolio' | 'projects' | 'pricing' | 'documents' | 'users' | 'hpp';
+  setDashboardTab: (tab: 'overview' | 'leads' | 'portfolio' | 'projects' | 'pricing' | 'documents' | 'users' | 'hpp') => void;
   
   // Auth & RBAC
   currentUser: User | null;
@@ -74,6 +74,12 @@ interface AppContextType {
   // Quick Action / Pre-fill contact form
   selectedServiceForInquiry: string;
   setSelectedServiceForInquiry: (service: string) => void;
+
+  // Document Navigation Selection State
+  selectedDocumentProjectId: string;
+  setSelectedDocumentProjectId: (id: string) => void;
+  selectedDocumentType: 'CIF' | 'RSD' | 'MOU' | 'SPK' | 'BAST';
+  setSelectedDocumentType: (type: 'CIF' | 'RSD' | 'MOU' | 'SPK' | 'BAST') => void;
 
   // Reset demo data
   resetAllDataToDefaults: () => void;
@@ -172,9 +178,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // View state
   const [activeView, setActiveView] = useState<'landing' | 'dashboard'>('landing');
-  const [dashboardTab, setDashboardTab] = useState<'overview' | 'pricing' | 'leads' | 'portfolio' | 'projects' | 'schema' | 'documents' | 'users' | 'hpp'>('overview');
+  const [dashboardTab, setDashboardTab] = useState<'overview' | 'pricing' | 'leads' | 'portfolio' | 'projects' | 'documents' | 'users' | 'hpp'>('overview');
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [selectedServiceForInquiry, setSelectedServiceForInquiry] = useState('');
+  const [selectedDocumentProjectId, setSelectedDocumentProjectId] = useState<string>('proj-1');
+  const [selectedDocumentType, setSelectedDocumentType] = useState<'CIF' | 'RSD' | 'MOU' | 'SPK' | 'BAST'>('CIF');
 
   // Persistent States initialized from Initial Constants (to avoid SSR/Client Hydration Mismatch)
   const [users, setUsers] = useState<User[]>(INITIAL_USERS);
@@ -206,50 +214,65 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, []);
 
-  // Helper State Setters with Automatic LocalStorage Sync
-  const saveUsers = (next: User[]) => {
-    setUsers(next);
-    try {
-      localStorage.setItem(STORAGE_KEYS.USERS_LIST, JSON.stringify(next));
-    } catch (e) {
-      console.error(e);
-    }
+  // Helper State Setters with Automatic LocalStorage Sync (using functional state updates)
+  const saveUsers = (next: User[] | ((prev: User[]) => User[])) => {
+    setUsers((prev) => {
+      const updated = typeof next === 'function' ? next(prev) : next;
+      try {
+        localStorage.setItem(STORAGE_KEYS.USERS_LIST, JSON.stringify(updated));
+      } catch (e) {
+        console.error(e);
+      }
+      return updated;
+    });
   };
 
-  const saveLeads = (next: Lead[]) => {
-    setLeads(next);
-    try {
-      localStorage.setItem(STORAGE_KEYS.LEADS, JSON.stringify(next));
-    } catch (e) {
-      console.error(e);
-    }
+  const saveLeads = (next: Lead[] | ((prev: Lead[]) => Lead[])) => {
+    setLeads((prev) => {
+      const updated = typeof next === 'function' ? next(prev) : next;
+      try {
+        localStorage.setItem(STORAGE_KEYS.LEADS, JSON.stringify(updated));
+      } catch (e) {
+        console.error(e);
+      }
+      return updated;
+    });
   };
 
-  const savePortfolios = (next: Portfolio[]) => {
-    setPortfolios(next);
-    try {
-      localStorage.setItem(STORAGE_KEYS.PORTFOLIOS, JSON.stringify(next));
-    } catch (e) {
-      console.error(e);
-    }
+  const savePortfolios = (next: Portfolio[] | ((prev: Portfolio[]) => Portfolio[])) => {
+    setPortfolios((prev) => {
+      const updated = typeof next === 'function' ? next(prev) : next;
+      try {
+        localStorage.setItem(STORAGE_KEYS.PORTFOLIOS, JSON.stringify(updated));
+      } catch (e) {
+        console.error(e);
+      }
+      return updated;
+    });
   };
 
-  const saveProjects = (next: ClientProject[]) => {
-    setProjects(next);
-    try {
-      localStorage.setItem(STORAGE_KEYS.PROJECTS, JSON.stringify(next));
-    } catch (e) {
-      console.error(e);
-    }
+  const saveProjects = (next: ClientProject[] | ((prev: ClientProject[]) => ClientProject[])) => {
+    setProjects((prev) => {
+      const updated = typeof next === 'function' ? next(prev) : next;
+      try {
+        localStorage.setItem(STORAGE_KEYS.PROJECTS, JSON.stringify(updated));
+      } catch (e) {
+        console.error(e);
+      }
+      return updated;
+    });
   };
 
-  const savePricingTiers = (next: PricingTier[]) => {
-    setPricingTiers(next);
-    try {
-      localStorage.setItem(STORAGE_KEYS.PRICING, JSON.stringify(next));
-    } catch (e) {
-      console.error(e);
-    }
+  const savePricingTiers = (next: PricingTier[] | ((prev: PricingTier[]) => PricingTier[])) => {
+    setPricingTiers((prev) => {
+      const updated = typeof next === 'function' ? next(prev) : next;
+      try {
+        localStorage.setItem(STORAGE_KEYS.PRICING, JSON.stringify(updated));
+      } catch (e) {
+        console.error(e);
+      }
+      return updated;
+    });
   };
 
   useEffect(() => {
@@ -302,41 +325,35 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       console.error(e);
     }
     setActiveView('landing');
-    showNotification('Sesi berakhir. Anda kembali ke Laman Depan.', 'info');
+    showNotification('Logout berhasil', 'info');
   };
 
+  // User Management
   const addUser = async (userData: Omit<User, 'id' | 'createdAt'>): Promise<User> => {
-    const newU: User = {
+    const newUser: User = {
       ...userData,
       id: `usr-${Date.now()}`,
       createdAt: new Date().toISOString(),
     };
-    saveUsers([newU, ...users]);
-    showNotification(`User ${newU.name} (${newU.role}) berhasil ditambahkan!`, 'success');
-    return newU;
+    saveUsers((prev) => [...prev, newUser]);
+    showNotification(`Pengguna ${newUser.name} [${newUser.role}] berhasil ditambahkan`, 'success');
+    return newUser;
   };
 
   const updateUser = async (id: string, fields: Partial<User>) => {
-    const nextUsers = users.map((u) => (u.id === id ? { ...u, ...fields, updatedAt: new Date().toISOString() } : u));
-    saveUsers(nextUsers);
+    saveUsers((prev) => prev.map((u) => (u.id === id ? { ...u, ...fields } : u)));
     if (currentUser?.id === id) {
-      const updatedCurrent = { ...currentUser, ...fields };
-      setCurrentUser(updatedCurrent);
-      try {
-        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(updatedCurrent));
-      } catch (e) {
-        console.error(e);
-      }
+      setCurrentUser((prev) => (prev ? { ...prev, ...fields } : null));
     }
     showNotification('Data pengguna & hak akses RBAC berhasil diperbarui!', 'success');
   };
 
   const deleteUser = async (id: string) => {
-    saveUsers(users.filter((u) => u.id !== id));
+    saveUsers((prev) => prev.filter((u) => u.id !== id));
     showNotification('Pengguna telah dihapus dari sistem', 'warning');
   };
 
-  // Fetch initial data from Next.js API Routes (if backend is connected)
+  // Fetch initial data from Next.js API Routes (only if local storage is completely empty)
   const refreshDataFromBackend = async () => {
     try {
       const [leadsRes, portRes, projRes, pricingRes] = await Promise.all([
@@ -346,10 +363,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         fetch('/api/pricing').then((res) => res.json()).catch(() => null),
       ]);
 
-      if (leadsRes?.success && Array.isArray(leadsRes.data) && leadsRes.data.length > 0) saveLeads(leadsRes.data);
-      if (portRes?.success && Array.isArray(portRes.data) && portRes.data.length > 0) savePortfolios(portRes.data);
-      if (projRes?.success && Array.isArray(projRes.data) && projRes.data.length > 0) saveProjects(projRes.data);
-      if (pricingRes?.success && Array.isArray(pricingRes.data) && pricingRes.data.length > 0) savePricingTiers(pricingRes.data);
+      const hasLocalLeads = typeof window !== 'undefined' && !!localStorage.getItem(STORAGE_KEYS.LEADS);
+      const hasLocalPortfolios = typeof window !== 'undefined' && !!localStorage.getItem(STORAGE_KEYS.PORTFOLIOS);
+      const hasLocalProjects = typeof window !== 'undefined' && !!localStorage.getItem(STORAGE_KEYS.PROJECTS);
+      const hasLocalPricing = typeof window !== 'undefined' && !!localStorage.getItem(STORAGE_KEYS.PRICING);
+
+      if (!hasLocalLeads && leadsRes?.success && Array.isArray(leadsRes.data) && leadsRes.data.length > 0) {
+        saveLeads(leadsRes.data);
+      }
+
+      if (!hasLocalPortfolios && portRes?.success && Array.isArray(portRes.data) && portRes.data.length > 0) {
+        savePortfolios(portRes.data);
+      }
+
+      if (!hasLocalProjects && projRes?.success && Array.isArray(projRes.data) && projRes.data.length > 0) {
+        saveProjects(projRes.data);
+      }
+
+      if (!hasLocalPricing && pricingRes?.success && Array.isArray(pricingRes.data) && pricingRes.data.length > 0) {
+        savePricingTiers(pricingRes.data);
+      }
     } catch (err) {
       console.warn('Could not fetch from backend APIs, keeping local storage state:', err);
     }
@@ -368,7 +401,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       createdAt: new Date().toISOString(),
     };
 
-    saveLeads([tempLead, ...leads]);
+    saveLeads((prev) => [tempLead, ...prev]);
 
     try {
       const res = await fetch('/api/leads', {
@@ -377,8 +410,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         body: JSON.stringify(leadData),
       });
       const data = await res.json();
-      if (data.success && data.data) {
-        saveLeads(leads.map((l) => (l.id === tempLead.id ? data.data : l)));
+      if (data.success && data.data && !data.fallback) {
+        saveLeads((prev) => prev.map((l) => (l.id === tempLead.id ? data.data : l)));
         showNotification('Pesan terkirim! Tersimpan di database Prisma & Supabase.', 'success');
         return data.data;
       }
@@ -391,7 +424,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateLeadStatus = async (id: string, status: LeadStatus) => {
-    saveLeads(leads.map((item) => (item.id === id ? { ...item, status } : item)));
+    saveLeads((prev) => prev.map((item) => (item.id === id ? { ...item, status } : item)));
     try {
       await fetch('/api/leads', {
         method: 'PATCH',
@@ -405,7 +438,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const deleteLead = async (id: string) => {
-    saveLeads(leads.filter((item) => item.id !== id));
+    saveLeads((prev) => prev.filter((item) => item.id !== id));
     try {
       await fetch(`/api/leads?id=${id}`, { method: 'DELETE' });
     } catch (e) {
@@ -415,7 +448,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const markAllLeadsRead = async () => {
-    saveLeads(leads.map((item) => (item.status === 'NEW' ? { ...item, status: 'READ' } : item)));
+    saveLeads((prev) => prev.map((item) => (item.status === 'NEW' ? { ...item, status: 'READ' } : item)));
     showNotification('Semua pesan baru telah ditandai sebagai dibaca', 'success');
   };
 
@@ -430,7 +463,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       createdAt: now,
       updatedAt: now,
     };
-    savePortfolios([tempPort, ...portfolios]);
+    savePortfolios((prev) => [tempPort, ...prev]);
 
     try {
       const res = await fetch('/api/portfolio', {
@@ -439,8 +472,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         body: JSON.stringify(item),
       });
       const data = await res.json();
-      if (data.success && data.data) {
-        savePortfolios(portfolios.map((p) => (p.id === tempPort.id ? data.data : p)));
+      if (data.success && data.data && !data.fallback) {
+        savePortfolios((prev) => prev.map((p) => (p.id === tempPort.id ? data.data : p)));
         showNotification('Portofolio disimpan ke database Prisma & Supabase!', 'success');
         return data.data;
       }
@@ -453,7 +486,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updatePortfolio = async (id: string, item: Partial<Portfolio>) => {
-    savePortfolios(portfolios.map((p) => (p.id === id ? { ...p, ...item, updatedAt: new Date().toISOString() } : p)));
+    savePortfolios((prev) => prev.map((p) => (p.id === id ? { ...p, ...item, updatedAt: new Date().toISOString() } : p)));
     try {
       await fetch('/api/portfolio', {
         method: 'PUT',
@@ -467,7 +500,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const deletePortfolio = async (id: string) => {
-    savePortfolios(portfolios.filter((p) => p.id !== id));
+    savePortfolios((prev) => prev.filter((p) => p.id !== id));
     try {
       await fetch(`/api/portfolio?id=${id}`, { method: 'DELETE' });
     } catch (e) {
@@ -485,7 +518,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       createdAt: now,
       updatedAt: now,
     };
-    saveProjects([tempProj, ...projects]);
+    saveProjects((prev) => [tempProj, ...prev]);
 
     // Automatically generate 5 official documents (CIF, RSD, MoU, SPK, BAST)
     try {
@@ -502,8 +535,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         body: JSON.stringify(proj),
       });
       const data = await res.json();
-      if (data.success && data.data) {
-        saveProjects(projects.map((p) => (p.id === tempProj.id ? data.data : p)));
+      if (data.success && data.data && !data.fallback) {
+        saveProjects((prev) => prev.map((p) => (p.id === tempProj.id ? data.data : p)));
         showNotification('Proyek dicatat & 5 Dokumen Operasional (CIF, RSD, MoU, SPK, BAST) dibuat otomatis!', 'success');
         return data.data;
       }
@@ -516,7 +549,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateProject = async (id: string, proj: Partial<ClientProject>) => {
-    saveProjects(projects.map((p) => (p.id === id ? { ...p, ...proj, updatedAt: new Date().toISOString() } : p)));
+    saveProjects((prev) => prev.map((p) => (p.id === id ? { ...p, ...proj, updatedAt: new Date().toISOString() } : p)));
     try {
       await fetch('/api/projects', {
         method: 'PATCH',
@@ -530,7 +563,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const deleteProject = async (id: string) => {
-    saveProjects(projects.filter((p) => p.id !== id));
+    saveProjects((prev) => prev.filter((p) => p.id !== id));
     try {
       await fetch(`/api/projects?id=${id}`, { method: 'DELETE' });
     } catch (e) {
@@ -544,8 +577,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const stageCfg = getStageFromProgress(clampedProgress);
     let calculatedStatus: ProjectStatus = status || stageCfg.defaultStatus;
 
-    saveProjects(
-      projects.map((p) => {
+    saveProjects((prev) =>
+      prev.map((p) => {
         if (p.id !== id) return p;
         return {
           ...p,
@@ -561,11 +594,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       await fetch('/api/projects', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, progress: clampedProgress, ipwStage: stageCfg.stage, status: calculatedStatus }),
+        body: JSON.stringify({
+          id,
+          progress: clampedProgress,
+          status: calculatedStatus,
+          ipwStage: stageCfg.stage,
+        }),
       });
     } catch (e) {
       console.error(e);
     }
+    showNotification(`Progress proyek diubah menjadi ${clampedProgress}% (${stageCfg.label})`, 'info');
   };
 
   // Pricing Tiers CRUD
@@ -688,6 +727,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         closeNotification,
         selectedServiceForInquiry,
         setSelectedServiceForInquiry,
+        selectedDocumentProjectId,
+        setSelectedDocumentProjectId,
+        selectedDocumentType,
+        setSelectedDocumentType,
         resetAllDataToDefaults,
         refreshDataFromBackend,
       }}

@@ -10,6 +10,7 @@ import {
   Box,
   Typography,
   TextField,
+  MenuItem,
   Grid,
   IconButton,
   Paper,
@@ -30,6 +31,7 @@ import {
   PhotoCamera as CameraIcon,
 } from '@mui/icons-material';
 import { DigitalSignatureData, SignatureAuditTrail } from '../../types';
+import { useApp } from '../../context/AppContext';
 
 interface SignatureDialogProps {
   open: boolean;
@@ -65,6 +67,44 @@ export const SignatureDialog: React.FC<SignatureDialogProps> = ({
   const [clientIp, setClientIp] = useState<string>('Memuat IP...');
   const [userAgent, setUserAgent] = useState<string>('');
   const [timestamp, setTimestamp] = useState<string>('');
+
+  const { users } = useApp();
+
+  // Dynamic user options for Signer Name
+  const signerOptionsMap = new Map<string, { name: string; role: string; email?: string; label: string }>();
+
+  (users || []).forEach((u) => {
+    signerOptionsMap.set(u.name, {
+      name: u.name,
+      role: u.role,
+      email: u.email,
+      label: `${u.name} (${u.role})`,
+    });
+  });
+
+  if (signerName && !signerOptionsMap.has(signerName)) {
+    signerOptionsMap.set(signerName, {
+      name: signerName,
+      role: signerRole || 'Penandatangan',
+      label: signerName,
+    });
+  }
+
+  const signerOptions = Array.from(signerOptionsMap.values());
+
+  const handleSignerNameSelect = (nameVal: string) => {
+    setSignerName(nameVal);
+    const matched = (users || []).find((u) => u.name === nameVal);
+    if (matched) {
+      if (matched.email) setSignerEmail(matched.email);
+      if (matched.role === 'CEO') setSignerRole('Founder & CEO Atasilabs');
+      else if (matched.role === 'CTO') setSignerRole('Chief Technology Officer (CTO)');
+      else if (matched.role === 'CMO') setSignerRole('Chief Marketing Officer (CMO)');
+      else if (matched.role === 'ADMIN') setSignerRole('System Administrator');
+      else if (matched.role === 'DEVELOPER') setSignerRole('Software Engineer / QA');
+      else setSignerRole(matched.role);
+    }
+  };
 
   useEffect(() => {
     if (open) {
@@ -288,13 +328,19 @@ export const SignatureDialog: React.FC<SignatureDialogProps> = ({
         <Grid container spacing={2} sx={{ mb: 2 }}>
           <Grid item xs={12} sm={6}>
             <TextField
+              select
               label="Nama Penandatangan"
               fullWidth
               size="small"
               value={signerName}
-              onChange={(e) => setSignerName(e.target.value)}
-              placeholder="e.g. Cecep Fahmidin"
-            />
+              onChange={(e) => handleSignerNameSelect(e.target.value)}
+            >
+              {signerOptions.map((opt) => (
+                <MenuItem key={opt.name} value={opt.name}>
+                  {opt.label}
+                </MenuItem>
+              ))}
+            </TextField>
           </Grid>
           <Grid item xs={12} sm={6}>
             <TextField

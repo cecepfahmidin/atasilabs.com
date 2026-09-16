@@ -1,4 +1,4 @@
-import { CIFData, RSDData, MoUData, SPKData, BASTData, HPPItem } from '../types';
+import { CIFData, RSDData, MoUData, SPKData, BASTData, HPPItem, QAData } from '../types';
 
 export const INITIAL_CIF_DATA: CIFData[] = [
   {
@@ -374,5 +374,81 @@ export const INITIAL_HPP_MATRIX: HPPItem[] = [
       mitigation: 2770000,
       zakat: 1385000,
     },
+  },
+];
+
+export const INITIAL_QA_DATA: QAData[] = [
+  {
+    id: 'qa-1',
+    projectId: 'proj-1',
+    docNumber: '001/ATL-QA/III/2026',
+    issueDate: '2026-03-20',
+    clientName: 'PT Nusantara Teknologi Mandiri',
+    projectTitle: 'Platform Portal Enterprise Next.js',
+    qaLeadName: 'Rizky Ramadhan, S.Kom (CTO / QA Lead)',
+    testerName: 'Rian Hidayat (Senior Developer)',
+    clientPic: 'Budi Santoso (Direktur IT)',
+    stagingUrl: 'https://staging-b2b.atasilabs.com',
+    summary: 'Laporan hasil pengujian QA Sprints mengacu pada RSD (001/ATL-RSD/III/2026), Security RLS, Performance Audit, & Checklist UAT Klien.',
+    overallStatus: 'PASSED',
+    testItems: [
+      {
+        id: 'tc-1',
+        category: 'RSD [ATL-001] - Autentikasi',
+        testCase: 'Pengujian Fitur ATL-001: Login, Register, & OTP Email dengan role Admin & Client',
+        expectedResult: 'Berhasil redirect ke dashboard sesuai hak akses RBAC & Supabase RLS',
+        status: 'PASSED',
+        notes: 'Supabase Auth RLS terverifikasi aman',
+      },
+      {
+        id: 'tc-2',
+        category: 'RSD [ATL-002] - User Management',
+        testCase: 'Pengujian Fitur ATL-002: Kelola Profil & Penetapan Role RBAC',
+        expectedResult: 'Hanya Admin yang dapat mengubah role user & akses fitur sensitif',
+        status: 'PASSED',
+        notes: 'Verified Security Role',
+      },
+      {
+        id: 'tc-3',
+        category: 'RSD [ATL-003] - Dashboard Utama',
+        testCase: 'Pengujian Fitur ATL-003: Visualisasi Grafik & Statistik Ringkasan',
+        expectedResult: 'Grafik Recharts dirender presisi dengan data riil Supabase',
+        status: 'PASSED',
+        notes: 'Tested 100% Mobile Responsive',
+      },
+      {
+        id: 'tc-4',
+        category: 'RSD [ATL-004] - Manajemen Transaksi',
+        testCase: 'Pengujian Fitur ATL-004: Pencatatan data & ekspor laporan PDF/Excel',
+        expectedResult: 'Total transaksi terhitung akurat & PDF tergenerate sempurna',
+        status: 'PASSED',
+        notes: 'Formula kalkulasi & PDF terverifikasi',
+      },
+      {
+        id: 'tc-5',
+        category: 'RSD [ATL-005] - Integrasi Payment Gateway',
+        testCase: 'Pengujian Fitur ATL-005: Proses pembayaran otomatis via Virtual Account & QRIS',
+        expectedResult: 'Callback webhook payment gateway terkonfirmasi 100% otomatis',
+        status: 'PASSED',
+        notes: 'Simulasi VA & QRIS sukses',
+      },
+      {
+        id: 'tc-sec',
+        category: 'RSD Non-Fungsional (Security)',
+        testCase: 'Keamanan HTTPS, Password Hashing, & Supabase RLS Policies',
+        expectedResult: 'Enkripsi SSL 256-bit & RLS active',
+        status: 'PASSED',
+        notes: 'Lighthouse Security 100/100',
+      },
+      {
+        id: 'tc-uat',
+        category: 'Checklist UAT Klien',
+        testCase: 'User Acceptance Testing (UAT) mandiri oleh tim PIC Klien di Staging',
+        expectedResult: 'Seluruh deliverable disetujui tanpa kendala blocker',
+        status: 'PASSED',
+        notes: 'Diuji pada 20 Maret 2026',
+      },
+    ],
+    updatedAt: '2026-03-20T10:00:00.000Z',
   },
 ];

@@ -29,14 +29,11 @@ import {
   Email as EmailIcon,
   Code as CodeIcon,
   Assignment as AssignmentIcon,
-  Storage as StorageIcon,
   Bolt as BoltIcon,
   Brightness4 as DarkIcon,
   Brightness7 as LightIcon,
   ExitToApp as LogoutIcon,
-  ArrowBack as ArrowBackIcon,
   Person as PersonIcon,
-  CheckCircle as CheckCircleIcon,
   RestartAlt as ResetIcon,
   Description as DescriptionIcon,
   People as PeopleIcon,
@@ -136,13 +133,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
       icon: <BoltIcon />,
       badge: 0,
     },
-    {
-      id: 'schema',
-      label: 'Skema Prisma & RLS',
-      href: '/dashboard/schema',
-      icon: <StorageIcon />,
-      badge: 0,
-    },
   ];
 
   const menuItems = rawMenuItems.filter((item) => hasRolePermission(userRole, item.id));
@@ -175,26 +165,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
           </Typography>
         </Box>
       </Box>
-
-      {/* Return to Landing Page Button */}
-      <Button
-        variant="outlined"
-        size="small"
-        fullWidth
-        startIcon={<ArrowBackIcon fontSize="small" />}
-        onClick={() => setActiveView('landing')}
-        sx={{
-          mb: 2.5,
-          borderRadius: 2,
-          justifyContent: 'flex-start',
-          color: theme.palette.text.secondary,
-          borderColor: theme.palette.divider,
-          fontSize: '0.8rem',
-          py: 0.8,
-        }}
-      >
-        Kembali ke Laman Depan
-      </Button>
 
       {/* Navigation List */}
       <List sx={{ px: 0, flexGrow: 1 }}>
@@ -296,11 +266,18 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
           display: 'flex',
           alignItems: 'center',
           gap: 1.2,
+          cursor: 'pointer',
+          '&:hover': {
+            backgroundColor:
+              theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.07)' : 'rgba(0, 0, 0, 0.06)',
+          },
         }}
+        onClick={() => setDashboardTab('users')}
+        title="Klik untuk kelola profil & ganti foto avatar user"
       >
         <Avatar
           src={currentUser?.avatarUrl}
-          sx={{ width: 34, height: 34, bgcolor: roleConfig.hexColor }}
+          sx={{ width: 34, height: 34, bgcolor: roleConfig.hexColor, border: '1.5px solid', borderColor: 'primary.main' }}
         >
           {currentUser?.name?.[0] || 'A'}
         </Avatar>
@@ -317,7 +294,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
             sx={{ height: 18, fontSize: '0.62rem', fontWeight: 800, mt: 0.2 }}
           />
         </Box>
-        <IconButton size="small" onClick={logout} title="Logout">
+        <IconButton size="small" onClick={(e) => { e.stopPropagation(); logout(); }} title="Logout">
           <LogoutIcon fontSize="small" sx={{ fontSize: 18 }} />
         </IconButton>
       </Box>
@@ -357,19 +334,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
 
           {/* Right Action Icons */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Chip
-              icon={<CheckCircleIcon sx={{ fontSize: '14px !important', color: '#10b981 !important' }} />}
-              label="Supabase Connected"
-              size="small"
-              sx={{
-                display: { xs: 'none', sm: 'inline-flex' },
-                fontSize: '0.72rem',
-                fontWeight: 600,
-                backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                color: '#10b981',
-              }}
-            />
-
             <IconButton
               onClick={toggleTheme}
               color="inherit"
@@ -381,21 +345,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                 <DarkIcon sx={{ color: '#475569', fontSize: 18 }} />
               )}
             </IconButton>
-
-            <Button
-              variant="text"
-              size="small"
-              startIcon={<ArrowBackIcon />}
-              onClick={() => setActiveView('landing')}
-              sx={{
-                display: { xs: 'none', sm: 'inline-flex' },
-                color: theme.palette.text.secondary,
-                fontWeight: 600,
-                fontSize: '0.82rem',
-              }}
-            >
-              Laman Depan
-            </Button>
           </Box>
         </Toolbar>
       </AppBar>

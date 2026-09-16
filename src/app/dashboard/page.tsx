@@ -8,7 +8,6 @@ import { LeadsView } from '@/components/dashboard/LeadsView';
 import { PortfolioCMSView } from '@/components/dashboard/PortfolioCMSView';
 import { ProjectsView } from '@/components/dashboard/ProjectsView';
 import { PricingCMSView } from '@/components/dashboard/PricingCMSView';
-import { SchemaInspectorView } from '@/components/dashboard/SchemaInspectorView';
 import { DocumentsWorkflowView } from '@/components/dashboard/DocumentsWorkflowView';
 import { UsersView } from '@/components/dashboard/UsersView';
 
@@ -28,7 +27,6 @@ export default function DashboardPage() {
       {dashboardTab === 'portfolio' && <PortfolioCMSView />}
       {dashboardTab === 'projects' && <ProjectsView />}
       {dashboardTab === 'pricing' && <PricingCMSView />}
-      {dashboardTab === 'schema' && <SchemaInspectorView />}
     </DashboardLayout>
   );
 }

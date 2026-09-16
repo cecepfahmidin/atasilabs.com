@@ -65,14 +65,14 @@ export const IPW_STAGES_CONFIG: Record<IPWStage, IPWStageConfig> = {
   STAGE_5_EXECUTION: {
     stage: 'STAGE_5_EXECUTION',
     stageNumber: 5,
-    label: 'Tahap 5: Pengerjaan Teknis & Review',
-    shortName: 'Tahap 5 - Review Sprints',
+    label: 'Tahap 5: QA Testing & UAT Review',
+    shortName: 'Tahap 5 - QA & UAT',
     progressPercent: 85,
     defaultStatus: 'REVIEW',
     badgeColor: 'secondary',
     hexColor: '#ec4899',
-    description: 'Pengembangan full-stack, QA Testing, Staging deployment, & UAT review klien.',
-    documentAssigned: 'Checklist UAT & Sprints Review',
+    description: 'Pengembangan full-stack, QA Testing Sprints, Staging deployment, & checklist UAT Klien.',
+    documentAssigned: 'QA (Quality Assurance & Checklist UAT)',
   },
   STAGE_6_CLOSURE: {
     stage: 'STAGE_6_CLOSURE',

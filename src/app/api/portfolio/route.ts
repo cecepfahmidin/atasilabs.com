@@ -9,9 +9,12 @@ export async function GET() {
     const items = await prisma.portfolio.findMany({
       orderBy: { createdAt: 'desc' },
     });
-    return NextResponse.json({ success: true, data: items });
+    if (!items || items.length === 0) {
+      return NextResponse.json({ success: true, data: INITIAL_PORTFOLIOS, fallback: true, isInitialSeed: true });
+    }
+    return NextResponse.json({ success: true, data: items, fallback: false, isInitialSeed: false });
   } catch (error) {
-    return NextResponse.json({ success: true, data: INITIAL_PORTFOLIOS, fallback: true });
+    return NextResponse.json({ success: true, data: INITIAL_PORTFOLIOS, fallback: true, isInitialSeed: true });
   }
 }
 

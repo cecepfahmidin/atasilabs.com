@@ -51,10 +51,20 @@ import {
   Info as InfoIcon,
   Lock as LockIcon,
   RestartAlt as ResetIcon,
+  PhotoCamera as PhotoCameraIcon,
 } from '@mui/icons-material';
 import { useApp } from '../../context/AppContext';
 import { User, UserRole } from '../../types';
 import { ROLE_CONFIGS, hasPermission } from '../../lib/rbac';
+
+const PRESET_AVATARS = [
+  { label: 'CEO / Exec', url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80' },
+  { label: 'Senior Dev', url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80' },
+  { label: 'Manager Wanita', url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=250&q=80' },
+  { label: 'Tech Lead', url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=250&q=80' },
+  { label: 'Dev Wanita', url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=250&q=80' },
+  { label: 'Corporate', url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=250&q=80' },
+];
 
 export const UsersView: React.FC = () => {
   const theme = useTheme();
@@ -78,6 +88,8 @@ export const UsersView: React.FC = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
+  const { showNotification } = useApp();
+
   // Form state
   const [formData, setFormData] = useState<{
     name: string;
@@ -86,6 +98,7 @@ export const UsersView: React.FC = () => {
     phone: string;
     company: string;
     status: 'ACTIVE' | 'INACTIVE';
+    avatarUrl: string;
   }>({
     name: '',
     email: '',
@@ -93,7 +106,28 @@ export const UsersView: React.FC = () => {
     phone: '',
     company: '',
     status: 'ACTIVE',
+    avatarUrl: '',
   });
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      showNotification('Ukuran file foto maksimal 5 MB', 'warning');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64 = event.target?.result as string;
+      if (base64) {
+        setFormData((prev) => ({ ...prev, avatarUrl: base64 }));
+        showNotification('Foto profil berhasil diupload!', 'success');
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleOpenAdd = () => {
     setEditingUser(null);
@@ -104,6 +138,7 @@ export const UsersView: React.FC = () => {
       phone: '',
       company: '',
       status: 'ACTIVE',
+      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
     });
     setOpenDialog(true);
   };
@@ -117,6 +152,7 @@ export const UsersView: React.FC = () => {
       phone: user.phone || '',
       company: user.company || '',
       status: user.status || 'ACTIVE',
+      avatarUrl: user.avatarUrl || '',
     });
     setOpenDialog(true);
   };
@@ -527,7 +563,6 @@ export const UsersView: React.FC = () => {
                   { key: 'portfolio', label: 'CMS Portofolio & Showcases' },
                   { key: 'pricing', label: 'Pengaturan Pricelist Paket & Spec' },
                   { key: 'users', label: 'Manajemen User & Pengaturan RBAC' },
-                  { key: 'schema', label: 'Inspektur Skema Database Prisma & RLS' },
                 ].map((item) => (
                   <TableRow key={item.key} hover>
                     <TableCell sx={{ fontWeight: 600 }}>{item.label}</TableCell>
@@ -568,6 +603,94 @@ export const UsersView: React.FC = () => {
         </DialogTitle>
         <DialogContent dividers>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 1 }}>
+            {/* Avatar Photo Management Section */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', p: 2, bgcolor: 'action.hover', borderRadius: 2.5, border: '1px dashed', borderColor: 'divider' }}>
+              <Box sx={{ position: 'relative' }}>
+                <Avatar
+                  src={formData.avatarUrl}
+                  sx={{ width: 84, height: 84, border: '3px solid', borderColor: 'primary.main', boxShadow: 3, mb: 1 }}
+                >
+                  {formData.name ? formData.name[0]?.toUpperCase() : 'U'}
+                </Avatar>
+                <label htmlFor="avatar-file-input">
+                  <IconButton
+                    component="span"
+                    size="small"
+                    color="primary"
+                    sx={{
+                      position: 'absolute',
+                      bottom: 8,
+                      right: -4,
+                      bgcolor: 'background.paper',
+                      boxShadow: 2,
+                      '&:hover': { bgcolor: 'background.paper' },
+                    }}
+                    title="Upload Foto Profil Baru"
+                  >
+                    <PhotoCameraIcon fontSize="small" />
+                  </IconButton>
+                </label>
+                <input
+                  type="file"
+                  id="avatar-file-input"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  style={{ display: 'none' }}
+                />
+              </Box>
+
+              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, mb: 1.5, textAlign: 'center' }}>
+                Klik ikon kamera untuk upload foto dari laptop/HP (PNG/JPG, Maks 5MB)
+              </Typography>
+
+              <Box sx={{ width: '100%', mb: 1.5 }}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="URL Link Foto Profil (Atau Paste Link)"
+                  value={formData.avatarUrl}
+                  onChange={(e) => setFormData({ ...formData, avatarUrl: e.target.value })}
+                  placeholder="https://images.unsplash.com/..."
+                />
+              </Box>
+
+              {/* Sample Preset Avatars */}
+              <Box sx={{ width: '100%' }}>
+                <Typography variant="caption" sx={{ fontWeight: 700, display: 'block', mb: 1, color: 'text.secondary' }}>
+                  Atau Pilih Foto Sample Preset:
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+                  {PRESET_AVATARS.map((preset, i) => (
+                    <Tooltip key={i} title={preset.label} arrow placement="top">
+                      <Avatar
+                        src={preset.url}
+                        onClick={() => setFormData({ ...formData, avatarUrl: preset.url })}
+                        sx={{
+                          width: 34,
+                          height: 34,
+                          cursor: 'pointer',
+                          border: formData.avatarUrl === preset.url ? '2px solid #d97706' : '1px solid rgba(0,0,0,0.2)',
+                          transform: formData.avatarUrl === preset.url ? 'scale(1.15)' : 'scale(1)',
+                          transition: 'all 0.2s ease',
+                          '&:hover': { transform: 'scale(1.15)' },
+                        }}
+                      />
+                    </Tooltip>
+                  ))}
+                  {formData.avatarUrl && (
+                    <Button
+                      size="small"
+                      color="error"
+                      onClick={() => setFormData({ ...formData, avatarUrl: '' })}
+                      sx={{ fontSize: '0.68rem', textTransform: 'none', ml: 'auto' }}
+                    >
+                      Hapus Foto
+                    </Button>
+                  )}
+                </Box>
+              </Box>
+            </Box>
+
             <TextField
               label="Nama Lengkap"
               fullWidth

@@ -15,7 +15,9 @@ export default function DocumentsDashboardPage() {
 
   return (
     <DashboardLayout>
-      <DocumentsWorkflowView />
+      <React.Suspense fallback={<div style={{ padding: 20 }}>Memuat dokumen proyek...</div>}>
+        <DocumentsWorkflowView />
+      </React.Suspense>
     </DashboardLayout>
   );
 }

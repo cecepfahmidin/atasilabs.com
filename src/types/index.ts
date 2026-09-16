@@ -37,7 +37,7 @@ export type IPWStage =
   | 'STAGE_5_EXECUTION' 
   | 'STAGE_6_CLOSURE';
 
-export type DocumentType = 'CIF' | 'RSD' | 'MOU' | 'SPK' | 'BAST' | 'HPP';
+export type DocumentType = 'CIF' | 'RSD' | 'MOU' | 'SPK' | 'BAST' | 'HPP' | 'QA';
 
 export interface ClientProject {
   id: string;
@@ -272,6 +272,35 @@ export interface BASTData {
   party2Signature?: DigitalSignatureData;
 }
 
+// 5b. Quality Assurance & UAT Testing Checklist (QA) Data Model
+export interface QATestItem {
+  id: string;
+  category: string;
+  testCase: string;
+  expectedResult: string;
+  status: 'PASSED' | 'FAILED' | 'PENDING';
+  notes?: string;
+}
+
+export interface QAData {
+  id: string;
+  projectId?: string;
+  docNumber: string;
+  issueDate: string;
+  clientName: string;
+  projectTitle: string;
+  qaLeadName: string;
+  testerName: string;
+  clientPic: string;
+  stagingUrl: string;
+  summary: string;
+  testItems: QATestItem[];
+  overallStatus: 'PASSED' | 'NEEDS_REVISION' | 'APPROVED' | 'FAILED';
+  updatedAt: string;
+  party1Signature?: DigitalSignatureData;
+  party2Signature?: DigitalSignatureData;
+}
+
 // 6. HPP Financial Breakdown Data Model
 export interface HPPItem {
   tierNumber: 1 | 2 | 3 | 4 | 5;
@@ -296,7 +325,7 @@ export interface HPPItem {
   };
 }
 
-export type UserRole = 'CEO' | 'CTO' | 'CMO' | 'ADMIN' | 'CLIENT' | 'FREELANCER';
+export type UserRole = 'CEO' | 'CTO' | 'CMO' | 'ADMIN' | 'CLIENT' | 'FREELANCER' | 'DEVELOPER';
 
 export interface User {
   id: string;

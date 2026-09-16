@@ -21,6 +21,7 @@ import {
   Alert,
   Tooltip,
   Divider,
+  Avatar,
 } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import { useRouter } from 'next/navigation';
@@ -47,11 +48,14 @@ export const ProjectsView: React.FC = () => {
   const router = useRouter();
   const {
     projects,
+    users,
     addProject,
     updateProject,
     deleteProject,
     updateProjectProgress,
     setDashboardTab,
+    setSelectedDocumentProjectId,
+    setSelectedDocumentType,
   } = useApp();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -165,6 +169,10 @@ export const ProjectsView: React.FC = () => {
     }
   };
 
+  const handleFreelancerChangeOnCard = (projId: string, freelancerName: string) => {
+    updateProject(projId, { freelancerName });
+  };
+
   return (
     <Box sx={{ pb: 6 }}>
       {/* Header Banner */}
@@ -215,6 +223,10 @@ export const ProjectsView: React.FC = () => {
       <Grid container spacing={3}>
         {projects.map((proj) => {
           const currentStageCfg = getStageFromProgress(proj.progress, proj.ipwStage);
+          const assignedUser = users.find(
+            (u) => `${u.name} (${u.role})` === proj.freelancerName || u.name === proj.freelancerName
+          );
+
           return (
             <Grid size={{ xs: 12, md: 6 }} key={proj.id}>
               <Paper
@@ -346,41 +358,140 @@ export const ProjectsView: React.FC = () => {
                   </Typography>
                 </Box>
 
-                {/* Client & Budget Information */}
+                {/* Client, Budget & Freelancer Information (Enlarged Layout) */}
                 <Grid container spacing={1.5} sx={{ mb: 2.5 }}>
-                  <Grid size={6}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
                     <Box
                       sx={{
-                        p: 1.2,
-                        borderRadius: 2,
+                        p: 1.5,
+                        borderRadius: 2.5,
                         border: `1px solid ${theme.palette.divider}`,
                         backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
+                        height: '100%',
                       }}
                     >
-                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '0.7rem' }}>
+                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '0.72rem', fontWeight: 600 }}>
                         Klien / Perusahaan
                       </Typography>
-                      <Typography variant="subtitle2" noWrap sx={{ fontWeight: 700, fontSize: '0.82rem' }}>
+                      <Typography variant="subtitle2" noWrap sx={{ fontWeight: 800, fontSize: '0.88rem', mt: 0.3 }}>
                         {proj.clientName}
                       </Typography>
                     </Box>
                   </Grid>
 
-                  <Grid size={6}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Box
+                      sx={{
+                        p: 1.5,
+                        borderRadius: 2.5,
+                        border: `1px solid ${theme.palette.divider}`,
+                        backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
+                        height: '100%',
+                      }}
+                    >
+                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '0.72rem', fontWeight: 600 }}>
+                        Nilai Kontrak Proyek
+                      </Typography>
+                      <Typography variant="subtitle2" color="primary" noWrap sx={{ fontWeight: 800, fontSize: '0.88rem', mt: 0.3 }}>
+                        {formatRupiah(proj.budget)}
+                      </Typography>
+                    </Box>
+                  </Grid>
+
+                  <Grid size={12}>
                     <Box
                       sx={{
                         p: 1.2,
-                        borderRadius: 2,
+                        px: 1.5,
+                        borderRadius: 2.5,
                         border: `1px solid ${theme.palette.divider}`,
-                        backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
+                        backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1.5,
                       }}
                     >
-                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '0.7rem' }}>
-                        Nilai Kontrak Proyek
-                      </Typography>
-                      <Typography variant="subtitle2" color="primary" noWrap sx={{ fontWeight: 700, fontSize: '0.82rem' }}>
-                        {formatRupiah(proj.budget)}
-                      </Typography>
+                      {/* Photo Avatar of PJ */}
+                      <Tooltip title={assignedUser ? `Penanggung Jawab: ${assignedUser.name} (${assignedUser.role})` : 'Belum Ada PJ'} arrow placement="top">
+                        <Avatar
+                          src={assignedUser?.avatarUrl}
+                          sx={{
+                            width: 36,
+                            height: 36,
+                            bgcolor: assignedUser ? 'primary.main' : 'action.disabledBackground',
+                            border: '2px solid',
+                            borderColor: assignedUser ? 'primary.main' : 'divider',
+                            boxShadow: assignedUser ? 1 : 0,
+                            flexShrink: 0,
+                            fontSize: '0.85rem',
+                            fontWeight: 800,
+                          }}
+                        >
+                          {assignedUser ? assignedUser.name[0]?.toUpperCase() : '?'}
+                        </Avatar>
+                      </Tooltip>
+
+                      {/* Dropdown 1-Click */}
+                      <TextField
+                        select
+                        variant="outlined"
+                        fullWidth
+                        size="small"
+                        value={proj.freelancerName || ''}
+                        onChange={(e) => handleFreelancerChangeOnCard(proj.id, e.target.value)}
+                        slotProps={{
+                          select: {
+                            displayEmpty: true,
+                            sx: {
+                              fontSize: '0.85rem',
+                              fontWeight: 700,
+                              borderRadius: 2,
+                              backgroundColor: theme.palette.background.paper,
+                              color: proj.freelancerName ? (theme.palette.mode === 'dark' ? '#fbbf24' : '#b45309') : theme.palette.text.secondary,
+                            },
+                          },
+                        }}
+                      >
+                        <MenuItem value="">
+                          <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                            -- Pilih PJ / Developer --
+                          </Typography>
+                        </MenuItem>
+                        {users
+                          .filter((u) => u.role === 'FREELANCER' || u.role === 'DEVELOPER' || u.role === 'CTO' || u.role === 'ADMIN')
+                          .map((u) => {
+                            const displayVal = `${u.name} (${u.role})`;
+                            return (
+                              <MenuItem key={u.id} value={displayVal}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', py: 0.3 }}>
+                                  <Typography variant="body2" sx={{ fontWeight: 700, fontSize: '0.85rem' }}>
+                                    {u.name}
+                                  </Typography>
+                                  <Chip
+                                    label={u.role}
+                                    size="small"
+                                    sx={{
+                                      height: 20,
+                                      fontSize: '0.68rem',
+                                      fontWeight: 800,
+                                      backgroundColor: u.role === 'FREELANCER' ? '#f59e0b' : '#3b82f6',
+                                      color: '#ffffff',
+                                      ml: 1,
+                                    }}
+                                  />
+                                </Box>
+                              </MenuItem>
+                            );
+                          })}
+                        {proj.freelancerName &&
+                          !users.some((u) => `${u.name} (${u.role})` === proj.freelancerName || u.name === proj.freelancerName) && (
+                            <MenuItem value={proj.freelancerName}>
+                              <Typography variant="body2" sx={{ fontWeight: 700, fontSize: '0.85rem' }}>
+                                {proj.freelancerName}
+                              </Typography>
+                            </MenuItem>
+                          )}
+                      </TextField>
                     </Box>
                   </Grid>
                 </Grid>
@@ -432,8 +543,18 @@ export const ProjectsView: React.FC = () => {
                     startIcon={<DescriptionIcon fontSize="small" />}
                     endIcon={<ArrowForwardIcon fontSize="small" />}
                     onClick={() => {
+                      const docAssigned = currentStageCfg.documentAssigned.toUpperCase();
+                      let docCode: 'CIF' | 'RSD' | 'MOU' | 'SPK' | 'BAST' = 'CIF';
+                      if (docAssigned.includes('CIF')) docCode = 'CIF';
+                      else if (docAssigned.includes('RSD')) docCode = 'RSD';
+                      else if (docAssigned.includes('MOU')) docCode = 'MOU';
+                      else if (docAssigned.includes('SPK')) docCode = 'SPK';
+                      else if (docAssigned.includes('BAST')) docCode = 'BAST';
+
+                      setSelectedDocumentProjectId(proj.id);
+                      setSelectedDocumentType(docCode);
                       setDashboardTab('documents');
-                      router.push('/dashboard/documents');
+                      router.push(`/dashboard/documents?projectId=${proj.id}&docType=${docCode}`);
                     }}
                     sx={{
                       fontWeight: 700,
@@ -581,12 +702,49 @@ export const ProjectsView: React.FC = () => {
 
               <Grid size={12}>
                 <TextField
+                  select
                   fullWidth
                   label="Nama Freelancer / Mitra Penanggung Jawab"
-                  placeholder="Contoh: Doni Wijaya (Full-Stack Dev)"
                   value={formData.freelancerName}
                   onChange={(e) => setFormData({ ...formData, freelancerName: e.target.value })}
-                />
+                  helperText="Pilih mitra freelancer / developer penanggung jawab proyek dari daftar pengguna"
+                >
+                  <MenuItem value="">
+                    <em>-- Belum Ditugaskan --</em>
+                  </MenuItem>
+                  {users
+                    .filter((u) => u.role === 'FREELANCER' || u.role === 'DEVELOPER' || u.role === 'CTO' || u.role === 'ADMIN')
+                    .map((u) => {
+                      const displayVal = `${u.name} (${u.role})`;
+                      return (
+                        <MenuItem key={u.id} value={displayVal}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                              {u.name}
+                            </Typography>
+                            <Chip
+                              label={u.role}
+                              size="small"
+                              sx={{
+                                height: 20,
+                                fontSize: '0.65rem',
+                                fontWeight: 800,
+                                backgroundColor: u.role === 'FREELANCER' ? '#f59e0b' : '#3b82f6',
+                                color: '#ffffff',
+                                ml: 1,
+                              }}
+                            />
+                          </Box>
+                        </MenuItem>
+                      );
+                    })}
+                  {formData.freelancerName &&
+                    !users.some((u) => `${u.name} (${u.role})` === formData.freelancerName || u.name === formData.freelancerName) && (
+                      <MenuItem value={formData.freelancerName}>
+                        {formData.freelancerName}
+                      </MenuItem>
+                    )}
+                </TextField>
               </Grid>
             </Grid>
           </DialogContent>

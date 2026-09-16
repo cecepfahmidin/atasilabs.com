@@ -9,10 +9,13 @@ export async function GET() {
     const leads = await prisma.lead.findMany({
       orderBy: { createdAt: 'desc' },
     });
-    return NextResponse.json({ success: true, data: leads });
+    if (!leads || leads.length === 0) {
+      return NextResponse.json({ success: true, data: INITIAL_LEADS, fallback: true, isInitialSeed: true });
+    }
+    return NextResponse.json({ success: true, data: leads, fallback: false, isInitialSeed: false });
   } catch (error) {
     console.warn('Prisma DB query failed for leads, falling back to seed data:', error);
-    return NextResponse.json({ success: true, data: INITIAL_LEADS, fallback: true });
+    return NextResponse.json({ success: true, data: INITIAL_LEADS, fallback: true, isInitialSeed: true });
   }
 }
 
