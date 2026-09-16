@@ -388,7 +388,7 @@ export const DocumentsWorkflowView: React.FC = () => {
 
             <Grid item xs={12} sm={7} textAlign={{ sm: 'right' }}>
               <Box sx={{ display: 'flex', gap: 1, justifyContent: { sm: 'flex-end' }, flexWrap: 'wrap', mt: { xs: 1, sm: 2.5 } }}>
-                {activeDocType === 'QA' && (
+                {!isClientRole && activeDocType === 'QA' && (
                   <Button
                     variant="outlined"
                     color="secondary"
@@ -405,31 +405,35 @@ export const DocumentsWorkflowView: React.FC = () => {
                   color="success"
                   size="small"
                   startIcon={<DrawIcon />}
-                  onClick={() => handleOpenSignatureDialog('Pihak Pertama')}
+                  onClick={() => handleOpenSignatureDialog(isClientRole ? 'Pihak Kedua' : 'Pihak Pertama')}
                   sx={{ fontWeight: 700 }}
                 >
-                  Tanda Tangani ({activeDocType})
+                  {isClientRole ? `Tanda Tangan Klien (${activeDocType})` : `Tanda Tangani (${activeDocType})`}
                 </Button>
-                <Button
-                  variant="outlined"
-                  color="secondary"
-                  size="small"
-                  startIcon={<ResetIcon />}
-                  onClick={handleResetDocumentToDefault}
-                  sx={{ fontWeight: 700 }}
-                >
-                  Reset Dokumen
-                </Button>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  size="small"
-                  startIcon={<EditIcon />}
-                  onClick={() => setIsFormOpen(true)}
-                  sx={{ fontWeight: 700 }}
-                >
-                  Edit Form ({activeDocType})
-                </Button>
+                {!isClientRole && (
+                  <Button
+                    variant="outlined"
+                    color="secondary"
+                    size="small"
+                    startIcon={<ResetIcon />}
+                    onClick={handleResetDocumentToDefault}
+                    sx={{ fontWeight: 700 }}
+                  >
+                    Reset Dokumen
+                  </Button>
+                )}
+                {!isClientRole && (
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    size="small"
+                    startIcon={<EditIcon />}
+                    onClick={() => setIsFormOpen(true)}
+                    sx={{ fontWeight: 700 }}
+                  >
+                    Edit Form ({activeDocType})
+                  </Button>
+                )}
               </Box>
             </Grid>
           </Grid>

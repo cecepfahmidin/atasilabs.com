@@ -39,7 +39,8 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
   onSignParty2,
   onUpdateQA,
 }) => {
-  const { showNotification } = useApp();
+  const { showNotification, currentUser } = useApp();
+  const isClientRole = currentUser?.role === 'CLIENT';
 
   const handlePrint = () => {
     if (onPrint) {
@@ -118,7 +119,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
               />
             ) : (
               <Box sx={{ height: 50, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {onSignParty1Cb && (
+                {!isClientRole && onSignParty1Cb && (
                   <Button
                     size="small"
                     variant="outlined"
@@ -1119,11 +1120,11 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
                           ? 'error'
                           : 'warning'
                       }
-                      onClick={onUpdateQA ? toggleOverallStatus : undefined}
-                      sx={{ fontWeight: 800, cursor: onUpdateQA ? 'pointer' : 'default' }}
+                      onClick={onUpdateQA && !isClientRole ? toggleOverallStatus : undefined}
+                      sx={{ fontWeight: 800, cursor: onUpdateQA && !isClientRole ? 'pointer' : 'default' }}
                     />
                   </Tooltip>
-                  {onUpdateQA && (
+                  {onUpdateQA && !isClientRole && (
                     <Typography variant="caption" color="text.secondary" sx={{ ml: 1, fontSize: '0.68rem' }} className="no-print">
                       (Klik chip untuk ubah status)
                     </Typography>
@@ -1174,7 +1175,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
                   <TableCell>{item.testCase}</TableCell>
                   <TableCell>{item.expectedResult}</TableCell>
                   <TableCell>
-                    <Tooltip title={onUpdateQA ? 'Klik untuk toggle status (PASSED -> FAILED -> PENDING)' : ''}>
+                    <Tooltip title={onUpdateQA && !isClientRole ? 'Klik untuk toggle status (PASSED -> FAILED -> PENDING)' : ''}>
                       <Chip
                         label={item.status}
                         size="small"
@@ -1185,8 +1186,8 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
                             ? 'error'
                             : 'warning'
                         }
-                        onClick={onUpdateQA ? () => toggleTestItemStatus(idx) : undefined}
-                        sx={{ fontWeight: 800, height: 22, fontSize: '0.68rem', cursor: onUpdateQA ? 'pointer' : 'default' }}
+                        onClick={onUpdateQA && !isClientRole ? () => toggleTestItemStatus(idx) : undefined}
+                        sx={{ fontWeight: 800, height: 22, fontSize: '0.68rem', cursor: onUpdateQA && !isClientRole ? 'pointer' : 'default' }}
                       />
                     </Tooltip>
                   </TableCell>

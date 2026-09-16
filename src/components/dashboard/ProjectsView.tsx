@@ -59,8 +59,9 @@ export const ProjectsView: React.FC = () => {
     setSelectedDocumentType,
   } = useApp();
 
+  const isClientRole = currentUser?.role === 'CLIENT';
+
   const projects = useMemo(() => {
-    const isClientRole = currentUser?.role === 'CLIENT';
     const filteredProjects = isClientRole
       ? rawProjects.filter(
           (p) =>
@@ -69,7 +70,7 @@ export const ProjectsView: React.FC = () => {
         )
       : rawProjects;
     return filteredProjects.length > 0 ? filteredProjects : rawProjects;
-  }, [rawProjects, currentUser]);
+  }, [rawProjects, currentUser, isClientRole]);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProj, setEditingProj] = useState<ClientProject | null>(null);
@@ -211,25 +212,27 @@ export const ProjectsView: React.FC = () => {
           </Typography>
         </Box>
 
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={handleOpenAdd}
-          sx={{
-            borderRadius: 2.5,
-            px: 3,
-            py: 1,
-            fontWeight: 700,
-            textTransform: 'none',
-            background: theme.palette.mode === 'dark'
-              ? 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)'
-              : 'linear-gradient(135deg, #F59E0B 0%, #B45309 100%)',
-            color: theme.palette.mode === 'dark' ? '#181512' : '#ffffff',
-            boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)',
-          }}
-        >
-          Tambah Proyek Baru
-        </Button>
+        {!isClientRole && (
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={handleOpenAdd}
+            sx={{
+              borderRadius: 2.5,
+              px: 3,
+              py: 1,
+              fontWeight: 700,
+              textTransform: 'none',
+              background: theme.palette.mode === 'dark'
+                ? 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)'
+                : 'linear-gradient(135deg, #F59E0B 0%, #B45309 100%)',
+              color: theme.palette.mode === 'dark' ? '#181512' : '#ffffff',
+              boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)',
+            }}
+          >
+            Tambah Proyek Baru
+          </Button>
+        )}
       </Box>
 
       {/* Projects Grid Cards */}
@@ -343,11 +346,11 @@ export const ProjectsView: React.FC = () => {
                         <Grid size={2} key={stg.stage}>
                           <Tooltip title={`${stg.label} (${stg.progressPercent}%)`} arrow placement="top">
                             <Box
-                              onClick={() => handleStageButtonClick(proj.id, stg.stage)}
+                              onClick={() => !isClientRole && handleStageButtonClick(proj.id, stg.stage)}
                               sx={{
                                 height: 8,
                                 borderRadius: 4,
-                                cursor: 'pointer',
+                                cursor: isClientRole ? 'default' : 'pointer',
                                 transition: 'all 0.2s ease',
                                 backgroundColor: isCurrent
                                   ? stg.hexColor
@@ -450,6 +453,7 @@ export const ProjectsView: React.FC = () => {
                         variant="outlined"
                         fullWidth
                         size="small"
+                        disabled={isClientRole}
                         value={proj.freelancerName || ''}
                         onChange={(e) => handleFreelancerChangeOnCard(proj.id, e.target.value)}
                         slotProps={{
@@ -510,42 +514,44 @@ export const ProjectsView: React.FC = () => {
                 </Grid>
 
                 {/* 1-Click Stage Switcher Bar */}
-                <Box sx={{ mb: 2.5, mt: 'auto' }}>
-                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, display: 'block', mb: 1 }}>
-                    Pindah Tahap Operasional 6-Stage (1-Click):
-                  </Typography>
-                  <Stack direction="row" spacing={0.6} sx={{ flexWrap: 'wrap', gap: 0.6 }}>
-                    {IPW_STAGES_LIST.map((stg) => {
-                      const isActive = currentStageCfg.stage === stg.stage;
-                      return (
-                        <Button
-                          key={stg.stage}
-                          size="small"
-                          variant={isActive ? 'contained' : 'outlined'}
-                          onClick={() => handleStageButtonClick(proj.id, stg.stage)}
-                          sx={{
-                            borderRadius: 1.5,
-                            py: 0.3,
-                            px: 0.8,
-                            fontSize: '0.68rem',
-                            fontWeight: 800,
-                            textTransform: 'none',
-                            minWidth: 0,
-                            borderColor: stg.hexColor,
-                            color: isActive ? '#ffffff' : stg.hexColor,
-                            backgroundColor: isActive ? stg.hexColor : 'transparent',
-                            '&:hover': {
-                              backgroundColor: stg.hexColor,
-                              color: '#ffffff',
-                            },
-                          }}
-                        >
-                          T{stg.stageNumber}: {stg.documentAssigned.split(' ')[0]}
-                        </Button>
-                      );
-                    })}
-                  </Stack>
-                </Box>
+                {!isClientRole && (
+                  <Box sx={{ mb: 2.5, mt: 'auto' }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, display: 'block', mb: 1 }}>
+                      Pindah Tahap Operasional 6-Stage (1-Click):
+                    </Typography>
+                    <Stack direction="row" spacing={0.6} sx={{ flexWrap: 'wrap', gap: 0.6 }}>
+                      {IPW_STAGES_LIST.map((stg) => {
+                        const isActive = currentStageCfg.stage === stg.stage;
+                        return (
+                          <Button
+                            key={stg.stage}
+                            size="small"
+                            variant={isActive ? 'contained' : 'outlined'}
+                            onClick={() => handleStageButtonClick(proj.id, stg.stage)}
+                            sx={{
+                              borderRadius: 1.5,
+                              py: 0.3,
+                              px: 0.8,
+                              fontSize: '0.68rem',
+                              fontWeight: 800,
+                              textTransform: 'none',
+                              minWidth: 0,
+                              borderColor: stg.hexColor,
+                              color: isActive ? '#ffffff' : stg.hexColor,
+                              backgroundColor: isActive ? stg.hexColor : 'transparent',
+                              '&:hover': {
+                                backgroundColor: stg.hexColor,
+                                color: '#ffffff',
+                              },
+                            }}
+                          >
+                            T{stg.stageNumber}: {stg.documentAssigned.split(' ')[0]}
+                          </Button>
+                        );
+                      })}
+                    </Stack>
+                  </Box>
+                )}
 
                 <Divider sx={{ mb: 2 }} />
 
@@ -579,14 +585,16 @@ export const ProjectsView: React.FC = () => {
                     Buka Dokumen ({currentStageCfg.documentAssigned.split(' ')[0]})
                   </Button>
 
-                  <Box>
-                    <IconButton size="small" onClick={() => handleOpenEdit(proj)} color="primary" title="Edit Proyek">
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton size="small" onClick={() => setProjToDelete(proj.id)} color="error" title="Hapus Proyek">
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Box>
+                  {!isClientRole && (
+                    <Box>
+                      <IconButton size="small" onClick={() => handleOpenEdit(proj)} color="primary" title="Edit Proyek">
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton size="small" onClick={() => setProjToDelete(proj.id)} color="error" title="Hapus Proyek">
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  )}
                 </Box>
               </Paper>
             </Grid>
