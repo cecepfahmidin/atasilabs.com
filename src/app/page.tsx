@@ -14,7 +14,6 @@ import { Stats } from '@/components/landing/Stats';
 import { TestimonialsSection } from '@/components/landing/TestimonialsSection';
 import { Bento } from '@/components/landing/Bento';
 import { TechStackArchitectureSection } from '@/components/landing/TechStackArchitectureSection';
-import { Comparison } from '@/components/landing/Comparison';
 import { PortfolioSection } from '@/components/landing/PortfolioSection';
 import { PricingSection } from '@/components/landing/PricingSection';
 import { FAQSection } from '@/components/landing/FAQSection';
@@ -60,7 +59,6 @@ export default function MainPage() {
         <TestimonialsSection />
         <Bento />
         <TechStackArchitectureSection />
-        <Comparison />
         <PortfolioSection />
         <PricingSection />
         <FAQSection />
