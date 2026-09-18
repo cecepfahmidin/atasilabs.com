@@ -1,221 +1,141 @@
 'use client';
 
-import React, { useState } from 'react';
-import {
-  Box,
-  Container,
-  Typography,
-  Paper,
-  Chip,
-  Stack,
-  Divider,
-  useTheme,
-} from '@mui/material';
-import Grid from '@mui/material/Grid2';
-import {
-  Storage as StorageIcon,
-  Shield as ShieldIcon,
-  Code as CodeIcon,
-  Layers as LayersIcon,
-  SyncAlt as SyncAltIcon,
-  CheckCircleOutlined as CheckIcon,
-} from '@mui/icons-material';
+import React from 'react';
+import SectionHeader from './SectionHeader';
 
 export const TechStackArchitectureSection: React.FC = () => {
-  const theme = useTheme();
-
   const architecturePillars = [
     {
-      title: 'Frontend & UI Presentation',
-      badge: 'Client & Server Components',
-      color: theme.palette.primary.main,
-      icon: <LayersIcon sx={{ color: theme.palette.primary.main }} />,
-      desc: 'Next.js App Router dipadukan dengan Material UI (MUI) versi terbaru untuk antarmuka konsisten, responsif, dan aksesibilitas tinggi.',
+      numStr: '[01/03]',
+      title: 'TAMPILAN MODERN & SANGAT CEPAT',
+      badge: 'RESPONSIF SEMUA HP & LAPTOP',
+      tagColor: '#FFD600',
+      desc: 'Website dapat dibuka secara instan tanpa lemot dari perangkat apa pun, memberikan kenyamanan maksimal bagi setiap pengunjung.',
       points: [
-        'MUI ThemeProvider mendukung Light/Dark mode native',
-        'Komponen MUI DataGrid untuk tabel admin kompleks',
-        'Next/image teroptimasi untuk aset Supabase Storage',
+        'Tampilan rapi dan pas di layar HP, tablet, maupun komputer',
+        'Loading halaman super cepat tanpa waktu tunggu lama',
+        'Gambar dan foto produk tampil jernih serta hemat kuota',
       ],
     },
     {
-      title: 'Server Actions & ORM Layer',
-      badge: 'Type-Safe Data Processing',
-      color: '#10b981',
-      icon: <CodeIcon sx={{ color: '#10b981' }} />,
-      desc: 'Logika backend diproses via Next.js Server Actions dan Route Handlers yang divalidasi langsung oleh Prisma ORM.',
+      numStr: '[02/03]',
+      title: 'PEMROSESAN DATA OTOMATIS & AKURAT',
+      badge: 'TANPA REPOT & BEBAS ERROR',
+      tagColor: '#4ADE80',
+      desc: 'Setiap data pelanggan dan pesanan baru langsung diolah secara otomatis oleh sistem tanpa perlu dicatat manual satu per satu.',
       points: [
-        'Prisma Client mencegah injeksi SQL secara otomatis',
-        'Type-safety penuh antara schema.prisma dan TypeScript',
-        'Incremental Static Regeneration (ISR) untuk cache cepat',
+        'Mencegah kesalahan catat atau salah input data',
+        'Data pesan dan transaksi diproses secara real-time',
+        'Rekapitulasi laporan rapi dan siap dicek kapan saja',
       ],
     },
     {
-      title: 'Supabase PostgreSQL & Auth',
-      badge: 'Database, RLS & Storage',
-      color: '#8b5cf6',
-      icon: <StorageIcon sx={{ color: '#8b5cf6' }} />,
-      desc: 'Basis data PostgreSQL terkelola dengan Row Level Security (RLS), Supabase Auth untuk proteksi rute, dan Supabase Storage untuk media.',
+      numStr: '[03/03]',
+      title: 'KEAMANAN DATA & PENYIMPANAN AMAN',
+      badge: 'PROTEKSI PRIVASI BISNIS',
+      tagColor: '#FF6B35',
+      desc: 'Seluruh informasi rahasia, transaksi, dan berkas bisnis Anda dilindungi dengan sistem keamanan modern agar terjaga dari kebocoran.',
       points: [
-        'Row Level Security (RLS) menjaga akses data Lead & Proyek',
-        'Middleware Next.js memverifikasi sesi JWT pengguna',
-        'Supabase Storage bucket terisolasi untuk aset gambar portofolio',
+        'Perlindungan privasi data pelanggan dari kebocoran',
+        'Akses dashboard aman dengan verifikasi akun terpercaya',
+        'Penyimpanan berkas & cadangan data otomatis di server cloud',
       ],
     },
   ];
 
+  const dataFlowSteps = [
+    { step: '[01]', title: 'PEMILIHAN PAKET', desc: 'Pilih paket layanan yang sesuai dengan kebutuhan bisnis.' },
+    { step: '[02]', title: 'PENGISIAN FORMULIR', desc: 'Isi formulir kebutuhan proyek dan detail usaha.' },
+    { step: '[03]', title: 'VERIFIKASI, MOU & DP', desc: 'Verifikasi data, penerbitan MoU, dan pembayaran awal.' },
+    { step: '[04]', title: 'PENGERJAAN WEBSITE', desc: 'Pengembangan sistem, perancangan, dan pengujian.' },
+    { step: '[05]', title: 'SERAH TERIMA', desc: 'Penyerahan akses akun, dokumen BAST, dan garansi.' },
+  ];
+
   return (
-    <Box
-      id="architecture"
-      sx={{
-        py: { xs: 8, md: 12 },
-        borderTop: `1px solid ${theme.palette.divider}`,
-        backgroundColor: theme.palette.mode === 'dark' ? '#121212' : '#f1f5f9',
-      }}
-    >
-      <Container maxWidth="lg">
-        {/* Section Header */}
-        <Box sx={{ textAlign: 'center', mb: { xs: 5, md: 8 }, maxWidth: 750, mx: 'auto' }}>
-          <Chip
-            label="ARSITEKTUR & SPESIFIKASI SISTEM"
-            size="small"
-            color="primary"
-            variant="outlined"
-            sx={{ fontWeight: 700, mb: 1.5, fontSize: '0.75rem', letterSpacing: '0.05em' }}
-          />
-          <Typography
-            variant="h2"
-            sx={{
-              fontSize: { xs: '1.8rem', md: '2.5rem' },
-              fontWeight: 800,
-              mb: 2,
-              letterSpacing: '-0.02em',
-            }}
+    <section id="architecture" className="flex flex-col w-full bg-[#050505] py-16 px-6 md:py-[100px] md:px-[80px] lg:px-[120px] gap-12 md:gap-[64px] border-t border-[#1D1D1D]">
+      <SectionHeader
+        label="[06] // ARSITEKTUR & SPESIFIKASI SISTEM"
+        title={"TEKNOLOGI MODERN UNTUK\nPERTUMBUHAN BISNIS ANDA"}
+        subtitle="Website dan aplikasi Anda dibangun menggunakan teknologi terkini yang ramah pengguna, loading super cepat, aman dari peretasan, dan siap mengikuti pertumbuhan bisnis Anda."
+      />
+
+      {/* Pillars Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
+        {architecturePillars.map((pillar) => (
+          <div
+            key={pillar.title}
+            className="flex flex-col justify-between p-8 md:p-[36px] bg-[#111111] border border-[#2D2D2D] hover:border-[#FFD600] hover:scale-[1.01] hover:shadow-[0_0_25px_rgba(255,214,0,0.12)] transition-all duration-300 group"
           >
-            Arsitektur Full-Stack Serverless Terintegrasi
-          </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ fontSize: '1.05rem', lineHeight: 1.7 }}>
-            Desain alur kerja end-to-end yang menjamin keamanan data, kecepatan rendering, dan kemudahan skalabilitas sesuai Dokumen Spesifikasi Kebutuhan Sistem (RSD).
-          </Typography>
-        </Box>
-
-        {/* Pillars Grid */}
-        <Grid container spacing={3.5} sx={{ mb: 6 }}>
-          {architecturePillars.map((pillar, idx) => (
-            <Grid size={{ xs: 12, md: 4 }} key={idx}>
-              <Paper
-                elevation={0}
-                sx={{
-                  height: '100%',
-                  p: 3.5,
-                  borderRadius: 3.5,
-                  border: `1px solid ${theme.palette.divider}`,
-                  backgroundColor: theme.palette.background.paper,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  transition: 'transform 0.2s ease, border-color 0.2s ease',
-                  '&:hover': {
-                    transform: 'translateY(-4px)',
-                    borderColor: pillar.color,
-                  },
-                }}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                  <Box
-                    sx={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: 2.5,
-                      backgroundColor: `${pillar.color}15`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    {pillar.icon}
-                  </Box>
-                  <Chip
-                    label={pillar.badge}
-                    size="small"
-                    sx={{
-                      fontSize: '0.72rem',
-                      fontWeight: 600,
-                      backgroundColor: `${pillar.color}15`,
-                      color: pillar.color,
-                    }}
-                  />
-                </Box>
-
-                <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
-                  {pillar.title}
-                </Typography>
-
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 3, lineHeight: 1.65 }}>
-                  {pillar.desc}
-                </Typography>
-
-                <Divider sx={{ mb: 2.5 }} />
-
-                <Stack spacing={1.5} sx={{ mt: 'auto' }}>
-                  {pillar.points.map((pt, pIdx) => (
-                    <Box key={pIdx} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.2 }}>
-                      <CheckIcon sx={{ fontSize: 18, color: pillar.color, mt: '2px', flexShrink: 0 }} />
-                      <Typography variant="body2" sx={{ fontSize: '0.84rem', lineHeight: 1.5 }}>
-                        {pt}
-                      </Typography>
-                    </Box>
-                  ))}
-                </Stack>
-              </Paper>
-            </Grid>
-          ))}
-        </Grid>
-
-        {/* Data Flow Pipeline Illustration Box */}
-        <Paper
-          elevation={0}
-          sx={{
-            p: { xs: 3, md: 4 },
-            borderRadius: 3.5,
-            border: `1px solid ${theme.palette.divider}`,
-            backgroundColor: theme.palette.background.paper,
-          }}
-        >
-          <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-            <SyncAltIcon color="primary" /> Alur Pemrosesan Data: Dari Formulir Kontak ke Tabel Supabase
-          </Typography>
-
-          <Grid container spacing={2} sx={{ alignItems: 'center' }}>
-            {[
-              { step: '1', title: 'User Input', desc: 'Pengunjung mengisi formulir MUI TextField di Landing Page' },
-              { step: '2', title: 'Server Action', desc: 'Data divalidasi di server Next.js tanpa membocorkan kredensial' },
-              { step: '3', title: 'Prisma Client', desc: 'Query parameterisasi type-safe dieksekusi secara otomatis' },
-              { step: '4', title: 'Supabase DB', desc: 'Tersimpan aman di tabel Lead dengan perlindungan RLS Supabase' },
-            ].map((step, sIdx) => (
-              <Grid size={{ xs: 12, sm: 6, md: 3 }} key={sIdx}>
-                <Box
-                  sx={{
-                    p: 2,
-                    borderRadius: 2.5,
-                    backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
-                    border: `1px solid ${theme.palette.divider}`,
-                    height: '100%',
-                  }}
+            <div className="flex flex-col gap-5">
+              <div className="flex items-center justify-between">
+                <span className="font-ibm-mono text-[11px] font-bold text-[#FFD600] tracking-[2px]">
+                  {pillar.numStr}
+                </span>
+                <div
+                  className="flex items-center justify-center h-[26px] px-[10px] bg-[#1A1A1A] border w-fit"
+                  style={{ borderColor: pillar.tagColor }}
                 >
-                  <Typography variant="caption" color="primary" sx={{ fontWeight: 800, display: 'block', mb: 0.5 }}>
-                    FASE 0{step.step}
-                  </Typography>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5 }}>
-                    {step.title}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.5, display: 'block' }}>
-                    {step.desc}
-                  </Typography>
-                </Box>
-              </Grid>
-            ))}
-          </Grid>
-        </Paper>
-      </Container>
-    </Box>
+                  <span className="font-ibm-mono text-[9px] font-bold tracking-[1.5px]" style={{ color: pillar.tagColor }}>
+                    {pillar.badge}
+                  </span>
+                </div>
+              </div>
+
+              <h3 className="font-grotesk text-[20px] md:text-[22px] font-bold text-[#F5F5F0] tracking-[0.5px] leading-[1.25] group-hover:text-[#FFD600] transition-colors">
+                {pillar.title}
+              </h3>
+
+              <p className="font-ibm-mono text-[12px] text-[#888888] tracking-[0.5px] leading-[1.65]">
+                {pillar.desc}
+              </p>
+
+              <div className="pt-4 border-t border-[#222222] flex flex-col gap-2.5">
+                {pillar.points.map((pt, pIdx) => (
+                  <div key={pIdx} className="flex items-start gap-2.5">
+                    <span className="font-ibm-mono text-[12px] text-[#FFD600] font-bold">✓</span>
+                    <span className="font-ibm-mono text-[11px] text-[#CCCCCC] leading-[1.5]">
+                      {pt}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Data Flow Pipeline Box */}
+      <div className="flex flex-col gap-6 p-8 md:p-10 bg-[#0F0F0F] border border-[#2D2D2D]">
+        <div className="flex items-center gap-3">
+          <span className="font-ibm-mono text-[14px] text-[#FFD600] font-bold"></span>
+          <h4 className="font-grotesk text-[18px] md:text-[20px] font-bold text-[#F5F5F0] tracking-[1px]">
+            ALUR KERJA OPERASIONAL: 5 TAHAP DARI PEMESANAN HINGGA SERAH TERIMA
+          </h4>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 w-full">
+          {dataFlowSteps.map((step) => (
+            <div
+              key={step.step}
+              className="flex flex-col gap-2 p-5 bg-[#141414] border border-[#222222] hover:border-[#FFD600] transition-colors"
+            >
+              <span className="font-ibm-mono text-[10px] font-bold text-[#FFD600] tracking-[2px]">
+                {step.step}
+              </span>
+              <h5 className="font-grotesk text-[15px] font-bold text-[#F5F5F0]">
+                {step.title}
+              </h5>
+              <p className="font-ibm-mono text-[11px] text-[#888888] leading-[1.5]">
+                {step.desc}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 };
+
+export default TechStackArchitectureSection;
+
+

@@ -88,16 +88,16 @@ export const ServicesSection: React.FC = () => {
     >
       <SectionHeader
         label="[01] // LAYANAN UTAMA"
-        title={"SEGALA YANG ANDA BUTUHKAN.\nTANPA KOMPROMI."}
-        subtitle="ARSITEKTUR NEXT.JS APP ROUTER PRESISI TINGGI. SUPABASE POSTGRESQL & OTOMATISASI LEGAL DOKUMEN INTEGRATED."
+        title={"JASA PEMBUATAN WEBSITE\nCEPAT, MURAH, DAN PROFESIONAL"}
+        subtitle="ATASILABS hadir untuk menciptakan desain yang memukau, fitur yang canggih, dan strategi digital yang tepat sasaran untuk menjadikan website dan landing page Anda magnet bagi pengunjung. Percayakan kebutuhan digital Anda kepada kami, dan lihat bagaimana kami mengubah peluang menjadi hasil nyata!"
       />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
         <FeatureCard
           numberStr="[01/03]"
           iconColor="#FFD600"
-          title={"FULL-STACK WEB APP\n& SAAS PLATFORM"}
-          description="PENGEMBANGAN APLIKASI WEB NEXT.JS 15 + PRISMA ORM BERKAPASITAS HIGH-TRAFFIC DEPLOYMENT TERINTEGRASI."
+          title={"Cepat & Profesional"}
+          description="Pengembangan website modern, responsif, cepat, dan profesional sesuai kebutuhan dalam waktu yang efisien."
           tag="CORE APP"
           tagColor="#FFD600"
           borderColor="#FFD600"
@@ -106,8 +106,8 @@ export const ServicesSection: React.FC = () => {
         <FeatureCard
           numberStr="[02/03]"
           iconColor="#FF6B35"
-          title={"ENTERPRISE DASHBOARD\n& WORKFLOW CMS"}
-          description="INTEGRASI MATERIAL UI V6 DASHBOARD UNTUK MANAJEMEN WORKFLOW KLIEN, PROYEK, DAN E-SIGNATURE VERIFIED."
+          title={"Harga Transparan"}
+          description="Solusi terbaik dengan harga yang kompetitif. Tidak ada biaya tersembunyi, semua transparan."
           tag="ENTERPRISE"
           tagColor="#FF6B35"
           bgColor="#0F0F0F"
@@ -117,8 +117,8 @@ export const ServicesSection: React.FC = () => {
         <FeatureCard
           numberStr="[03/03]"
           iconColor="#F5F5F0"
-          title={"DATABASE ORM & AUTOMATED\nDOCS WORKFLOW"}
-          description="OTOMATISASI 5 PAKET DOKUMEN SOP (CIF, RSD, MOU, SPK, BAST) BER-KOP RESMI DAN VERIFIED E-SIGN canvas."
+          title={"Bayar Lunas Setelah Jadi"}
+          description="Garansi kepuasan 100%. Bayar lunas setelah website Anda selesai dan sesuai dengan yang diinginkan."
           tag="WORKFLOW"
           tagColor="#4ADE80"
           borderColor="#2D2D2D"

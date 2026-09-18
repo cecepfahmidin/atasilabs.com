@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Paper,
@@ -44,6 +44,7 @@ import {
 } from '@mui/icons-material';
 import { useApp } from '../../context/AppContext';
 import { Lead, LeadStatus } from '../../types';
+import { computeBudgetFromService } from '../../lib/pricingUtils';
 
 export const LeadsView: React.FC = () => {
   const theme = useTheme();
@@ -55,15 +56,30 @@ export const LeadsView: React.FC = () => {
     unreadLeadsCount,
     addProject,
     setDashboardTab,
+    pricingTiers,
   } = useApp();
 
+  const [mounted, setMounted] = useState(false);
   const [filterTab, setFilterTab] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [leadToDelete, setLeadToDelete] = useState<string | null>(null);
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const handleConvertToProject = async () => {
     if (!selectedLead) return;
+
+    let numericBudget = 18500000;
+    const digitsOnly = selectedLead.budget ? selectedLead.budget.replace(/\D/g, '') : '';
+    if (digitsOnly && Number(digitsOnly) >= 100000) {
+      numericBudget = Number(digitsOnly);
+    } else {
+      numericBudget = computeBudgetFromService(selectedLead.serviceType || '', pricingTiers).amount;
+    }
+
     const newProj = await addProject({
       clientName: selectedLead.name,
       clientEmail: selectedLead.email,
@@ -71,7 +87,7 @@ export const LeadsView: React.FC = () => {
       title: selectedLead.serviceType || 'Pengembangan Web Custom',
       description: selectedLead.message,
       deadline: '2026-05-30',
-      budget: selectedLead.budget?.includes('50') ? 50000000 : selectedLead.budget?.includes('25') ? 25000000 : 15000000,
+      budget: numericBudget,
       progress: 10,
       status: 'PLANNING',
     });
@@ -79,22 +95,24 @@ export const LeadsView: React.FC = () => {
     setDashboardTab('documents');
   };
 
-  const filteredLeads = leads.filter((lead) => {
-    const matchesTab =
-      filterTab === 'ALL' ||
-      (filterTab === 'NEW' && lead.status === 'NEW') ||
-      (filterTab === 'READ' && lead.status === 'READ') ||
-      (filterTab === 'ARCHIVED' && lead.status === 'ARCHIVED');
+  const filteredLeads = useMemo(() => {
+    return leads.filter((lead) => {
+      const matchesTab =
+        filterTab === 'ALL' ||
+        (filterTab === 'NEW' && lead.status === 'NEW') ||
+        (filterTab === 'READ' && lead.status === 'READ') ||
+        (filterTab === 'ARCHIVED' && lead.status === 'ARCHIVED');
 
-    const matchesSearch =
-      lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      lead.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (lead.company && lead.company.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (lead.serviceType && lead.serviceType.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      lead.message.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSearch =
+        lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        lead.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (lead.company && lead.company.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (lead.serviceType && lead.serviceType.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        lead.message.toLowerCase().includes(searchQuery.toLowerCase());
 
-    return matchesTab && matchesSearch;
-  });
+      return matchesTab && matchesSearch;
+    });
+  }, [leads, filterTab, searchQuery]);
 
   const getStatusChip = (status: LeadStatus) => {
     switch (status) {
@@ -151,93 +169,96 @@ export const LeadsView: React.FC = () => {
     }
   };
 
-  const columns: GridColDef[] = [
-    {
-      field: 'name',
-      headerName: 'Pengirim',
-      flex: 1.2,
-      minWidth: 180,
-      renderCell: (params: GridRenderCellParams) => (
-        <Box sx={{ py: 1 }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.86rem', lineHeight: 1.2 }}>
-            {params.row.name}
-          </Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.74rem' }}>
-            {params.row.email}
-          </Typography>
-        </Box>
-      ),
-    },
-    {
-      field: 'company',
-      headerName: 'Instansi / Perusahaan',
-      flex: 1,
-      minWidth: 160,
-      valueGetter: (value, row) => row.company || 'Pribadi / Perorangan',
-    },
-    {
-      field: 'serviceType',
-      headerName: 'Layanan Diminati',
-      flex: 1.2,
-      minWidth: 180,
-      valueGetter: (value, row) => row.serviceType || 'Konsultasi Umum',
-    },
-    {
-      field: 'budget',
-      headerName: 'Anggaran',
-      flex: 1,
-      minWidth: 150,
-      valueGetter: (value, row) => row.budget || 'Fleksibel',
-    },
-    {
-      field: 'status',
-      headerName: 'Status Pesan',
-      width: 120,
-      renderCell: (params: GridRenderCellParams) => getStatusChip(params.value as LeadStatus),
-    },
-    {
-      field: 'createdAt',
-      headerName: 'Tanggal Masuk',
-      width: 130,
-      valueGetter: (value, row) => {
-        try {
-          return new Date(row.createdAt).toLocaleDateString('id-ID', {
-            day: 'numeric',
-            month: 'short',
-            year: 'numeric',
-          });
-        } catch {
-          return row.createdAt;
-        }
+  const columns: GridColDef[] = useMemo(
+    () => [
+      {
+        field: 'name',
+        headerName: 'Pengirim',
+        flex: 1.2,
+        minWidth: 180,
+        renderCell: (params: GridRenderCellParams) => (
+          <Box sx={{ py: 1 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.86rem', lineHeight: 1.2 }}>
+              {params.row.name}
+            </Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.74rem' }}>
+              {params.row.email}
+            </Typography>
+          </Box>
+        ),
       },
-    },
-    {
-      field: 'actions',
-      headerName: 'Aksi',
-      width: 110,
-      sortable: false,
-      renderCell: (params: GridRenderCellParams) => (
-        <Box sx={{ display: 'flex', gap: 0.5 }}>
-          <IconButton
-            size="small"
-            color="primary"
-            onClick={() => handleOpenDetail(params.row)}
-            title="Baca Detail Pesan"
-          >
-            <VisibilityIcon fontSize="small" />
-          </IconButton>
-          <IconButton
-            size="small"
-            color="error"
-            onClick={() => setLeadToDelete(params.row.id)}
-            title="Hapus Pesan"
-          >
-            <DeleteIcon fontSize="small" />
-          </IconButton>
-        </Box>
-      ),
-    },
-  ];
+      {
+        field: 'company',
+        headerName: 'Instansi / Perusahaan',
+        flex: 1,
+        minWidth: 160,
+        valueGetter: (value, row) => row.company || 'Pribadi / Perorangan',
+      },
+      {
+        field: 'serviceType',
+        headerName: 'Layanan Diminati',
+        flex: 1.2,
+        minWidth: 180,
+        valueGetter: (value, row) => row.serviceType || 'Konsultasi Umum',
+      },
+      {
+        field: 'budget',
+        headerName: 'Anggaran',
+        flex: 1,
+        minWidth: 150,
+        valueGetter: (value, row) => row.budget || 'Fleksibel',
+      },
+      {
+        field: 'status',
+        headerName: 'Status Pesan',
+        width: 120,
+        renderCell: (params: GridRenderCellParams) => getStatusChip(params.value as LeadStatus),
+      },
+      {
+        field: 'createdAt',
+        headerName: 'Tanggal Masuk',
+        width: 130,
+        valueGetter: (value, row) => {
+          try {
+            return new Date(row.createdAt).toLocaleDateString('id-ID', {
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric',
+            });
+          } catch {
+            return row.createdAt;
+          }
+        },
+      },
+      {
+        field: 'actions',
+        headerName: 'Aksi',
+        width: 110,
+        sortable: false,
+        renderCell: (params: GridRenderCellParams) => (
+          <Box sx={{ display: 'flex', gap: 0.5 }}>
+            <IconButton
+              size="small"
+              color="primary"
+              onClick={() => handleOpenDetail(params.row)}
+              title="Baca Detail Pesan"
+            >
+              <VisibilityIcon fontSize="small" />
+            </IconButton>
+            <IconButton
+              size="small"
+              color="error"
+              onClick={() => setLeadToDelete(params.row.id)}
+              title="Hapus Pesan"
+            >
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          </Box>
+        ),
+      },
+    ],
+    [theme.palette.mode, theme.palette.primary.main]
+  );
 
   return (
     <Box>
@@ -351,29 +372,31 @@ export const LeadsView: React.FC = () => {
         }}
       >
         <Box sx={{ height: 500, width: '100%' }}>
-          <DataGrid
-            rows={filteredLeads}
-            columns={columns}
-            pageSizeOptions={[5, 10, 20]}
-            initialState={{
-              pagination: { paginationModel: { pageSize: 10 } },
-            }}
-            disableRowSelectionOnClick
-            sx={{
-              border: 'none',
-              '& .MuiDataGrid-cell:focus': { outline: 'none' },
-              '& .MuiDataGrid-columnHeaders': {
-                backgroundColor:
-                  theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
-                borderBottom: `1px solid ${theme.palette.divider}`,
-                fontWeight: 700,
-              },
-              '& .MuiDataGrid-row:hover': {
-                backgroundColor:
-                  theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
-              },
-            }}
-          />
+          {mounted ? (
+            <DataGrid
+              rows={filteredLeads}
+              columns={columns}
+              pageSizeOptions={[5, 10, 20]}
+              initialState={{
+                pagination: { paginationModel: { pageSize: 10 } },
+              }}
+              disableRowSelectionOnClick
+              sx={{
+                border: 'none',
+                '& .MuiDataGrid-cell:focus': { outline: 'none' },
+                '& .MuiDataGrid-columnHeaders': {
+                  backgroundColor:
+                    theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+                  borderBottom: `1px solid ${theme.palette.divider}`,
+                  fontWeight: 700,
+                },
+                '& .MuiDataGrid-row:hover': {
+                  backgroundColor:
+                    theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
+                },
+              }}
+            />
+          ) : null}
         </Box>
       </Paper>
 
@@ -433,6 +456,13 @@ export const LeadsView: React.FC = () => {
                     <BusinessIcon sx={{ fontSize: 16, color: theme.palette.text.secondary }} />
                     <Typography variant="body2" sx={{ fontSize: '0.84rem' }}>
                       <strong>Instansi:</strong> {selectedLead.company || 'Pribadi / Perorangan'}
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <AutoIcon sx={{ fontSize: 16, color: theme.palette.text.secondary }} />
+                    <Typography variant="body2" sx={{ fontSize: '0.84rem' }}>
+                      <strong>Layanan Diminati:</strong> {selectedLead.serviceType || 'Konsultasi Umum'}
                     </Typography>
                   </Box>
 

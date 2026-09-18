@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import SectionHeader from './SectionHeader';
 import { useApp } from '../../context/AppContext';
 
+import { computeBudgetFromService } from '../../lib/pricingUtils';
+
 export const ContactSection: React.FC = () => {
   const { addLead, selectedServiceForInquiry, setActiveView, setDashboardTab, pricingTiers } = useApp();
 
@@ -12,7 +14,6 @@ export const ContactSection: React.FC = () => {
     email: '',
     company: '',
     serviceType: '',
-    budget: '',
     message: '',
   });
 
@@ -29,7 +30,7 @@ export const ContactSection: React.FC = () => {
     }
   }, [selectedServiceForInquiry]);
 
-  const serviceOptions = [
+  const defaultOptions = [
     ...pricingTiers.map((t) => `Paket Tier ${t.tierNumber}: ${t.name}`),
     'Full-Stack Web App (Next.js & Supabase)',
     'SaaS & Enterprise Dashboard UI (Material UI)',
@@ -39,13 +40,13 @@ export const ContactSection: React.FC = () => {
     'Lainnya / Konsultasi Kustom',
   ];
 
-  const budgetOptions = [
-    '< Rp 15.000.000',
-    'Rp 15.000.000 - Rp 30.000.000',
-    'Rp 30.000.000 - Rp 60.000.000',
-    'Rp 60.000.000+',
-    'Fleksibel / Belum Ditentukan',
-  ];
+  const serviceOptions = Array.from(
+    new Set(
+      formData.serviceType && !defaultOptions.includes(formData.serviceType)
+        ? [formData.serviceType, ...defaultOptions]
+        : defaultOptions
+    )
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,23 +58,42 @@ export const ContactSection: React.FC = () => {
     setErrorMsg(null);
     setLoading(true);
 
+    const name = formData.name.trim();
+    const email = formData.email.trim();
+    const company = formData.company.trim();
+    const serviceType = formData.serviceType || 'Konsultasi Umum';
+    const message = formData.message.trim();
+    const budgetInfo = computeBudgetFromService(serviceType, pricingTiers);
+
     try {
       const created = await addLead({
-        name: formData.name.trim(),
-        email: formData.email.trim(),
-        company: formData.company.trim() || undefined,
-        serviceType: formData.serviceType || 'Konsultasi Umum',
-        budget: formData.budget || 'Belum Ditentukan',
-        message: formData.message.trim(),
+        name,
+        email,
+        company: company || 'Pribadi / Perorangan',
+        serviceType,
+        budget: budgetInfo.text,
+        message,
       });
 
       setSubmittedLeadId(created.id);
+
+      // Trigger CTA to WhatsApp 08216361428
+      const waText = `Halo Atasilabs, saya ingin mengirim inquiry proyek:\n\n` +
+        `• Nama: ${name}\n` +
+        `• Email: ${email}\n` +
+        (company ? `• Perusahaan: ${company}\n` : '') +
+        `• Layanan: ${serviceType}\n` +
+        `• Estimasi Paket: ${budgetInfo.text}\n` +
+        `• Pesan: ${message}`;
+
+      const waUrl = `https://wa.me/628216361428?text=${encodeURIComponent(waText)}`;
+      window.open(waUrl, '_blank');
+
       setFormData({
         name: '',
         email: '',
         company: '',
         serviceType: '',
-        budget: '',
         message: '',
       });
     } catch (err) {
@@ -104,11 +124,19 @@ export const ContactSection: React.FC = () => {
               Terima Kasih! Inquiry Anda Telah Diterima.
             </h3>
             <p className="font-ibm-mono text-[12px] text-[#888888] max-w-[600px] mx-auto leading-[1.6]">
-              Tim Software Engineer kami sedang meninjau detail proyek Anda. Kami akan menghubungi Anda via email atau WhatsApp yang terdaftar.
+              Tim Software Engineer kami telah menerima inquiry Anda di dashboard dan membuka percakapan WhatsApp. Jika WhatsApp belum terbuka, silakan klik tombol di bawah.
             </p>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 pt-4">
+            <a
+              href="https://wa.me/628216361428"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center px-6 h-12 bg-[#25D366] text-[#0A0A0A] font-grotesk font-bold text-[12px] tracking-[1px] hover:bg-[#20bd5a] transition-colors"
+            >
+              HUBUNGI VIA WHATSAPP (08216361428) →
+            </a>
             <button
               onClick={() => {
                 setActiveView('dashboard');
@@ -150,7 +178,14 @@ export const ContactSection: React.FC = () => {
 
               <div className="flex flex-col gap-1">
                 <span className="font-ibm-mono text-[9px] text-[#555555] tracking-[2px] font-bold">WHATSAPP / CONSULTATION</span>
-                <span className="font-ibm-mono text-[13px] text-[#FFD600] font-bold">+62 812-3456-7890</span>
+                <a
+                  href="https://wa.me/628216361428"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-ibm-mono text-[13px] text-[#FFD600] font-bold hover:underline"
+                >
+                  +62 821-6361-428
+                </a>
               </div>
 
               <div className="flex flex-col gap-1">
@@ -246,32 +281,6 @@ export const ContactSection: React.FC = () => {
                       </option>
                     ))}
                   </select>
-                </div>
-              </div>
-
-              {/* Budget */}
-              <div className="flex flex-col gap-2">
-                <label className="font-ibm-mono text-[10px] text-[#888888] tracking-[1.5px] font-bold uppercase">
-                  ESTIMASI ANGGARAN (BUDGET)
-                </label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {budgetOptions.map((b) => {
-                    const isSelected = formData.budget === b;
-                    return (
-                      <button
-                        type="button"
-                        key={b}
-                        onClick={() => setFormData({ ...formData, budget: b })}
-                        className={`h-10 px-3 font-ibm-mono text-[10px] tracking-[0.5px] border transition-colors ${
-                          isSelected
-                            ? 'bg-[#FFD600] text-[#0A0A0A] font-bold border-[#FFD600]'
-                            : 'bg-[#0A0A0A] text-[#888888] border-[#2D2D2D] hover:border-[#888888]'
-                        }`}
-                      >
-                        {b}
-                      </button>
-                    );
-                  })}
                 </div>
               </div>
 

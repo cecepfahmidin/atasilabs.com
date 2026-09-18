@@ -24,7 +24,7 @@ export const HeroSection: React.FC = () => {
       <div className="flex items-center justify-center gap-[8px] h-[32px] px-[12px] md:px-[16px] bg-[#1A1A1A] border-2 border-[#FFD600]">
         <div className="w-[8px] h-[8px] bg-[#FFD600] shrink-0 animate-pulse" />
         <span className="font-ibm-mono text-[9px] md:text-[11px] font-bold text-[#FFD600] tracking-[1px] md:tracking-[2px] whitespace-nowrap">
-          [SYSTEM 2.0] // ATASILABS INDUSTRIAL SOP & AUTOMATION
+          BUILD YOUR DIGITAL FUTURE
         </span>
       </div>
 
@@ -32,19 +32,17 @@ export const HeroSection: React.FC = () => {
 
       {/* Main Glitch Headlines */}
       <h1 className="font-grotesk text-[clamp(32px,8vw,90px)] font-bold text-[#F5F5F0] tracking-[-1px] leading-none text-center w-full max-w-[1100px]">
-        <GlitchText text="BUILD WITHOUT LIMITS." speed={40} delay={100} />
+        <GlitchText text="PENGEN WEBSITE KEREN?" speed={40} delay={100} />
       </h1>
       <h1 className="font-grotesk text-[clamp(32px,8vw,90px)] font-bold text-[#FFD600] tracking-[-1px] leading-none text-center w-full max-w-[1100px] mt-2">
-        <GlitchText text="ENTERPRISE WEB APPS." speed={40} delay={400} />
+        <GlitchText text="KITA BANGUN BERSAMA!" speed={40} delay={400} />
       </h1>
 
       <div className="h-8 md:h-[32px]" />
 
       {/* Subheading */}
       <p className="font-ibm-mono text-[13px] md:text-[15px] text-[#888888] tracking-[1px] leading-[1.6] text-center w-full max-w-[800px]">
-        STUDIO PENGEMBANGAN APLIKASI WEB FULL-STACK PERFORMANCE SKALA ENTERPRISE.
-        <br />
-        NEXT.JS APP ROUTER, PRISMA ORM, SUPABASE POSTGRESQL & OTOMATISASI DOKUMEN SOP 6-STAGE.
+        Ceritain aja konsep web impianmu, pilih paketnya, dan biarkan tim kami yang handle sisanya dengan transparan dan profesional.
       </p>
 
       <div className="h-10 md:h-[48px]" />
@@ -55,8 +53,8 @@ export const HeroSection: React.FC = () => {
           onClick={scrollToContact}
           className="flex items-center justify-center w-full max-w-[280px] sm:w-[230px] h-[56px] bg-[#FFD600] hover:bg-[#e6c200] transition-colors border-none cursor-pointer"
         >
-          <span className="font-grotesk text-[12px] font-bold text-[#0A0A0A] tracking-[2px]">
-            KONSULTASI PROYEK FREE
+          <span className="font-ibm-mono text-[12px] font-bold text-[#0A0A0A] tracking-[2px]">
+            MULAI KONSULTASI GRATIS
           </span>
         </button>
 
@@ -73,7 +71,7 @@ export const HeroSection: React.FC = () => {
       <div className="h-6 md:h-[24px]" />
 
       <p className="font-ibm-mono text-[11px] text-[#555555] tracking-[2px] text-center">
-        UU ITE E-SIGNATURE VERIFIED // GARANSI BUG 30-90 HARI // 100% TYPE-SAFE
+        BUILD YOUR DIGITAL FUTURE WITH ATASILABS TEAM
       </p>
 
       <div className="h-12 md:h-[64px]" />

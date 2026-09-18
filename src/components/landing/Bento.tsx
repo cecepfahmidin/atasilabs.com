@@ -6,9 +6,9 @@ export function Bento() {
   return (
     <section id="architecture" className="flex flex-col w-full bg-[#0D0D0D] py-16 px-6 md:py-[100px] md:px-[80px] gap-10 md:gap-[48px]">
       <SectionHeader
-        label="[05] // ENTERPRISE ARCHITECTURE"
-        title={'STACK TEKNOLOGI MODERN.\nDALAM SATU EKOSISTEM.'}
-        subtitle="Arsitektur teruji skala produksi dengan kehandalan tinggi, keamanan RLS, dan otomatisasi PDF."
+        label="[05] // KEUNGGULAN SISTEM DI BALIK LAYAR KAMI"
+        title={"ARSITEKTUR ANDAL, AMAN, &\nDIRANCANG UNTUK PERTUMBUHAN BISNIS ANDA."}
+        subtitle="Sistem modern yang dirancang rapi, cepat, dan transparan untuk mendukung pertumbuhan usaha Anda secara berkelanjutan."
       />
 
       <div className="flex flex-col w-full gap-6">
@@ -19,14 +19,14 @@ export function Bento() {
             <div>
               <span className="font-ibm-mono text-[11px] font-bold text-[#1A1A1A] tracking-[2px]">[01/06]</span>
               <h3 className="font-grotesk text-[22px] md:text-[24px] font-bold text-[#0A0A0A] tracking-[-0.5px] leading-[1.2] mt-3 mb-3">
-                NEXT.JS 15 APP ROUTER & SERVER ACTIONS
+                AKSES SUPER CEPAT & STABIL
               </h3>
               <p className="font-ibm-mono text-[12px] text-[#1A1A1A] tracking-[0.5px] leading-[1.6]">
-                SERVER-SIDE RENDERING (SSR), INCREMENTAL STATIC REGENERATION (ISR), DAN SKOR LIGHTHOUSE 98+.
+                Website dan aplikasi Anda dimuat dalam hitungan detik dari berbagai perangkat, memberikan pengalaman terbaik tanpa hambatan bagi pelanggan yang berkunjung.
               </p>
             </div>
             <div className="flex items-center justify-center h-[28px] px-[12px] bg-[#0A0A0A] w-fit mt-6">
-              <span className="font-ibm-mono text-[10px] font-bold text-[#FFD600] tracking-[2px]">[NEXT.JS 15]</span>
+              <span className="font-ibm-mono text-[10px] font-bold text-[#FFD600] tracking-[2px]">[SUPER CEPAT]</span>
             </div>
           </div>
 
@@ -35,14 +35,14 @@ export function Bento() {
             <div>
               <span className="font-ibm-mono text-[11px] font-bold text-[#FFD600] tracking-[2px]">[02/06]</span>
               <h3 className="font-grotesk text-[22px] md:text-[24px] font-bold text-[#F5F5F0] tracking-[-0.5px] leading-[1.2] mt-3 mb-3">
-                PRISMA ORM & POSTGRESQL SUPABASE
+                KEAMANAN DATA & ANTI-BOCOR
               </h3>
               <p className="font-ibm-mono text-[12px] text-[#888888] tracking-[0.5px] leading-[1.6]">
-                SKEMA DATABASE TYPE-SAFE RELASIONAL DENGAN ROW LEVEL SECURITY (RLS) ANTI-BOCOR DATA.
+                Seluruh data rahasia, informasi akun, dan transaksi bisnis Anda dilindungi dengan sistem keamanan bertingkat agar privasi perusahaan terjaga ketat.
               </p>
             </div>
             <div className="flex items-center justify-center h-[28px] px-[12px] bg-[#1A1A1A] border border-[#333] w-fit mt-6">
-              <span className="font-ibm-mono text-[10px] font-bold text-[#4ADE80] tracking-[2px]">[PRISMA ORM]</span>
+              <span className="font-ibm-mono text-[10px] font-bold text-[#4ADE80] tracking-[2px]">[KEAMANAN DATA]</span>
             </div>
           </div>
 
@@ -51,14 +51,14 @@ export function Bento() {
             <div>
               <span className="font-ibm-mono text-[11px] font-bold text-[#FF6B35] tracking-[2px]">[03/06]</span>
               <h3 className="font-grotesk text-[22px] md:text-[24px] font-bold text-[#F5F5F0] tracking-[-0.5px] leading-[1.2] mt-3 mb-3">
-                MATERIAL UI (MUI V6) DESIGN SYSTEM
+                TAMPILAN NYAMAN & MUDAH DIGUNAKAN
               </h3>
               <p className="font-ibm-mono text-[12px] text-[#888888] tracking-[0.5px] leading-[1.6]">
-                ANTARMUKA MANAGEMENT DATA INTERAKTIF, DATAGRID COMPLEX, & MULTI-THEME LIGHT/DARK DYNAMIC.
+                Antarmuka dashboard dan halaman muka dirancang rapi, modern, serta sangat ramah pengguna (user-friendly) tanpa memerlukan pelatihan rumit bagi tim Anda.
               </p>
             </div>
             <div className="flex items-center justify-center h-[28px] px-[12px] bg-[#1A1A1A] border border-[#FF6B35] w-fit mt-6">
-              <span className="font-ibm-mono text-[10px] font-bold text-[#FF6B35] tracking-[2px]">[MUI V6 SYSTEM]</span>
+              <span className="font-ibm-mono text-[10px] font-bold text-[#FF6B35] tracking-[2px]">[USER FRIENDLY]</span>
             </div>
           </div>
         </div>
@@ -70,14 +70,14 @@ export function Bento() {
             <div>
               <span className="font-ibm-mono text-[11px] font-bold text-[#FFD600] tracking-[2px]">[04/06]</span>
               <h3 className="font-grotesk text-[20px] md:text-[22px] font-bold text-[#F5F5F0] tracking-[-0.5px] leading-[1.2] mt-3 mb-2">
-                OTOMATISASI PDF DOKUMEN SOP
+                PENERBITAN DOKUMEN & LAPORAN OTOMATIS
               </h3>
               <p className="font-ibm-mono text-[12px] text-[#888888] tracking-[0.5px] leading-[1.6]">
-                PENERBITAN OTOMATIS 5 DOKUMEN RESMI (CIF, RSD, MOU, SPK, BAST) BER-KOP RESMI PT AULIA INDOLAND GRP.
+                Sistem secara otomatis merapikan data masuk, mencetak rekapitulasi, dan memproses berkas operasional penting secara real-time tanpa repot.
               </p>
             </div>
             <div className="flex items-center justify-center h-[28px] px-[12px] bg-[#1A1A1A] border border-[#333] w-fit mt-4">
-              <span className="font-ibm-mono text-[10px] font-bold text-[#888888] tracking-[2px]">[PDF AUTO-GEN]</span>
+              <span className="font-ibm-mono text-[10px] font-bold text-[#888888] tracking-[2px]">[LAPORAN OTOMATIS]</span>
             </div>
           </div>
 
@@ -86,14 +86,14 @@ export function Bento() {
             <div>
               <span className="font-ibm-mono text-[11px] font-bold text-[#FF6B35] tracking-[2px]">[05/06]</span>
               <h3 className="font-grotesk text-[20px] md:text-[22px] font-bold text-[#F5F5F0] tracking-[-0.5px] leading-[1.2] mt-3 mb-2">
-                UU ITE E-SIGNATURE VERIFIED
+                LEGALITAS TANDA TANGAN DIGITAL SAH
               </h3>
               <p className="font-ibm-mono text-[12px] text-[#888888] tracking-[0.5px] leading-[1.6]">
-                TANDA TANGAN CANVAS DRAWING + AUDIT TRAIL TIMESTAMP & VERIFIKASI METADATA IP ADDRESS KLIEN.
+                Dilengkapi fitur validasi kontrak dan persetujuan digital yang sah secara hukum, lengkap dengan jejak audit waktu yang transparan.
               </p>
             </div>
             <div className="flex items-center justify-center h-[28px] px-[12px] bg-[#1A1A1A] border border-[#FF6B35] w-fit mt-4">
-              <span className="font-ibm-mono text-[10px] font-bold text-[#FF6B35] tracking-[2px]">[UU ITE VERIFIED]</span>
+              <span className="font-ibm-mono text-[10px] font-bold text-[#FF6B35] tracking-[2px]">[E-SIGN SAH]</span>
             </div>
           </div>
 
@@ -102,14 +102,14 @@ export function Bento() {
             <div>
               <span className="font-ibm-mono text-[11px] font-bold text-[#4ADE80] tracking-[2px]">[06/06]</span>
               <h3 className="font-grotesk text-[20px] md:text-[22px] font-bold text-[#F5F5F0] tracking-[-0.5px] leading-[1.2] mt-3 mb-2">
-                PAYMENT GATEWAY & REAL-TIME
+                INTEGRASI PEMBAYARAN & SINKRONISASI LANGSUNG
               </h3>
               <p className="font-ibm-mono text-[12px] text-[#888888] tracking-[0.5px] leading-[1.6]">
-                INTEGRASI MIDTRANS SNAP API, QRIS, VIRTUAL ACCOUNT, & SUPABASE REALTIME CHANNEL SYNC.
+                Mendukung berbagai metode pembayaran instan (QRIS, Transfer Bank, E-Wallet) yang terhubung langsung ke laporan keuangan sistem secara otomatis.
               </p>
             </div>
             <div className="flex items-center justify-center h-[28px] px-[12px] bg-[#1A1A1A] border border-[#4ADE80]/40 w-fit mt-4">
-              <span className="font-ibm-mono text-[10px] font-bold text-[#4ADE80] tracking-[2px]">[REALTIME & MIDTRANS]</span>
+              <span className="font-ibm-mono text-[10px] font-bold text-[#4ADE80] tracking-[2px]">[PEMBAYARAN INSTAN]</span>
             </div>
           </div>
         </div>

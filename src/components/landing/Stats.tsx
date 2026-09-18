@@ -1,17 +1,17 @@
 'use client';
 
 const stats = [
-  { value: '100%', label: 'TYPE-SAFE PRISMA ORM', border: true },
-  { value: '98+', label: 'LIGHTHOUSE SPEED SCORE', border: true },
-  { value: '5-DOC', label: 'AUTOMATED SOP PACKAGE', border: true },
-  { value: '<100MS', label: 'SUPABASE POSTGRES LATENCY', border: false },
+  { value: '100%', label: 'KEPUASAN & KUALITAS', border: true },
+  { value: '30 HARI', label: 'GARANSI PERBAIKAN BUG', border: true },
+  { value: '0 IDR', label: 'BIAYA TERSEMBUNYI', border: true },
+  { value: '5 PAKET', label: 'PEMBUATAN WEBSITE & LANDING PAGE', border: false },
 ];
 
 export function Stats() {
   return (
     <section className="flex flex-col w-full bg-[#FFD600] py-12 px-6 md:py-[75px] md:px-[80px]">
       <span className="font-ibm-mono text-[12px] font-bold text-[#0A0A0A] tracking-[3px]">
-        [04] // METRIK PERFORMA & STANDAR APLIKASI WEB
+        [03] // JAMINAN KEPUASAN & GARANSI
       </span>
       <div className="h-6 md:h-[28px]" />
       <div className="grid grid-cols-2 md:flex w-full gap-[2px] md:gap-0">

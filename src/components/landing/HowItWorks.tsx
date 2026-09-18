@@ -5,45 +5,38 @@ import { SectionHeader } from './SectionHeader';
 const stages = [
   {
     num: '01',
-    title: 'DISCOVERY & INTAKE (CIF)',
-    desc: 'Pengumpulan kebutuhan awal (Form CIF), target launching, & penentuan klaster Tier 1-5.',
-    doc: 'CIF (Customer Information Form)',
+    title: 'PEMILIHAN PAKET',
+    desc: 'Pilih paket layanan yang sesuai dengan kebutuhan dan skala bisnis Anda.',
+    doc: 'Katalog Paket (Starter, Growth, Pro, Elite)',
     badge: 'STAGE 1',
   },
   {
     num: '02',
-    title: 'SPESIFIKASI TEKNIS (RSD)',
-    desc: 'Penyusunan rincian fitur ATL-xxx, NFR, Tech Stack, & estimasi milestone pengerjaan.',
-    doc: 'RSD (Requirement Spec Document)',
+    title: 'PENGISIAN FORMULIR',
+    desc: 'Isi formulir online sesuai kebutuhan fitur website dan profil usaha Anda.',
+    doc: 'Formulir Intake Klien (CIF)',
     badge: 'STAGE 2',
   },
   {
     num: '03',
-    title: 'KONTRAK BISNIS (MoU)',
-    desc: 'Kesepakatan MoU PT Aulia Indoland Grup, skema DP/termin, & rekening pembayaran.',
-    doc: 'MoU (Memorandum of Understanding)',
+    title: 'VERIFIKASI, MOU DAN PEMBAYARAN AWAL',
+    desc: 'Tim atasilabs memverifikasi data, menerbitkan MoU/kontrak kerja, dan invoice DP awal.',
+    doc: 'MoU & Invoice Pembayaran Awal',
     badge: 'STAGE 3',
   },
   {
     num: '04',
-    title: 'PENDELEGASIAN TIM (SPK)',
-    desc: 'Penerbitan SPK Mitra Developer, skema fee pengerjaan, & jadwal deadline sprints.',
-    doc: 'SPK (Surat Perintah Kerja)',
+    title: 'PENGERJAAN WEBSITE',
+    desc: 'Tim atasilabs mulai merancang dan membangun website sesuai paket pilihan Anda.',
+    doc: 'RSD (Requirement Spec) & QA Checklist',
     badge: 'STAGE 4',
   },
   {
     num: '05',
-    title: 'QA TESTING & UAT REVIEW',
-    desc: 'Pengembangan full-stack, QA Testing Sprints, Staging deployment, & checklist UAT Klien.',
-    doc: 'QA Checklist & UAT Report',
-    badge: 'STAGE 5',
-  },
-  {
-    num: '06',
-    title: 'SERAH TERIMA & BAST',
-    desc: 'Penandatanganan Berita Acara Serah Terima (BAST), serah kredensial & garansi 30-90 hari.',
+    title: 'SERAH TERIMA',
+    desc: 'Penandatanganan BAST, penyerahan akses kredensial lengkap, & garansi 30 hari.',
     doc: 'BAST (Berita Acara Serah Terima)',
-    badge: 'STAGE 6',
+    badge: 'STAGE 5',
   },
 ];
 
@@ -51,9 +44,9 @@ export function HowItWorks() {
   return (
     <section id="workflow" className="flex flex-col w-full bg-[#0A0A0A] py-16 px-6 md:py-[100px] md:px-[80px] gap-10 md:gap-[48px]">
       <SectionHeader
-        label="[03] // OPERATIONAL WORKFLOW"
-        title={'ALUR SERTA SOP KERJA 6-STAGE IPW.\nTERPERCAYA & OTOMATIS.'}
-        subtitle="Setiap proyek diproses mengikuti 6 tahap SOP operasional bergaransi dengan penerbitan 5 paket dokumen legal otomatis ber-kop resmi."
+        label="[02] // OPERATIONAL WORKFLOW"
+        title={'ALUR SERTA SOP KERJA TERPERCAYA.\n5 TAHAP TRANSPARAN & OTOMATIS.'}
+        subtitle="Setiap proyek diproses mengikuti 5 tahap SOP operasional bergaransi dengan penerbitan dokumen legal resmi."
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full items-stretch">

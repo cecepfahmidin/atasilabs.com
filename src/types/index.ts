@@ -105,9 +105,9 @@ export interface CIFData {
   visualStyle: string; // Modern/Minimalis, Profesional/Korporasi, Elegant/Mewah
   referenceWebsites: string[];
   contentAvailability: {
-    general: 'Tersedia' | 'Tidak Tersedia' | 'Disediakan Developer';
-    copywriting: 'Tersedia' | 'Tidak Tersedia' | 'Disediakan Developer';
-    images: 'Tersedia' | 'Tidak Tersedia' | 'Disediakan Developer';
+    general: 'Tersedia' | 'Tidak Tersedia' | 'Disediakan Developer' | string;
+    copywriting: 'Tersedia' | 'Tidak Tersedia' | 'Disediakan Developer' | string;
+    images: 'Tersedia' | 'Tidak Tersedia' | 'Disediakan Developer' | string;
   };
   estimatedBudget: number;
   additionalCosts?: number;

@@ -48,7 +48,7 @@ export const Footer: React.FC = () => {
             INDUSTRIAL-GRADE SOFTWARE ENGINEERING STUDIO. REKAYASA ARSITEKTUR NEXT.JS, MATERIAL UI & PRISMA ORM UNTUK ENTERPRISE DENGAN SYSTEM SPRINT MANAJEMEN PRESISI TINGGI.
           </p>
           <div className="flex gap-[12px]">
-            {[{ label: "GH", url: "https://github.com" }, { label: "WA", url: "https://wa.me" }, { label: "LI", url: "https://linkedin.com" }].map((s) => (
+            {[{ label: "GH", url: "https://github.com" }, { label: "WA", url: "https://wa.me/628216361428" }, { label: "LI", url: "https://linkedin.com" }].map((s) => (
               <a
                 key={s.label}
                 href={s.url}
