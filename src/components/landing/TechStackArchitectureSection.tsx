@@ -4,64 +4,61 @@ import React from 'react';
 import SectionHeader from './SectionHeader';
 
 export const TechStackArchitectureSection: React.FC = () => {
-  const architecturePillars = [
+  const comparisonPillars = [
     {
       numStr: '[01/03]',
-      title: 'TAMPILAN MODERN & SANGAT CEPAT',
-      badge: 'RESPONSIF SEMUA HP & LAPTOP',
+      title: 'KEPASTIAN KONTRAK & LEGALITAS',
+      badge: 'ATASILABS vs VENDOR LAIN',
       tagColor: '#FFD600',
-      desc: 'Website dapat dibuka secara instan tanpa lemot dari perangkat apa pun, memberikan kenyamanan maksimal bagi setiap pengunjung.',
+      desc: 'Setiap tahapan proyek dijamin dengan dokumen resmi ber-kop legal agar hak dan investasi bisnis Anda 100% aman.',
       points: [
-        'Tampilan rapi dan pas di layar HP, tablet, maupun komputer',
-        'Loading halaman super cepat tanpa waktu tunggu lama',
-        'Gambar dan foto produk tampil jernih serta hemat kuota',
+        '✓ ATASILABS: Terbit MoU legal, Invoice resmi, & BAST otomatis',
+        '✕ VENDOR LAIN: Tanpa kontrak jelas & harga sering membengkak',
       ],
     },
     {
       numStr: '[02/03]',
-      title: 'PEMROSESAN DATA OTOMATIS & AKURAT',
-      badge: 'TANPA REPOT & BEBAS ERROR',
+      title: 'KECEPATAN & KINERJA SISTEM',
+      badge: 'MODERN vs CARA TRADISIONAL',
       tagColor: '#4ADE80',
-      desc: 'Setiap data pelanggan dan pesanan baru langsung diolah secara otomatis oleh sistem tanpa perlu dicatat manual satu per satu.',
+      desc: 'Website dibangun dengan standar teknologi terbaru yang sangat cepat dibuka di HP tanpa ada waktu tunggu lama.',
       points: [
-        'Mencegah kesalahan catat atau salah input data',
-        'Data pesan dan transaksi diproses secara real-time',
-        'Rekapitulasi laporan rapi dan siap dicek kapan saja',
+        '✓ ATASILABS: Loading super cepat, ringan di HP, & bebas lemot',
+        '✕ VENDOR LAIN: Pakai template berat yang mudah lambat & crash',
       ],
     },
     {
       numStr: '[03/03]',
-      title: 'KEAMANAN DATA & PENYIMPANAN AMAN',
-      badge: 'PROTEKSI PRIVASI BISNIS',
+      title: 'KEAMANAN DATA & GARANSI',
+      badge: 'PROTEKSI PENUH vs TANPA JAMINAN',
       tagColor: '#FF6B35',
-      desc: 'Seluruh informasi rahasia, transaksi, dan berkas bisnis Anda dilindungi dengan sistem keamanan modern agar terjaga dari kebocoran.',
+      desc: 'Seluruh data rahasia bisnis Anda dilindungi dengan sistem enkripsi ketat plus dukungan garansi resmi pasca serah terima.',
       points: [
-        'Perlindungan privasi data pelanggan dari kebocoran',
-        'Akses dashboard aman dengan verifikasi akun terpercaya',
-        'Penyimpanan berkas & cadangan data otomatis di server cloud',
+        '✓ ATASILABS: Enkripsi data, backup otomatis, & garansi 30 hari',
+        '✕ VENDOR LAIN: Rawan kebocoran data & lepas tangan setelah jadi',
       ],
     },
   ];
 
-  const dataFlowSteps = [
-    { step: '[01]', title: 'PEMILIHAN PAKET', desc: 'Pilih paket layanan yang sesuai dengan kebutuhan bisnis.' },
-    { step: '[02]', title: 'PENGISIAN FORMULIR', desc: 'Isi formulir kebutuhan proyek dan detail usaha.' },
-    { step: '[03]', title: 'VERIFIKASI, MOU & DP', desc: 'Verifikasi data, penerbitan MoU, dan pembayaran awal.' },
-    { step: '[04]', title: 'PENGERJAAN WEBSITE', desc: 'Pengembangan sistem, perancangan, dan pengujian.' },
-    { step: '[05]', title: 'SERAH TERIMA', desc: 'Penyerahan akses akun, dokumen BAST, dan garansi.' },
+  const comparisonRows = [
+    { label: 'Kejelasan Biaya', atasilabs: 'Transparan sejak awal tanpa biaya tersembunyi', others: 'Sering ada tambahan biaya di tengah jalan' },
+    { label: 'Waktu Pengerjaan', atasilabs: 'Terjadwal presisi & dapat dipantau real-time', others: 'Sering molor bertingkat tanpa kepastian' },
+    { label: 'Kelengkapan Dokumen', atasilabs: 'Penerbitan otomatis MoU, RSD, & BAST resmi', others: 'Hanya serah terima lisan / tanpa dokumen' },
+    { label: 'Keamanan System', atasilabs: 'Proteksi privasi data & backup cloud otomatis', others: 'Sistem rentan di-hack & data rawan hilang' },
+    { label: 'Dukungan Garansi', atasilabs: 'Garansi operasional 30 hari & bantuan teknis', others: 'Tidak ada garansi jika terjadi error' },
   ];
 
   return (
     <section id="architecture" className="flex flex-col w-full bg-[#050505] py-16 px-6 md:py-[100px] md:px-[80px] lg:px-[120px] gap-12 md:gap-[64px] border-t border-[#1D1D1D]">
       <SectionHeader
-        label="[06] // ARSITEKTUR & SPESIFIKASI SISTEM"
-        title={"TEKNOLOGI MODERN UNTUK\nPERTUMBUHAN BISNIS ANDA"}
-        subtitle="Website dan aplikasi Anda dibangun menggunakan teknologi terkini yang ramah pengguna, loading super cepat, aman dari peretasan, dan siap mengikuti pertumbuhan bisnis Anda."
+        label="[06] // ATASILABS SOP VS OTHERS"
+        title={"PERBANDINGAN KUALITAS &\nKEUNTUNGAN BISNIS ANDA"}
+        subtitle="Lihat bagaimana standar sistem & SOP operasional ATASILABS memberikan perlindungan, kepastian, dan kualitas jauh di atas vendor biasa."
       />
 
       {/* Pillars Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
-        {architecturePillars.map((pillar) => (
+        {comparisonPillars.map((pillar) => (
           <div
             key={pillar.title}
             className="flex flex-col justify-between p-8 md:p-[36px] bg-[#111111] border border-[#2D2D2D] hover:border-[#FFD600] hover:scale-[1.01] hover:shadow-[0_0_25px_rgba(255,214,0,0.12)] transition-all duration-300 group"
@@ -89,11 +86,14 @@ export const TechStackArchitectureSection: React.FC = () => {
                 {pillar.desc}
               </p>
 
-              <div className="pt-4 border-t border-[#222222] flex flex-col gap-2.5">
+              <div className="pt-4 border-t border-[#222222] flex flex-col gap-3">
                 {pillar.points.map((pt, pIdx) => (
-                  <div key={pIdx} className="flex items-start gap-2.5">
-                    <span className="font-ibm-mono text-[12px] text-[#FFD600] font-bold">✓</span>
-                    <span className="font-ibm-mono text-[11px] text-[#CCCCCC] leading-[1.5]">
+                  <div key={pIdx} className="flex items-start gap-2">
+                    <span
+                      className={`font-ibm-mono text-[11px] leading-[1.5] ${
+                        pt.startsWith('✓') ? 'text-[#4ADE80] font-semibold' : 'text-[#FF6B35]'
+                      }`}
+                    >
                       {pt}
                     </span>
                   </div>
@@ -104,30 +104,29 @@ export const TechStackArchitectureSection: React.FC = () => {
         ))}
       </div>
 
-      {/* Data Flow Pipeline Box */}
-      <div className="flex flex-col gap-6 p-8 md:p-10 bg-[#0F0F0F] border border-[#2D2D2D]">
-        <div className="flex items-center gap-3">
-          <span className="font-ibm-mono text-[14px] text-[#FFD600] font-bold"></span>
+      {/* Detail Comparison Table / Box */}
+      <div className="flex flex-col gap-6 p-6 md:p-8 bg-[#0F0F0F] border border-[#2D2D2D]">
+        <div className="flex items-center gap-3 border-b border-[#222222] pb-4">
+          <span className="font-ibm-mono text-[14px] text-[#FFD600] font-bold">⚡</span>
           <h4 className="font-grotesk text-[18px] md:text-[20px] font-bold text-[#F5F5F0] tracking-[1px]">
-            ALUR KERJA OPERASIONAL: 5 TAHAP DARI PEMESANAN HINGGA SERAH TERIMA
+            TABEL PERBANDINGAN STANDAR LAYANAN: ATASILABS vs VENDOR LAIN
           </h4>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 w-full">
-          {dataFlowSteps.map((step) => (
-            <div
-              key={step.step}
-              className="flex flex-col gap-2 p-5 bg-[#141414] border border-[#222222] hover:border-[#FFD600] transition-colors"
-            >
-              <span className="font-ibm-mono text-[10px] font-bold text-[#FFD600] tracking-[2px]">
-                {step.step}
+        <div className="flex flex-col w-full divide-y divide-[#1F1F1F]">
+          {comparisonRows.map((row, idx) => (
+            <div key={idx} className="grid grid-cols-1 md:grid-cols-3 py-4 gap-2 md:gap-4 items-center">
+              <span className="font-grotesk text-[14px] font-bold text-[#F5F5F0]">
+                {row.label}
               </span>
-              <h5 className="font-grotesk text-[15px] font-bold text-[#F5F5F0]">
-                {step.title}
-              </h5>
-              <p className="font-ibm-mono text-[11px] text-[#888888] leading-[1.5]">
-                {step.desc}
-              </p>
+              <div className="flex items-center gap-2 text-[#4ADE80]">
+                <span className="font-ibm-mono text-[12px]">✓</span>
+                <span className="font-ibm-mono text-[12px] text-[#DDDDDD]">{row.atasilabs}</span>
+              </div>
+              <div className="flex items-center gap-2 text-[#FF6B35]">
+                <span className="font-ibm-mono text-[12px]">✕</span>
+                <span className="font-ibm-mono text-[12px] text-[#777777]">{row.others}</span>
+              </div>
             </div>
           ))}
         </div>
@@ -137,5 +136,6 @@ export const TechStackArchitectureSection: React.FC = () => {
 };
 
 export default TechStackArchitectureSection;
+
 
 
