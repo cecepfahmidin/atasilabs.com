@@ -2,8 +2,8 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { PaletteMode } from '@mui/material';
-import { Lead, Portfolio, ClientProject, User, UserRole, LeadStatus, ProjectStatus, PricingTier } from '../types';
-import { INITIAL_LEADS, INITIAL_PORTFOLIOS, INITIAL_PROJECTS, INITIAL_USER, INITIAL_USERS, INITIAL_PRICING_TIERS } from '../data/initialData';
+import { Lead, Portfolio, ClientProject, User, UserRole, LeadStatus, ProjectStatus, PricingTier, CompanyContact } from '../types';
+import { INITIAL_LEADS, INITIAL_PORTFOLIOS, INITIAL_PROJECTS, INITIAL_USER, INITIAL_USERS, INITIAL_PRICING_TIERS, INITIAL_COMPANY_CONTACT } from '../data/initialData';
 import { generateAutoDocumentsForProject } from '../lib/documentGenerator';
 import { DEFAULT_ROLE_PERMISSIONS } from '../lib/rbac';
 import { getStageFromProgress } from '../lib/ipwStages';
@@ -19,8 +19,8 @@ interface AppContextType {
   toggleTheme: () => void;
   activeView: 'landing' | 'dashboard';
   setActiveView: (view: 'landing' | 'dashboard') => void;
-  dashboardTab: 'overview' | 'leads' | 'portfolio' | 'projects' | 'pricing' | 'documents' | 'users' | 'hpp';
-  setDashboardTab: (tab: 'overview' | 'leads' | 'portfolio' | 'projects' | 'pricing' | 'documents' | 'users' | 'hpp') => void;
+  dashboardTab: 'overview' | 'leads' | 'portfolio' | 'projects' | 'pricing' | 'documents' | 'users' | 'hpp' | 'master-data' | 'contact';
+  setDashboardTab: (tab: 'overview' | 'leads' | 'portfolio' | 'projects' | 'pricing' | 'documents' | 'users' | 'hpp' | 'master-data' | 'contact') => void;
   
   // Auth & RBAC
   currentUser: User | null;
@@ -66,6 +66,11 @@ interface AppContextType {
   updatePricingTier: (id: string, tier: Partial<PricingTier>) => Promise<void>;
   resetPricingTiersToDefault: () => void;
 
+  // Company Contact (Master Data)
+  companyContact: CompanyContact;
+  updateCompanyContact: (data: Partial<CompanyContact>) => Promise<void>;
+  resetCompanyContactToDefault: () => void;
+
   // Global Notification / Toast
   notification: NotificationState;
   showNotification: (message: string, severity?: 'success' | 'info' | 'warning' | 'error') => void;
@@ -97,6 +102,7 @@ const STORAGE_KEYS = {
   LEADS: 'webdev_sys_leads',
   PORTFOLIOS: 'webdev_sys_portfolios',
   PRICING: 'webdev_sys_pricing_tiers',
+  COMPANY_CONTACT: 'webdev_sys_company_contact',
 };
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -178,7 +184,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // View state
   const [activeView, setActiveView] = useState<'landing' | 'dashboard'>('landing');
-  const [dashboardTab, setDashboardTab] = useState<'overview' | 'pricing' | 'leads' | 'portfolio' | 'projects' | 'documents' | 'users' | 'hpp'>('overview');
+  const [dashboardTab, setDashboardTab] = useState<'overview' | 'pricing' | 'leads' | 'portfolio' | 'projects' | 'documents' | 'users' | 'hpp' | 'master-data' | 'contact'>('overview');
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [selectedServiceForInquiry, setSelectedServiceForInquiry] = useState('');
   const [selectedDocumentProjectId, setSelectedDocumentProjectId] = useState<string>('proj-1');
@@ -191,6 +197,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [portfolios, setPortfolios] = useState<Portfolio[]>(INITIAL_PORTFOLIOS);
   const [projects, setProjects] = useState<ClientProject[]>(INITIAL_PROJECTS);
   const [pricingTiers, setPricingTiers] = useState<PricingTier[]>(INITIAL_PRICING_TIERS);
+  const [companyContact, setCompanyContact] = useState<CompanyContact>(INITIAL_COMPANY_CONTACT);
 
   // Restore state from LocalStorage after initial mount (hydration complete)
   useEffect(() => {
@@ -209,6 +216,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       const savedPricing = localStorage.getItem(STORAGE_KEYS.PRICING);
       if (savedPricing) setPricingTiers(JSON.parse(savedPricing));
+
+      const savedContact = localStorage.getItem(STORAGE_KEYS.COMPANY_CONTACT);
+      if (savedContact) setCompanyContact(JSON.parse(savedContact));
     } catch (e) {
       console.error('Error restoring state from localStorage:', e);
     }
@@ -268,6 +278,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const updated = typeof next === 'function' ? next(prev) : next;
       try {
         localStorage.setItem(STORAGE_KEYS.PRICING, JSON.stringify(updated));
+      } catch (e) {
+        console.error(e);
+      }
+      return updated;
+    });
+  };
+
+  const saveCompanyContact = (next: CompanyContact | ((prev: CompanyContact) => CompanyContact)) => {
+    setCompanyContact((prev) => {
+      const updated = typeof next === 'function' ? next(prev) : next;
+      try {
+        localStorage.setItem(STORAGE_KEYS.COMPANY_CONTACT, JSON.stringify(updated));
       } catch (e) {
         console.error(e);
       }
@@ -520,10 +542,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
     saveProjects((prev) => [tempProj, ...prev]);
 
-    // Automatically generate 5 official documents (CIF, RSD, MoU, SPK, BAST)
+    // Automatically generate 5 official documents (CIF, RSD, MoU, SPK, BAST) and lock them for this project
     try {
       const autoDocs = generateAutoDocumentsForProject(tempProj);
-      console.log('Auto-generated documents for project:', tempProj.id, autoDocs);
+      if (typeof window !== 'undefined') {
+        const key = 'atasilabs_custom_project_documents';
+        const existingStr = localStorage.getItem(key);
+        const existingDocs = existingStr ? JSON.parse(existingStr) : {};
+        existingDocs[tempProj.id] = autoDocs;
+        localStorage.setItem(key, JSON.stringify(existingDocs));
+      }
+      console.log('Auto-generated & locked documents for project:', tempProj.id, autoDocs);
     } catch (docErr) {
       console.error('Auto document generation error:', docErr);
     }
@@ -637,6 +666,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showNotification('Pricelist dikembalikan ke spesifikasi default', 'info');
   };
 
+  const updateCompanyContact = async (updatedFields: Partial<CompanyContact>) => {
+    saveCompanyContact((prev) => ({
+      ...prev,
+      ...updatedFields,
+      updatedAt: new Date().toISOString(),
+    }));
+    showNotification('Data kontak perusahaan berhasil diperbarui!', 'success');
+  };
+
+  const resetCompanyContactToDefault = () => {
+    saveCompanyContact(INITIAL_COMPANY_CONTACT);
+    showNotification('Data kontak dikembalikan ke konfigurasi default', 'info');
+  };
+
   // Notification Toast
   const [notification, setNotification] = useState<NotificationState>({
     open: false,
@@ -664,6 +707,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     savePortfolios(INITIAL_PORTFOLIOS);
     saveProjects(INITIAL_PROJECTS);
     savePricingTiers(INITIAL_PRICING_TIERS);
+    saveCompanyContact(INITIAL_COMPANY_CONTACT);
     saveUsers(INITIAL_USERS);
     setCurrentUser(INITIAL_USER);
 
@@ -672,6 +716,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       localStorage.removeItem(STORAGE_KEYS.LEADS);
       localStorage.removeItem(STORAGE_KEYS.PORTFOLIOS);
       localStorage.removeItem(STORAGE_KEYS.PRICING);
+      localStorage.removeItem(STORAGE_KEYS.COMPANY_CONTACT);
       localStorage.removeItem(STORAGE_KEYS.USERS_LIST);
       localStorage.removeItem(STORAGE_KEYS.USER);
     } catch (e) {
@@ -722,6 +767,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         pricingTiers,
         updatePricingTier,
         resetPricingTiersToDefault,
+        companyContact,
+        updateCompanyContact,
+        resetCompanyContactToDefault,
         notification,
         showNotification,
         closeNotification,

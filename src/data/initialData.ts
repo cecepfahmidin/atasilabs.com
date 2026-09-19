@@ -1,4 +1,20 @@
-import { Portfolio, Lead, ClientProject, ServiceItem, User, PricingTier } from '../types';
+import { Portfolio, Lead, ClientProject, ServiceItem, User, PricingTier, CompanyContact } from '../types';
+
+export const INITIAL_COMPANY_CONTACT: CompanyContact = {
+  companyName: 'ATASILABS HQ & STUDIO',
+  subtitle: 'BUILD YOUR DIGITAL FUTURE',
+  description: 'Siap mendiskusikan kebutuhan arsitektur Next.js, Material UI, Prisma ORM, maupun integrasi workflow internal perusahaan Anda.',
+  email: 'contact@atasilabs.com',
+  phone: '+62 821-6361-428',
+  whatsapp: '+62 821-6361-428',
+  whatsappRaw: '628216361428',
+  address: 'Jakarta & Bandung, Indonesia (Remote First)',
+  workingHours: 'Senin - Jumat // 09:00 - 18:00 WIB',
+  facebookUrl: 'https://facebook.com/atasilabs',
+  instagramUrl: 'https://instagram.com/atasilabs',
+  ndaNotice: '100% Non-Disclosure Agreement (NDA) Dijamin. Kerahasiaan Ide & Codebase Proyek Terjaga.',
+  updatedAt: new Date().toISOString(),
+};
 
 export const INITIAL_USER: User = {
   id: 'usr-ceo',

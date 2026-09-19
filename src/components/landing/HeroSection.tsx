@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useApp } from '../../context/AppContext';
 import { GlitchText } from './GlitchText';
 import { CollabCursors } from './CollabCursors';
 
 export const HeroSection: React.FC = () => {
-  const { setActiveView } = useApp();
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -59,7 +60,7 @@ export const HeroSection: React.FC = () => {
         </button>
 
         <button
-          onClick={() => setActiveView('dashboard')}
+          onClick={() => router.push('/dashboard')}
           className="flex items-center justify-center w-full max-w-[280px] sm:w-[230px] h-[56px] bg-[#0A0A0A] border-2 border-[#3D3D3D] hover:border-[#888888] transition-colors cursor-pointer text-[#F5F5F0]"
         >
           <span className="font-ibm-mono text-[12px] text-[#888888] hover:text-[#FFD600] tracking-[1.5px]">

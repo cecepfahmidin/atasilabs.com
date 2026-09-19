@@ -97,11 +97,13 @@ export const SignatureDialog: React.FC<SignatureDialogProps> = ({
     const matched = (users || []).find((u) => u.name === nameVal);
     if (matched) {
       if (matched.email) setSignerEmail(matched.email);
-      if (matched.role === 'CEO') setSignerRole('Founder & CEO Atasilabs');
+      if (matched.role === 'CEO') setSignerRole('Chief Executive Officer (CEO)');
       else if (matched.role === 'CTO') setSignerRole('Chief Technology Officer (CTO)');
       else if (matched.role === 'CMO') setSignerRole('Chief Marketing Officer (CMO)');
-      else if (matched.role === 'ADMIN') setSignerRole('System Administrator');
-      else if (matched.role === 'DEVELOPER') setSignerRole('Software Engineer / QA');
+      else if (matched.role === 'ADMIN') setSignerRole('System Administrator (ADMIN)');
+      else if (matched.role === 'DEVELOPER') setSignerRole('In-House Developer (DEVELOPER)');
+      else if (matched.role === 'FREELANCER') setSignerRole('Mitra / Freelance Developer (FREELANCER)');
+      else if (matched.role === 'CLIENT') setSignerRole('Klien / Enterprise Customer (CLIENT)');
       else setSignerRole(matched.role);
     }
   };

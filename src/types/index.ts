@@ -96,13 +96,19 @@ export interface CIFData {
   pageStructure: string;
   mainFeatures: string;
   techFramework: string;
+  scopeOthers?: string; // Ruang Lingkup & Fitur: Lain-Lain
   brandingAssets: {
     logo: boolean;
     color: boolean;
     officialFont: boolean;
     others?: string;
   };
-  visualStyle: string; // Modern/Minimalis, Profesional/Korporasi, Elegant/Mewah
+  visualStyle: string | { // Modern/Minimalis, Profesional/Korporasi, Elegant/Mewah, Lainnya
+    modern?: boolean;
+    professional?: boolean;
+    elegant?: boolean;
+    others?: string;
+  };
   referenceWebsites: string[];
   contentAvailability: {
     general: 'Tersedia' | 'Tidak Tersedia' | 'Disediakan Developer' | string;
@@ -118,6 +124,7 @@ export interface CIFData {
   };
   targetLaunchDate: string;
   additionalNotes?: string;
+  additionalNotesTable?: Array<{ prihal: string; catatan: string }>;
   updatedAt: string;
   party1Signature?: DigitalSignatureData;
   party2Signature?: DigitalSignatureData;
@@ -152,6 +159,8 @@ export interface RSDData {
   projectId?: string;
   docCode: string; // .../ATL-RSD/.../20...
   clientName: string;
+  clientPic?: string;
+  clientContact?: string;
   issueDate: string;
   domain: string;
   emailPass: string;
@@ -221,6 +230,7 @@ export interface SPKData {
   projectId?: string;
   spkNumber: string; // .../SPK-ATL/.../20...
   date: string;
+  tier?: string;
   atasilabsPic: string;
   atasilabsRole: string;
   atasilabsAddress: string;
@@ -258,6 +268,7 @@ export interface BASTData {
   date: string;
   atasilabsPic: string;
   atasilabsRole: string;
+  atasilabsAddress?: string;
   clientCompany: string;
   clientAddress: string;
   clientPic: string;
@@ -373,4 +384,21 @@ export interface PricingTier {
   ctaText: string;
   updatedAt: string;
 }
+
+export interface CompanyContact {
+  companyName: string;
+  subtitle: string;
+  description: string;
+  email: string;
+  phone: string;
+  whatsapp: string;
+  whatsappRaw: string;
+  address: string;
+  workingHours: string;
+  facebookUrl: string;
+  instagramUrl: string;
+  ndaNotice: string;
+  updatedAt?: string;
+}
+
 

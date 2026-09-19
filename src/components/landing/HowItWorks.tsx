@@ -45,7 +45,7 @@ export function HowItWorks() {
     <section id="workflow" className="flex flex-col w-full bg-[#0A0A0A] py-16 px-6 md:py-[100px] md:px-[80px] gap-10 md:gap-[48px]">
       <SectionHeader
         label="[02] // OPERATIONAL WORKFLOW"
-        title={'ALUR SERTA SOP KERJA TERPERCAYA.\n5 TAHAP TRANSPARAN & OTOMATIS.'}
+        title={'ALUR PEMESANAN.\nPEMBUATAN WEBSITE.'}
         subtitle="Setiap proyek diproses mengikuti 5 tahap SOP operasional bergaransi dengan penerbitan dokumen legal resmi."
       />
 

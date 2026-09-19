@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { useApp } from '@/context/AppContext';
 
 // Landing Page Components
 import { LandingNavbar } from '@/components/landing/LandingNavbar';
@@ -21,31 +20,7 @@ import { FinalCTA } from '@/components/landing/FinalCTA';
 import { ContactSection } from '@/components/landing/ContactSection';
 import { Footer } from '@/components/landing/Footer';
 
-// Dashboard Components
-import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { OverviewView } from '@/components/dashboard/OverviewView';
-import { LeadsView } from '@/components/dashboard/LeadsView';
-import { PortfolioCMSView } from '@/components/dashboard/PortfolioCMSView';
-import { ProjectsView } from '@/components/dashboard/ProjectsView';
-import { PricingCMSView } from '@/components/dashboard/PricingCMSView';
-import { DocumentsWorkflowView } from '@/components/dashboard/DocumentsWorkflowView';
-
 export default function MainPage() {
-  const { activeView, dashboardTab } = useApp();
-
-  if (activeView === 'dashboard') {
-    return (
-      <DashboardLayout>
-        {dashboardTab === 'overview' && <OverviewView />}
-        {dashboardTab === 'documents' && <DocumentsWorkflowView />}
-        {dashboardTab === 'leads' && <LeadsView />}
-        {dashboardTab === 'portfolio' && <PortfolioCMSView />}
-        {dashboardTab === 'projects' && <ProjectsView />}
-        {dashboardTab === 'pricing' && <PricingCMSView />}
-      </DashboardLayout>
-    );
-  }
-
   return (
     <div className="bg-[#0A0A0A] text-[#F5F5F0] min-h-screen selection:bg-[#FFD600] selection:text-[#0A0A0A]">
       <LandingNavbar />

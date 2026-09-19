@@ -9,6 +9,11 @@ export const metadata: Metadata = {
   keywords: ['Next.js', 'Prisma ORM', 'Supabase', 'PostgreSQL', 'Material UI', 'React 19', 'Full-Stack Web Development', 'AtasiLabs'],
   authors: [{ name: 'Cecep Fahmidin', url: 'https://atasilabs.com' }],
   viewport: 'width=device-width, initial-scale=1',
+  icons: {
+    icon: '/favicon.png',
+    shortcut: '/favicon.png',
+    apple: '/favicon.png',
+  },
 };
 
 export default function RootLayout({
@@ -19,8 +24,9 @@ export default function RootLayout({
   return (
     <html lang="id">
       <head>
-        <link rel="icon" href="/atasilabs-logo.svg" type="image/svg+xml" />
-        <link rel="shortcut icon" href="/atasilabs-logo.svg" />
+        <link rel="icon" href="/favicon.png" type="image/png" />
+        <link rel="shortcut icon" href="/favicon.png" />
+        <link rel="apple-touch-icon" href="/favicon.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link

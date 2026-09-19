@@ -1,13 +1,15 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import SectionHeader from './SectionHeader';
 import { useApp } from '../../context/AppContext';
 
 import { computeBudgetFromService } from '../../lib/pricingUtils';
 
 export const ContactSection: React.FC = () => {
-  const { addLead, selectedServiceForInquiry, setActiveView, setDashboardTab, pricingTiers } = useApp();
+  const router = useRouter();
+  const { addLead, selectedServiceForInquiry, setDashboardTab, pricingTiers, companyContact } = useApp();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -77,8 +79,7 @@ export const ContactSection: React.FC = () => {
 
       setSubmittedLeadId(created.id);
 
-      // Trigger CTA to WhatsApp 08216361428
-      const waText = `Halo Atasilabs, saya ingin mengirim inquiry proyek:\n\n` +
+      const waText = `Halo ${companyContact.companyName || 'Atasilabs'}, saya ingin mengirim inquiry proyek:\n\n` +
         `• Nama: ${name}\n` +
         `• Email: ${email}\n` +
         (company ? `• Perusahaan: ${company}\n` : '') +
@@ -86,7 +87,7 @@ export const ContactSection: React.FC = () => {
         `• Estimasi Paket: ${budgetInfo.text}\n` +
         `• Pesan: ${message}`;
 
-      const waUrl = `https://wa.me/628216361428?text=${encodeURIComponent(waText)}`;
+      const waUrl = `https://wa.me/${companyContact.whatsappRaw || '628216361428'}?text=${encodeURIComponent(waText)}`;
       window.open(waUrl, '_blank');
 
       setFormData({
@@ -130,17 +131,17 @@ export const ContactSection: React.FC = () => {
 
           <div className="flex flex-col sm:flex-row gap-4 pt-4">
             <a
-              href="https://wa.me/628216361428"
+              href={`https://wa.me/${companyContact.whatsappRaw || '628216361428'}`}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-center px-6 h-12 bg-[#25D366] text-[#0A0A0A] font-grotesk font-bold text-[12px] tracking-[1px] hover:bg-[#20bd5a] transition-colors"
             >
-              HUBUNGI VIA WHATSAPP (08216361428) →
+              HUBUNGI VIA WHATSAPP ({companyContact.whatsapp}) →
             </a>
             <button
               onClick={() => {
-                setActiveView('dashboard');
                 setDashboardTab('leads');
+                router.push('/dashboard/leads');
               }}
               className="flex items-center justify-center px-6 h-12 bg-[#FFD600] text-[#0A0A0A] font-grotesk font-bold text-[12px] tracking-[1px] hover:bg-[#e6c200] transition-colors"
             >
@@ -163,39 +164,41 @@ export const ContactSection: React.FC = () => {
                 [CONTACT DIRECTORY]
               </span>
               <h3 className="font-grotesk text-[22px] font-bold text-[#F5F5F0]">
-                ATASILABS HQ & STUDIO
+                {companyContact.companyName}
               </h3>
               <p className="font-ibm-mono text-[11px] text-[#888888] leading-[1.6]">
-                Siap mendiskusikan kebutuhan arsitektur Next.js, Material UI, Prisma ORM, maupun integrasi workflow internal perusahaan Anda.
+                {companyContact.description}
               </p>
             </div>
 
             <div className="flex flex-col gap-6 pt-4 border-t border-[#1D1D1D]">
               <div className="flex flex-col gap-1">
                 <span className="font-ibm-mono text-[9px] text-[#555555] tracking-[2px] font-bold">EMAIL SUPPORT</span>
-                <span className="font-ibm-mono text-[13px] text-[#F5F5F0] font-bold">contact@atasilabs.com</span>
+                <a href={`mailto:${companyContact.email}`} className="font-ibm-mono text-[13px] text-[#F5F5F0] font-bold hover:text-[#FFD600]">
+                  {companyContact.email}
+                </a>
               </div>
 
               <div className="flex flex-col gap-1">
                 <span className="font-ibm-mono text-[9px] text-[#555555] tracking-[2px] font-bold">WHATSAPP / CONSULTATION</span>
                 <a
-                  href="https://wa.me/628216361428"
+                  href={`https://wa.me/${companyContact.whatsappRaw || '628216361428'}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="font-ibm-mono text-[13px] text-[#FFD600] font-bold hover:underline"
                 >
-                  +62 821-6361-428
+                  {companyContact.whatsapp}
                 </a>
               </div>
 
               <div className="flex flex-col gap-1">
                 <span className="font-ibm-mono text-[9px] text-[#555555] tracking-[2px] font-bold">STUDIO LOCATION</span>
-                <span className="font-ibm-mono text-[12px] text-[#CCCCCC]">Jakarta & Bandung, Indonesia (Remote First)</span>
+                <span className="font-ibm-mono text-[12px] text-[#CCCCCC]">{companyContact.address}</span>
               </div>
 
               <div className="flex flex-col gap-1">
                 <span className="font-ibm-mono text-[9px] text-[#555555] tracking-[2px] font-bold">WORKING HOURS</span>
-                <span className="font-ibm-mono text-[12px] text-[#CCCCCC]">Senin - Jumat // 09:00 - 18:00 WIB</span>
+                <span className="font-ibm-mono text-[12px] text-[#CCCCCC]">{companyContact.workingHours}</span>
               </div>
             </div>
 
@@ -203,7 +206,7 @@ export const ContactSection: React.FC = () => {
             <div className="flex items-center gap-3 p-4 bg-[#141414] border border-[#2D2D2D] mt-auto">
               <span className="font-ibm-mono text-[14px] text-[#FFD600]">🔒</span>
               <span className="font-ibm-mono text-[10px] text-[#888888] leading-[1.4]">
-                100% Non-Disclosure Agreement (NDA) Dijamin. Kerahasiaan Ide & Codebase Proyek Terjaga.
+                {companyContact.ndaNotice}
               </span>
             </div>
           </div>

@@ -10,6 +10,7 @@ import { ProjectsView } from '@/components/dashboard/ProjectsView';
 import { PricingCMSView } from '@/components/dashboard/PricingCMSView';
 import { DocumentsWorkflowView } from '@/components/dashboard/DocumentsWorkflowView';
 import { UsersView } from '@/components/dashboard/UsersView';
+import { CompanyContactView } from '@/components/dashboard/CompanyContactView';
 
 export default function DashboardPage() {
   const { setActiveView, dashboardTab } = useApp();
@@ -27,6 +28,7 @@ export default function DashboardPage() {
       {dashboardTab === 'portfolio' && <PortfolioCMSView />}
       {dashboardTab === 'projects' && <ProjectsView />}
       {dashboardTab === 'pricing' && <PricingCMSView />}
+      {dashboardTab === 'contact' && <CompanyContactView />}
     </DashboardLayout>
   );
 }

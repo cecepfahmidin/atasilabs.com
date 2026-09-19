@@ -22,6 +22,7 @@ import {
   useTheme,
   useMediaQuery,
   Button,
+  Collapse,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -37,6 +38,10 @@ import {
   Description as DescriptionIcon,
   People as PeopleIcon,
   Calculate as CalculateIcon,
+  Storage as MasterDataIcon,
+  Phone as PhoneIcon,
+  ExpandLess,
+  ExpandMore,
 } from '@mui/icons-material';
 import { useRouter, usePathname } from 'next/navigation';
 import { useApp } from '../../context/AppContext';
@@ -74,6 +79,17 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
   const userRole = currentUser?.role || 'ADMIN';
   const roleConfig = ROLE_CONFIGS[userRole] || ROLE_CONFIGS.ADMIN;
 
+  const [masterDataOpen, setMasterDataOpen] = useState(() => {
+    return (
+      pathname?.includes('/dashboard/portfolio') ||
+      pathname?.includes('/dashboard/pricing') ||
+      pathname?.includes('/dashboard/contact') ||
+      pathname?.includes('/dashboard/users') ||
+      pathname?.includes('/dashboard/master-data') ||
+      ['portfolio', 'pricing', 'contact', 'users', 'master-data'].includes(dashboardTab)
+    );
+  });
+
   const rawMenuItems = [
     {
       id: 'overview',
@@ -91,45 +107,61 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
     },
     {
       id: 'documents',
-      label: 'Dokumen & Generator',
+      label: 'Dokumentasi',
       href: '/dashboard/documents',
       icon: <DescriptionIcon />,
       badge: 0,
     },
     {
       id: 'hpp',
-      label: 'Kalkulator HPP & Financial Matrix',
+      label: 'HPP Matriks',
       href: '/dashboard/hpp',
       icon: <CalculateIcon />,
       badge: 0,
     },
     {
       id: 'leads',
-      label: 'Pesan Masuk (Leads)',
+      label: 'Pesan Masuk',
       href: '/dashboard/leads',
       icon: <EmailIcon />,
       badge: unreadLeadsCount,
     },
     {
-      id: 'users',
-      label: 'Manajemen User & RBAC',
-      href: '/dashboard/users',
-      icon: <PeopleIcon />,
+      id: 'master-data',
+      label: 'Master Data',
+      href: '/dashboard/master-data',
+      icon: <MasterDataIcon />,
       badge: 0,
-    },
-    {
-      id: 'portfolio',
-      label: 'Manajemen Portofolio',
-      href: '/dashboard/portfolio',
-      icon: <CodeIcon />,
-      badge: 0,
-    },
-    {
-      id: 'pricing',
-      label: 'Atur Pricelist & Spec',
-      href: '/dashboard/pricing',
-      icon: <BoltIcon />,
-      badge: 0,
+      children: [
+        {
+          id: 'users',
+          label: 'Manajemen User',
+          href: '/dashboard/users',
+          icon: <PeopleIcon />,
+          badge: 0,
+        },
+        {
+          id: 'portfolio',
+          label: 'Manajemen Portofolio',
+          href: '/dashboard/portfolio',
+          icon: <CodeIcon />,
+          badge: 0,
+        },
+        {
+          id: 'pricing',
+          label: 'Atur Pricelist & Spec',
+          href: '/dashboard/pricing',
+          icon: <BoltIcon />,
+          badge: 0,
+        },
+        {
+          id: 'contact',
+          label: 'Kontak Perusahaan',
+          href: '/dashboard/contact',
+          icon: <PhoneIcon />,
+          badge: 0,
+        },
+      ],
     },
   ];
 
@@ -139,6 +171,18 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
     setMobileOpen(!mobileOpen);
   };
 
+  let activeTitle = 'Dashboard';
+  if (dashboardTab === 'portfolio') activeTitle = 'Master Data - Manajemen Portofolio';
+  else if (dashboardTab === 'pricing') activeTitle = 'Master Data - Atur Pricelist & Spec';
+  else if (dashboardTab === 'contact') activeTitle = 'Master Data - Kontak Perusahaan';
+  else if (dashboardTab === 'users') activeTitle = 'Master Data - Manajemen User & RBAC';
+  else if (dashboardTab === 'master-data') activeTitle = 'Pusat Master Data';
+  else {
+    const flat = rawMenuItems.flatMap((m) => (m.children ? [m, ...m.children] : [m]));
+    const found = flat.find((m) => m.id === dashboardTab);
+    if (found) activeTitle = found.label;
+  }
+
   const drawerContent = (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', p: 2 }}>
       {/* Brand Header */}
@@ -146,27 +190,138 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <AtasiLabsLogo height={32} />
         </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-          <Chip
-            label="ADMIN CMS"
-            size="small"
-            sx={{
-              height: 20,
-              fontSize: '0.65rem',
-              fontWeight: 800,
-              backgroundColor: theme.palette.mode === 'dark' ? 'rgba(245, 158, 11, 0.2)' : 'rgba(217, 119, 6, 0.12)',
-              color: theme.palette.primary.main,
-            }}
-          />
-          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, fontSize: '0.7rem' }}>
-            Next.js & Supabase
-          </Typography>
-        </Box>
+        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, fontSize: '0.73rem', fontStyle: 'italic', letterSpacing: '0.02em', mt: 0.5, px: 0.5 }}>
+          Build your digital future
+        </Typography>
       </Box>
 
       {/* Navigation List */}
       <List sx={{ px: 0, flexGrow: 1 }}>
         {menuItems.map((item) => {
+          if (item.children && item.children.length > 0) {
+            const permittedChildren = item.children.filter((child) => hasRolePermission(userRole, child.id));
+            if (permittedChildren.length === 0) return null;
+
+            const isChildActive = permittedChildren.some(
+              (child) => pathname === child.href || dashboardTab === child.id
+            );
+            const isParentActive = pathname === item.href || dashboardTab === 'master-data' || isChildActive;
+
+            return (
+              <React.Fragment key={item.id}>
+                <ListItem disablePadding sx={{ mb: 0.5 }}>
+                  <ListItemButton
+                    selected={isParentActive}
+                    onClick={() => {
+                      setMasterDataOpen((prev) => !prev);
+                      setDashboardTab('master-data' as any);
+                      router.push('/dashboard/master-data');
+                    }}
+                    sx={{
+                      borderRadius: 2,
+                      py: 1,
+                      px: 1.8,
+                      backgroundColor: isParentActive
+                        ? theme.palette.mode === 'dark'
+                          ? 'rgba(245, 158, 11, 0.16)'
+                          : 'rgba(217, 119, 6, 0.12)'
+                        : 'transparent',
+                      color: isParentActive ? theme.palette.primary.main : theme.palette.text.secondary,
+                      '&:hover': {
+                        backgroundColor:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(255, 255, 255, 0.05)'
+                            : 'rgba(0, 0, 0, 0.04)',
+                        color: theme.palette.text.primary,
+                      },
+                    }}
+                  >
+                    <ListItemIcon
+                      sx={{
+                        minWidth: 36,
+                        color: isParentActive ? theme.palette.primary.main : 'inherit',
+                      }}
+                    >
+                      {item.icon}
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={
+                        <Typography
+                          sx={{
+                            fontSize: '0.88rem',
+                            fontWeight: isParentActive ? 700 : 500,
+                          }}
+                        >
+                          {item.label}
+                        </Typography>
+                      }
+                    />
+                    {masterDataOpen ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />}
+                  </ListItemButton>
+                </ListItem>
+
+                <Collapse in={masterDataOpen} timeout="auto" unmountOnExit>
+                  <List component="div" disablePadding sx={{ pl: 2.5 }}>
+                    {permittedChildren.map((child) => {
+                      const isChildSelected = pathname === child.href || dashboardTab === child.id;
+                      return (
+                        <ListItem key={child.id} disablePadding sx={{ mb: 0.5 }}>
+                          <ListItemButton
+                            selected={isChildSelected}
+                            onClick={() => {
+                              setDashboardTab(child.id as any);
+                              router.push(child.href);
+                              if (isMobile) setMobileOpen(false);
+                            }}
+                            sx={{
+                              borderRadius: 2,
+                              py: 0.8,
+                              px: 1.5,
+                              backgroundColor: isChildSelected
+                                ? theme.palette.mode === 'dark'
+                                  ? 'rgba(245, 158, 11, 0.22)'
+                                  : 'rgba(217, 119, 6, 0.16)'
+                                : 'transparent',
+                              color: isChildSelected ? theme.palette.primary.main : theme.palette.text.secondary,
+                              '&:hover': {
+                                backgroundColor:
+                                  theme.palette.mode === 'dark'
+                                    ? 'rgba(255, 255, 255, 0.05)'
+                                    : 'rgba(0, 0, 0, 0.04)',
+                                color: theme.palette.text.primary,
+                              },
+                            }}
+                          >
+                            <ListItemIcon
+                              sx={{
+                                minWidth: 30,
+                                color: isChildSelected ? theme.palette.primary.main : 'inherit',
+                              }}
+                            >
+                              {child.icon}
+                            </ListItemIcon>
+                            <ListItemText
+                              primary={
+                                <Typography
+                                  sx={{
+                                    fontSize: '0.82rem',
+                                    fontWeight: isChildSelected ? 700 : 500,
+                                  }}
+                                >
+                                  {child.label}
+                                </Typography>
+                              }
+                            />
+                          </ListItemButton>
+                        </ListItem>
+                      );
+                    })}
+                  </List>
+                </Collapse>
+              </React.Fragment>
+            );
+          }
+
           const isSelected =
             pathname === item.href ||
             (item.href !== '/dashboard' && pathname?.startsWith(item.href)) ||
@@ -306,7 +461,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
               <MenuIcon />
             </IconButton>
             <Typography variant="h6" sx={{ fontWeight: 700, fontSize: { xs: '1rem', sm: '1.2rem' } }}>
-              {menuItems.find((m) => m.id === dashboardTab)?.label || 'Dashboard'}
+              {activeTitle}
             </Typography>
           </Box>
 

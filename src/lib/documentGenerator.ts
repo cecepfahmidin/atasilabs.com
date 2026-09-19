@@ -1,26 +1,57 @@
 import { ClientProject, CIFData, RSDData, MoUData, SPKData, BASTData, QAData, QATestItem } from '../types';
+import { getFreelancerFeeForTier } from './pricingUtils';
 
 export function numberToWordsIDR(amount: number): string {
-  if (amount <= 0) return 'Nol Rupiah';
-  if (amount === 45000000) return 'Empat Puluh Lima Juta Rupiah';
-  if (amount === 22000000) return 'Dua Puluh Dua Juta Rupiah';
-  if (amount === 60000000) return 'Enam Puluh Juta Rupiah';
-  if (amount === 32000000) return 'Tiga Puluh Dua Juta Rupiah';
-  if (amount === 12000000) return 'Dua Belas Juta Rupiah';
+  if (!amount || amount <= 0) return 'Nol Rupiah';
 
-  const juta = Math.floor(amount / 1000000);
-  const ribu = Math.floor((amount % 1000000) / 1000);
-  if (juta > 0) {
-    return `${juta} Juta ${ribu > 0 ? ribu + ' Ribu' : ''} Rupiah`;
+  const units = ['', 'Satu', 'Dua', 'Tiga', 'Empat', 'Lima', 'Enam', 'Tujuh', 'Delapan', 'Sembilan', 'Sepuluh', 'Sebelas'];
+
+  function convertLessThanThousand(n: number): string {
+    if (n === 0) return '';
+    if (n < 12) return units[n];
+    if (n < 20) return units[n - 10] + ' Belas';
+    if (n < 100) return units[Math.floor(n / 10)] + ' Puluh' + (n % 10 !== 0 ? ' ' + units[n % 10] : '');
+    if (n < 200) return 'Seratus' + (n % 100 !== 0 ? ' ' + convertLessThanThousand(n % 100) : '');
+    return units[Math.floor(n / 100)] + ' Ratus' + (n % 100 !== 0 ? ' ' + convertLessThanThousand(n % 100) : '');
   }
-  return `${ribu} Ribu Rupiah`;
+
+  function convert(n: number): string {
+    if (n === 0) return 'Nol';
+    let str = '';
+    if (n >= 1000000000) {
+      const milyar = Math.floor(n / 1000000000);
+      str += convertLessThanThousand(milyar) + ' Miliar ';
+      n %= 1000000000;
+    }
+    if (n >= 1000000) {
+      const juta = Math.floor(n / 1000000);
+      str += convertLessThanThousand(juta) + ' Juta ';
+      n %= 1000000;
+    }
+    if (n >= 1000) {
+      const ribu = Math.floor(n / 1000);
+      if (ribu === 1) {
+        str += 'Seribu ';
+      } else {
+        str += convertLessThanThousand(ribu) + ' Ribu ';
+      }
+      n %= 1000;
+    }
+    if (n > 0) {
+      str += convertLessThanThousand(n) + ' ';
+    }
+    return str.trim();
+  }
+
+  const words = convert(Math.floor(amount));
+  return words ? `${words} Rupiah` : 'Nol Rupiah';
 }
 
 export function inferTierFromBudget(budget: number): { tierName: string; isTier1_2: boolean; num: 1 | 2 | 3 | 4 | 5 } {
-  if (budget <= 3000000) return { tierName: 'Tier 1: Starter', isTier1_2: true, num: 1 };
-  if (budget <= 8000000) return { tierName: 'Tier 2: Growth', isTier1_2: true, num: 2 };
-  if (budget <= 25000000) return { tierName: 'Tier 3: Profesional', isTier1_2: false, num: 3 };
-  if (budget <= 50000000) return { tierName: 'Tier 4: Enterprise', isTier1_2: false, num: 4 };
+  if (budget <= 6000000) return { tierName: 'Tier 1: Starter', isTier1_2: true, num: 1 };
+  if (budget <= 14000000) return { tierName: 'Tier 2: Growth', isTier1_2: true, num: 2 };
+  if (budget <= 28000000) return { tierName: 'Tier 3: Profesional', isTier1_2: false, num: 3 };
+  if (budget <= 55000000) return { tierName: 'Tier 4: Enterprise', isTier1_2: false, num: 4 };
   return { tierName: 'Tier 5: Elite', isTier1_2: false, num: 5 };
 }
 
@@ -110,39 +141,45 @@ export function generateAutoDocumentsForProject(proj: ClientProject) {
   const dateStr = new Date().toISOString().split('T')[0];
   const { tierName, isTier1_2 } = inferTierFromBudget(proj.budget);
   const budgetWords = numberToWordsIDR(proj.budget);
-  const devFee = proj.freelancerFee || Math.round(proj.budget * 0.35);
+  const devFee = proj.freelancerFee || getFreelancerFeeForTier(tierName);
 
   const cif: CIFData = {
     id: `cif-${proj.id}`,
     projectId: proj.id,
     docNumber: `${indexStr}/CIF/ATL/III/${year}`,
-    adminName: '',
+    adminName: 'Cecep Fahmidin',
     date: dateStr,
-    infoSource: '',
+    infoSource: 'Direct Lead',
     clientName: proj.clientName || '',
     picName: proj.clientName ? `${proj.clientName} (PIC Utama)` : '',
     contact: proj.clientEmail
       ? (proj.clientPhone ? `${proj.clientEmail} / ${proj.clientPhone}` : proj.clientEmail)
       : (proj.clientPhone || ''),
-    industry: '',
+    industry: 'Teknologi & Bisnis',
     websiteUrl: '',
     businessLocation: '',
     projectSummary: proj.description || '',
     primaryGoals: proj.title ? `Membangun platform ${proj.title} berkinerja tinggi.` : '',
-    targetAudience: '',
+    targetAudience: 'Pengguna umum & Klien target.',
     tier: tierName,
-    pageStructure: '',
-    mainFeatures: '',
-    techFramework: '',
-    brandingAssets: { logo: false, color: false, officialFont: false },
-    visualStyle: '',
-    referenceWebsites: [],
-    contentAvailability: { general: '', copywriting: '', images: '' },
+    pageStructure: '1) Homepage / Landing, 2) About Us, 3) Fitur / Layanan, 4) Kontak',
+    mainFeatures: 'Desain Responsif, Form Kontak, SEO Friendly.',
+    techFramework: 'Next.js, TypeScript, Tailwind CSS / MUI',
+    scopeOthers: '',
+    brandingAssets: { logo: true, color: true, officialFont: false, others: '' },
+    visualStyle: { modern: true, professional: true, elegant: false, others: '' },
+    referenceWebsites: ['', '', ''],
+    contentAvailability: { general: 'Disediakan Developer', copywriting: 'Disediakan Developer', images: 'Disediakan Developer' },
     estimatedBudget: proj.budget,
+    additionalCosts: 0,
     paymentScheme: isTier1_2
       ? { dpPercent: 50, finalPercent: 50 }
       : { dpPercent: 30, midPercent: 30, finalPercent: 40 },
     targetLaunchDate: proj.deadline || '',
+    additionalNotes: '',
+    additionalNotesTable: [
+      { prihal: 'Diskusi Awal', catatan: 'Pengumpulan kebutuhan awal proyek oleh tim Sales & Admin.' },
+    ],
     updatedAt: new Date().toISOString(),
   };
 
@@ -166,6 +203,7 @@ export function generateAutoDocumentsForProject(proj: ClientProject) {
       { component: 'Frontend Web', techFramework: 'Next.js App Router', versionSpec: 'v14+', reason: 'Performa & SEO' },
       { component: 'Backend API', techFramework: 'Next.js Route Handlers', versionSpec: 'v20+', reason: 'Integrasi native' },
       { component: 'Database Utama', techFramework: 'PostgreSQL Supabase', versionSpec: 'v15+', reason: 'RLS Security Policies' },
+      { component: 'Infrastructure / Cloud', techFramework: 'Vercel PaaS & Edge Cloud', versionSpec: 'Enterprise Cloud', reason: 'Deployment serverless & auto-scaling' },
     ],
     functionalFeatures: [
       { id: 'f1', featureCode: 'ATL-001', moduleArea: 'Autentikasi', nameAndDesc: 'Login & Management User', roleAccess: 'All User', priority: 'High' },
@@ -219,6 +257,7 @@ export function generateAutoDocumentsForProject(proj: ClientProject) {
     projectId: proj.id,
     spkNumber: `${indexStr}/SPK-ATL/III/${year}`,
     date: dateStr,
+    tier: tierName,
     atasilabsPic: '',
     atasilabsRole: '',
     atasilabsAddress: '',

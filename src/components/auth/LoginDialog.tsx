@@ -22,12 +22,14 @@ import {
   Shield as ShieldIcon,
   Fingerprint as FingerprintIcon,
 } from '@mui/icons-material';
+import { useRouter } from 'next/navigation';
 import { useApp } from '../../context/AppContext';
 import { AtasiLabsLogo } from '../common/AtasiLabsLogo';
 
 export const LoginDialog: React.FC = () => {
   const theme = useTheme();
-  const { isLoginModalOpen, setIsLoginModalOpen, login, setActiveView } = useApp();
+  const router = useRouter();
+  const { isLoginModalOpen, setIsLoginModalOpen, login } = useApp();
 
   const [email, setEmail] = useState('cecepfahmidin@gmail.com');
   const [password, setPassword] = useState('••••••••••••');
@@ -41,13 +43,13 @@ export const LoginDialog: React.FC = () => {
     }
     login(email.trim());
     setIsLoginModalOpen(false);
-    setActiveView('dashboard');
+    router.push('/dashboard');
   };
 
   const handleQuickDemoLogin = () => {
     login('cecepfahmidin@gmail.com');
     setIsLoginModalOpen(false);
-    setActiveView('dashboard');
+    router.push('/dashboard');
   };
 
   return (

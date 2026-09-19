@@ -107,7 +107,7 @@ export const OverviewView: React.FC = () => {
       tabTarget: 'documents',
     },
     {
-      title: 'Pesan Masuk (Leads)',
+      title: 'Pesan Masuk',
       value: leads.length,
       subtitle: `${unreadLeadsCount} pesan baru perlu direspon`,
       icon: <EmailIcon sx={{ color: '#3b82f6' }} />,

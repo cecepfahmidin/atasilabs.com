@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useApp } from '../../context/AppContext';
 import { AtasiLabsLogo } from '../common/AtasiLabsLogo';
 
@@ -20,6 +21,7 @@ function scrollTo(id: string) {
 }
 
 export const LandingNavbar: React.FC = () => {
+  const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
   const [active, setActive] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
@@ -52,7 +54,7 @@ export const LandingNavbar: React.FC = () => {
   }, []);
 
   const handleDashboardClick = () => {
-    setActiveView('dashboard');
+    router.push('/dashboard');
   };
 
   return (
@@ -68,10 +70,7 @@ export const LandingNavbar: React.FC = () => {
       <div className="flex items-center justify-between h-[64px] px-6 md:px-[48px] max-w-[1400px] mx-auto">
         {/* Brand Logo */}
         <a href="#" className="flex items-center gap-[10px] shrink-0 group">
-          <span className="w-[10px] h-[10px] bg-[#FFD600] group-hover:scale-125 transition-transform" />
-          <span className="font-grotesk text-[14px] font-bold text-[#F5F5F0] tracking-[2.5px] uppercase">
-            ATASILABS <span className="text-[#FFD600]">STUDIO</span>
-          </span>
+          <AtasiLabsLogo height={32} />
         </a>
 
         {/* Desktop Nav */}

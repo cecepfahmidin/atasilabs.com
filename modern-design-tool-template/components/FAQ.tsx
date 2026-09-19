@@ -20,10 +20,10 @@ export default function FAQ() {
   const [openIndex, setOpenIndex] = useState(0);
 
   return (
-      <section id="faq" className="flex flex-col w-full bg-[#060606] py-16 px-6 md:py-[100px] md:px-[120px]">
+    <section id="faq" className="flex flex-col w-full bg-[#060606] py-16 px-6 md:py-[100px] md:px-[120px]">
       <div className="w-full max-w-[480px]">
         <SectionHeader
-          label="[08] // FAQ"
+          label="[09] // FAQ"
           title={"GOT\nQUESTIONS?"}
           subtitle="EVERYTHING YOU NEED TO KNOW BEFORE SHIPPING YOUR FIRST PIXEL."
           titleWidth="w-full"

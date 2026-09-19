@@ -1,7 +1,9 @@
 'use client';
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { useApp } from '../../context/AppContext';
+import { AtasiLabsLogo } from '../common/AtasiLabsLogo';
 
 const serviceLinks = [
   "SOFTWARE ARCHITECTURE",
@@ -23,12 +25,19 @@ const dashboardLinks = [
 ];
 
 export const Footer: React.FC = () => {
-  const { setActiveView, setDashboardTab } = useApp();
+  const router = useRouter();
+  const { setDashboardTab, companyContact } = useApp();
 
   const handleDashboardClick = (tab: string) => {
-    setActiveView('dashboard');
     setDashboardTab(tab as any);
+    router.push('/dashboard');
   };
+
+  const socialLinks = [
+    { label: "FB", url: companyContact?.facebookUrl || "https://facebook.com" },
+    { label: "WA", url: `https://wa.me/${companyContact?.whatsappRaw || '628216361428'}` },
+    ...(companyContact?.instagramUrl ? [{ label: "IG", url: companyContact.instagramUrl }] : []),
+  ];
 
   return (
     <footer className="flex flex-col w-full bg-[#050505] border-t border-[#1D1D1D]">
@@ -37,18 +46,13 @@ export const Footer: React.FC = () => {
         {/* Brand Column */}
         <div className="flex flex-col gap-6 md:w-[320px] md:shrink-0">
           <div className="flex items-center gap-[12px]">
-            <div className="w-[32px] h-[32px] bg-[#FFD600] shrink-0 font-grotesk font-extrabold text-black flex items-center justify-center text-sm">
-              A
-            </div>
-            <span className="font-grotesk text-[18px] font-bold text-[#FFD600] tracking-[3px]">
-              ATASILABS
-            </span>
+            <AtasiLabsLogo height={32} />
           </div>
           <p className="font-ibm-mono text-[11px] text-[#888888] tracking-[0.5px] leading-[1.6]">
             INDUSTRIAL-GRADE SOFTWARE ENGINEERING STUDIO. REKAYASA ARSITEKTUR NEXT.JS, MATERIAL UI & PRISMA ORM UNTUK ENTERPRISE DENGAN SYSTEM SPRINT MANAJEMEN PRESISI TINGGI.
           </p>
           <div className="flex gap-[12px]">
-            {[{ label: "GH", url: "https://github.com" }, { label: "WA", url: "https://wa.me/628216361428" }, { label: "LI", url: "https://linkedin.com" }].map((s) => (
+            {socialLinks.map((s) => (
               <a
                 key={s.label}
                 href={s.url}

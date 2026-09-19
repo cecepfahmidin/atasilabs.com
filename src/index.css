@@ -30,8 +30,48 @@ html, body {
 }
 
 /* -------------------------------------------------------------
- * PRINT STYLES FOR ATASILABS OFFICIAL DOCUMENT GENERATOR
+ * GLOBAL & PRINT STYLES FOR ATASILABS OFFICIAL DOCUMENT GENERATOR
  * ------------------------------------------------------------- */
+
+/* Shared Table & Document Styles (Screen Preview & Print Output) */
+.printable-document table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  margin: 0 !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding: 0 !important;
+}
+
+.printable-document tr {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.printable-document th,
+.printable-document td,
+.printable-document .MuiTableCell-root {
+  border: 1px solid #000000 !important;
+  color: #0f172a !important;
+  padding-top: 5px !important;
+  padding-bottom: 5px !important;
+  padding-left: 10px !important;
+  padding-right: 10px !important;
+  font-size: 12.5px !important;
+  line-height: 1.35 !important;
+  vertical-align: middle !important;
+  margin: 0 !important;
+}
+
+.printable-document td *,
+.printable-document th * {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  line-height: 1.25 !important;
+}
+
 @media print {
   @page {
     size: A4 portrait;
@@ -80,24 +120,12 @@ html, body {
   }
 
   .printable-document table {
-    width: 100% !important;
-    border-collapse: collapse !important;
     page-break-inside: auto !important;
-    margin-bottom: 12px !important;
   }
 
   .printable-document tr {
     page-break-inside: avoid !important;
     page-break-after: auto !important;
-  }
-
-  .printable-document th,
-  .printable-document td {
-    border: 1px solid #cbd5e1 !important;
-    color: #0f172a !important;
-    padding: 6px 10px !important;
-    font-size: 11px !important;
-    line-height: 1.4 !important;
   }
 
   .printable-document th {

@@ -19,6 +19,8 @@ import {
   Gesture as DrawIcon,
   VerifiedUser as SecurityIcon,
   Sync as SyncIcon,
+  Print as PrintIcon,
+  ContentCopy as CopyIcon,
 } from '@mui/icons-material';
 import {
   INITIAL_CIF_DATA,
@@ -138,10 +140,12 @@ export const DocumentsWorkflowView: React.FC = () => {
       const activeRsd = projCustom.rsd || autoDocs.rsd;
       const syncedQa = generateQAFromRSD(activeRsd, proj, projCustom.qa || autoDocs.qa);
 
+      const initialSpk = INITIAL_SPK_DATA.find((s) => s.projectId === selectedProjectId || s.id === `spk-${selectedProjectId}`);
+
       setCifData(projCustom.cif || autoDocs.cif);
       setRsdData(activeRsd);
       setMouData(projCustom.mou || autoDocs.mou);
-      setSpkData(projCustom.spk || autoDocs.spk);
+      setSpkData(projCustom.spk || initialSpk || autoDocs.spk);
       setBastData(projCustom.bast || autoDocs.bast);
       setQaData(syncedQa);
     }
@@ -237,6 +241,29 @@ export const DocumentsWorkflowView: React.FC = () => {
     }
 
     showNotification(`Dokumen QA berhasil di-sync ulang 100% dari spesifikasi RSD (${rsdData.functionalFeatures?.length || 0} fitur)!`, 'success');
+  };
+
+  const handlePrintDocument = () => {
+    if (typeof window !== 'undefined') {
+      window.print();
+    }
+  };
+
+  const handleCopyDocSummary = () => {
+    const doc = getActiveDocData() as any;
+    if (!doc) return;
+    let summaryText = '';
+    if (activeDocType === 'CIF') {
+      summaryText = `[CLIENT INTAKE FORM (CIF)]\nNo: ${doc.docNumber}\nKlien: ${doc.clientName}\nPIC: ${doc.picName}\nKontak: ${doc.contact}\nTier: ${doc.tier}\nBudget: Rp ${doc.estimatedBudget?.toLocaleString('id-ID')}\nTarget Launch: ${doc.targetLaunchDate}`;
+    } else {
+      summaryText = `[DOKUMEN ${activeDocType}]\nKlien: ${doc.clientName || ''}\nTanggal: ${doc.date || doc.issueDate || ''}`;
+    }
+    try {
+      navigator.clipboard.writeText(summaryText);
+      showNotification(`Ringkasan teks ${activeDocType} berhasil disalin ke clipboard!`, 'success');
+    } catch {
+      showNotification('Gagal menyalin teks ke clipboard', 'error');
+    }
   };
 
   const handleOpenSignatureDialog = (party: 'Pihak Pertama' | 'Pihak Kedua') => {
@@ -419,31 +446,31 @@ export const DocumentsWorkflowView: React.FC = () => {
                     onClick={() => handleOpenSignatureDialog('Pihak Pertama')}
                     sx={{ fontWeight: 700 }}
                   >
-                    Tanda Tangan Pihak 1 (Atasilabs)
+                    {activeDocType === 'CIF' ? 'Tanda Tangan Admin / Sales' : 'Tanda Tangan Pihak 1 (Atasilabs)'}
+                  </Button>
+                )}
+                {activeDocType !== 'CIF' && (
+                  <Button
+                    variant="outlined"
+                    color="success"
+                    size="small"
+                    startIcon={<DrawIcon />}
+                    onClick={() => handleOpenSignatureDialog('Pihak Kedua')}
+                    sx={{ fontWeight: 700 }}
+                  >
+                    {isClientRole ? `Tanda Tangan Klien (${activeDocType})` : `Tanda Tangan Pihak 2 (Klien)`}
                   </Button>
                 )}
                 <Button
-                  variant="outlined"
-                  color="success"
+                  variant="contained"
+                  color="warning"
                   size="small"
-                  startIcon={<DrawIcon />}
-                  onClick={() => handleOpenSignatureDialog('Pihak Kedua')}
+                  startIcon={<PrintIcon />}
+                  onClick={handlePrintDocument}
                   sx={{ fontWeight: 700 }}
                 >
-                  {isClientRole ? `Tanda Tangan Klien (${activeDocType})` : `Tanda Tangan Pihak 2 (Klien)`}
+                  Cetak / Simpan PDF (A4)
                 </Button>
-                {!isClientRole && (
-                  <Button
-                    variant="outlined"
-                    color="secondary"
-                    size="small"
-                    startIcon={<ResetIcon />}
-                    onClick={handleResetDocumentToDefault}
-                    sx={{ fontWeight: 700 }}
-                  >
-                    Reset Dokumen
-                  </Button>
-                )}
                 {!isClientRole && (
                   <Button
                     variant="contained"

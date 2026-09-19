@@ -39,7 +39,7 @@ export const FAQSection: React.FC = () => {
     <section id="faq" className="flex flex-col w-full bg-[#060606] py-16 px-6 md:py-[100px] md:px-[120px]">
       <div className="w-full max-w-[540px]">
         <SectionHeader
-          label="[08] // FAQ"
+          label="[09] // FAQ"
           title={"PERTANYAAN\nPOPULER."}
           subtitle="SEMUA INFORMASI DASAR SEBELUM MEMULAI PROJECT SPRINT BERSAMA ATASILABS."
           titleWidth="w-full"
