@@ -375,7 +375,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
             zIndex: 1,
             p: { xs: 2.5, sm: 4 },
             pt: 0,
-            mt: { xs: '-80px', sm: '-120px', md: '-145px' },
+            mt: { xs: '-130px', sm: '-190px', md: '-220px' },
           }}
         >
           {/* Top Header Title & Metadata Table */}
