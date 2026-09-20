@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 import { INITIAL_PORTFOLIOS, INITIAL_PRICING_TIERS } from '@/data/initialData';
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://atasilabs.com';
   const currentDate = new Date();
 
