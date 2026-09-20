@@ -23,6 +23,7 @@ import {
   useMediaQuery,
   Button,
   Collapse,
+  CircularProgress,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -76,8 +77,23 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
     hasRolePermission,
   } = useApp();
 
-  const userRole = currentUser?.role || 'ADMIN';
-  const roleConfig = ROLE_CONFIGS[userRole] || ROLE_CONFIGS.ADMIN;
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsAuthChecking(false);
+    }, 150);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthChecking && !currentUser) {
+      router.push('/login');
+    }
+  }, [currentUser, isAuthChecking, router]);
+
+  const userRole = currentUser?.role || 'CLIENT';
+  const roleConfig = ROLE_CONFIGS[userRole] || ROLE_CONFIGS.CLIENT;
 
   // Route Protection for CLIENT role
   useEffect(() => {
@@ -98,6 +114,27 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
       }
     }
   }, [userRole, dashboardTab, pathname, router, setDashboardTab]);
+
+  if (isAuthChecking || !currentUser) {
+    return (
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: theme.palette.background.default,
+          gap: 2,
+        }}
+      >
+        <CircularProgress size={36} color="primary" />
+        <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
+          Memverifikasi Akses Sesi Dashboard...
+        </Typography>
+      </Box>
+    );
+  }
 
   const handleLogout = () => {
     logout();

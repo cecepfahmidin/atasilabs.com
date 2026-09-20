@@ -190,7 +190,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Persistent States initialized from Initial Constants (to avoid SSR/Client Hydration Mismatch)
   const [users, setUsers] = useState<User[]>(INITIAL_USERS);
-  const [currentUser, setCurrentUser] = useState<User | null>(INITIAL_USER);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [leads, setLeads] = useState<Lead[]>(INITIAL_LEADS);
   const [portfolios, setPortfolios] = useState<Portfolio[]>(INITIAL_PORTFOLIOS);
   const [projects, setProjects] = useState<ClientProject[]>(INITIAL_PROJECTS);
@@ -348,9 +348,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const existing = users.find((u) => u.id === parsed.id || u.email === parsed.email);
         if (existing) setCurrentUser(existing);
         else setCurrentUser(parsed);
+      } else {
+        setCurrentUser(null);
       }
     } catch {
-      setCurrentUser(INITIAL_USER);
+      setCurrentUser(null);
     }
   }, []);
 
