@@ -111,6 +111,13 @@ html, body {
     display: block !important;
   }
 
+  .printable-document .doc-content-body {
+    padding-left: 12mm !important;
+    padding-right: 12mm !important;
+    padding-bottom: 12mm !important;
+    padding-top: 4mm !important;
+  }
+
   .printable-document .no-print,
   .printable-document button,
   .printable-document .MuiButton-root,

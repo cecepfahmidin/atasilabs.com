@@ -335,29 +335,21 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
         elevation={0}
         className="printable-document"
         sx={{
-          p: { xs: 2.5, sm: 4 },
+          p: 0,
           borderRadius: 3,
           border: '1px solid rgba(0,0,0,0.12)',
           bgcolor: '#ffffff',
           color: '#0f172a',
           fontFamily: 'Inter, Arial, sans-serif',
           boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
+          overflow: 'hidden',
           '& .MuiTypography-root': { color: 'inherit' },
           '& .MuiTypography-colorTextSecondary': { color: '#475569 !important' },
           '& .MuiTableCell-root': { color: '#0f172a' },
         }}
       >
         {/* Full-bleed Header Image (public/header.png) */}
-        <Box
-          sx={{
-            mt: { xs: -2.5, sm: -4 },
-            mx: { xs: -2.5, sm: -4 },
-            mb: 2.5,
-            borderTopLeftRadius: 'calc(12px - 1px)',
-            borderTopRightRadius: 'calc(12px - 1px)',
-            overflow: 'hidden',
-          }}
-        >
+        <Box sx={{ width: '100%', m: 0, p: 0, lineHeight: 0 }}>
           <Box
             component="img"
             src="/header.png"
@@ -375,44 +367,40 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
           />
         </Box>
 
-        {/* Custom PDF Kop & Top Header Table */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2, pb: 1, borderBottom: '2px solid #000' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Box component="img" src="/logo.svg" alt="Atasilabs Logo" sx={{ height: 36, width: 'auto' }} onError={(e: any) => { e.target.style.display = 'none'; }} />
-            <Box>
-              <Typography variant="h6" sx={{ fontWeight: 900, lineHeight: 1.1, color: '#0f172a', letterSpacing: '-0.02em' }}>
-                atasilabs
+        {/* Document Content Body with Margins */}
+        <Box className="doc-content-body" sx={{ p: { xs: 2.5, sm: 4 }, pt: { xs: 1.5, sm: 2 } }}>
+          {/* Top Header Title & Metadata Table */}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2, pb: 1, borderBottom: '1px solid #e2e8f0' }}>
+            <Box sx={{ pt: 0.5 }}>
+              <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', fontSize: '1.25rem', lineHeight: 1.2 }}>
+                Client Intake Form (CIF)
               </Typography>
-              <Typography variant="caption" sx={{ fontWeight: 600, color: '#475569', display: 'block' }}>
+              <Typography variant="caption" sx={{ fontWeight: 600, color: '#475569', display: 'block', mt: 0.5 }}>
                 Standard Operating Procedure (SOP) Internal
               </Typography>
             </Box>
-          </Box>
 
-          <Box sx={{ textAlign: 'right' }}>
-            <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', fontSize: '1.2rem' }}>
-              Client Intake Form (CIF)
-            </Typography>
-            <TableContainer component={Box} sx={{ mt: 0.5, border: '1px solid #000', borderRadius: 0, display: 'inline-block' }}>
-              <Table size="small" sx={{ width: 'auto', '& .MuiTableCell-root': { py: 0.3, px: 1, fontSize: '0.75rem', border: '1px solid #000' } }}>
-                <TableBody>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 700, bgcolor: '#f8fafc' }}>Nama Admin</TableCell>
-                    <TableCell sx={{ minWidth: 150 }}>: {cif.adminName || '-'}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 700, bgcolor: '#f8fafc' }}>Tanggal</TableCell>
-                    <TableCell>: {cif.date || '-'}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 700, bgcolor: '#f8fafc' }}>Sumber Informasi</TableCell>
-                    <TableCell>: {cif.infoSource || '-'}</TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </TableContainer>
+            <Box sx={{ textAlign: 'right' }}>
+              <TableContainer component={Box} sx={{ border: '1px solid #000', borderRadius: 0, display: 'inline-block' }}>
+                <Table size="small" sx={{ width: 'auto', '& .MuiTableCell-root': { py: 0.3, px: 1, fontSize: '0.75rem', border: '1px solid #000' } }}>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 700, bgcolor: '#f8fafc' }}>Nama Admin</TableCell>
+                      <TableCell sx={{ minWidth: 150 }}>: {cif.adminName || '-'}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 700, bgcolor: '#f8fafc' }}>Tanggal</TableCell>
+                      <TableCell>: {cif.date || '-'}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 700, bgcolor: '#f8fafc' }}>Sumber Informasi</TableCell>
+                      <TableCell>: {cif.infoSource || '-'}</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Box>
           </Box>
-        </Box>
 
         {/* RINGKASAN EKSEKUTIF */}
         <Box sx={{ mb: 2.5 }}>
@@ -753,6 +741,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
               {cif.party1Signature?.auditTrail?.signerRole || getDynamicSignerRole(cif.party1Signature?.auditTrail?.signedBy || cif.adminName, 'Founder & CEO Atasilabs')}
             </Typography>
           </Box>
+        </Box>
         </Box>
       </Paper>
     );
