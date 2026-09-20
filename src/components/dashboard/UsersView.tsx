@@ -52,10 +52,14 @@ import {
   Lock as LockIcon,
   RestartAlt as ResetIcon,
   PhotoCamera as PhotoCameraIcon,
+  Visibility as VisibilityIcon,
+  VisibilityOff as VisibilityOffIcon,
+  Key as KeyIcon,
 } from '@mui/icons-material';
 import { useApp } from '../../context/AppContext';
 import { User, UserRole } from '../../types';
 import { ROLE_CONFIGS, hasPermission } from '../../lib/rbac';
+import { supabase } from '../../lib/supabase';
 
 const PRESET_AVATARS = [
   { label: 'CEO / Exec', url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80' },
@@ -91,9 +95,11 @@ export const UsersView: React.FC = () => {
   const { showNotification } = useApp();
 
   // Form state
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState<{
     name: string;
     email: string;
+    password: string;
     role: UserRole;
     phone: string;
     company: string;
@@ -102,6 +108,7 @@ export const UsersView: React.FC = () => {
   }>({
     name: '',
     email: '',
+    password: '',
     role: 'ADMIN',
     phone: '',
     company: '',
@@ -134,12 +141,14 @@ export const UsersView: React.FC = () => {
     setFormData({
       name: '',
       email: '',
+      password: '',
       role: 'ADMIN',
       phone: '',
       company: '',
       status: 'ACTIVE',
       avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
     });
+    setShowPassword(false);
     setOpenDialog(true);
   };
 
@@ -148,22 +157,45 @@ export const UsersView: React.FC = () => {
     setFormData({
       name: user.name,
       email: user.email,
+      password: user.password || '',
       role: user.role,
       phone: user.phone || '',
       company: user.company || '',
       status: user.status || 'ACTIVE',
       avatarUrl: user.avatarUrl || '',
     });
+    setShowPassword(false);
     setOpenDialog(true);
   };
 
   const handleSave = async () => {
     if (!formData.name || !formData.email) return;
 
-    if (editingUser) {
-      await updateUser(editingUser.id, formData);
-    } else {
-      await addUser(formData);
+    try {
+      if (editingUser) {
+        await updateUser(editingUser.id, formData);
+        
+        // If updating current user's password in Supabase Auth session
+        if (formData.password && currentUser?.email === editingUser.email) {
+          const { error } = await supabase.auth.updateUser({
+            password: formData.password,
+          });
+          if (error) {
+            console.warn('Supabase Auth password sync note:', error.message);
+          } else {
+            showNotification('Kata sandi pengguna di Supabase Auth & RBAC berhasil diperbarui!', 'success');
+          }
+        } else if (formData.password) {
+          showNotification('Kata sandi pengguna & data RBAC berhasil diperbarui!', 'success');
+        }
+      } else {
+        await addUser(formData);
+        if (formData.password) {
+          showNotification('Pengguna & kata sandi baru berhasil dibuat!', 'success');
+        }
+      }
+    } catch (err: any) {
+      console.error(err);
     }
     setOpenDialog(false);
   };
@@ -708,6 +740,29 @@ export const UsersView: React.FC = () => {
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               placeholder="user@atasilabs.com"
               required
+            />
+
+            <TextField
+              label={editingUser ? "Kata Sandi Baru (Password)" : "Kata Sandi (Password)"}
+              type={showPassword ? 'text' : 'password'}
+              fullWidth
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              placeholder={editingUser ? "Kosongkan jika tidak ingin mengubah kata sandi" : "Masukkan kata sandi pengguna (min 6 karakter)"}
+              helperText={editingUser ? "Isi field ini untuk memperbarui kata sandi pengguna di Supabase Auth & Sistem" : "Kata sandi yang digunakan pengguna untuk autentikasi login"}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="toggle password visibility"
+                      onClick={() => setShowPassword(!showPassword)}
+                      edge="end"
+                    >
+                      {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
             />
 
             <FormControl fullWidth>

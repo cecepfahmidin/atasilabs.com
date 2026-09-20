@@ -304,5 +304,26 @@ export function generateAutoDocumentsForProject(proj: ClientProject) {
 
   const qa = generateQAFromRSD(rsd, proj);
 
+  if (typeof window !== 'undefined') {
+    try {
+      const saved = localStorage.getItem('atasilabs_custom_project_documents');
+      if (saved) {
+        const allCustom = JSON.parse(saved);
+        const projCustom = allCustom[proj.id];
+        if (projCustom) {
+          const mergedCif = projCustom.cif || cif;
+          const mergedRsd = projCustom.rsd || rsd;
+          const mergedMou = projCustom.mou || mou;
+          const mergedSpk = projCustom.spk || spk;
+          const mergedBast = projCustom.bast || bast;
+          const mergedQa = projCustom.qa || generateQAFromRSD(mergedRsd, proj, qa);
+          return { cif: mergedCif, rsd: mergedRsd, mou: mergedMou, spk: mergedSpk, bast: mergedBast, qa: mergedQa };
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
   return { cif, rsd, mou, spk, bast, qa };
 }

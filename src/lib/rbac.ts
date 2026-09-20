@@ -17,6 +17,7 @@ export interface RoleConfig {
     users: boolean;
     schema: boolean;
     hpp: boolean;
+    masterData: boolean;
     // Granular permissions
     hppFinancials: boolean; // Internal HPP Profit Matrix & Developer Fees
     freelancerFees: boolean; // SPK Fee Rates
@@ -45,6 +46,7 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
       users: true,
       schema: true,
       hpp: true,
+      masterData: true,
       hppFinancials: true,
       freelancerFees: true,
       clientPricingMoU: true,
@@ -70,6 +72,7 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
       users: true,
       schema: true,
       hpp: true,
+      masterData: true,
       hppFinancials: true, // Needs fee structure
       freelancerFees: true,
       clientPricingMoU: true,
@@ -95,6 +98,7 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
       users: false,
       schema: false,
       hpp: false,
+      masterData: true,
       hppFinancials: false, // Hidden from CMO
       freelancerFees: false,
       clientPricingMoU: true,
@@ -120,6 +124,7 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
       users: true,
       schema: true,
       hpp: true,
+      masterData: true,
       hppFinancials: true,
       freelancerFees: true,
       clientPricingMoU: true,
@@ -139,12 +144,13 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
       leads: false,
       projects: true,
       documents: true,
-      portfolio: true,
+      portfolio: false,
       pricing: false,
-      contact: true,
+      contact: false,
       users: false,
       schema: false,
       hpp: false,
+      masterData: false, // Strictly Hidden
       hppFinancials: false, // Strictly Hidden
       freelancerFees: false, // Strictly Hidden
       clientPricingMoU: true,
@@ -170,6 +176,7 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
       users: false,
       schema: false,
       hpp: false,
+      masterData: false, // Strictly Hidden
       hppFinancials: false, // Strictly Hidden
       freelancerFees: true, // Only own SPK fee
       clientPricingMoU: false, // Hidden
@@ -195,6 +202,7 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
       users: false,
       schema: true,
       hpp: false,
+      masterData: true,
       hppFinancials: false,
       freelancerFees: true,
       clientPricingMoU: false,
@@ -216,10 +224,22 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, Record<string, boolean>>
 };
 
 export const hasPermission = (role: UserRole, key: string, customMap?: Record<UserRole, Record<string, boolean>>): boolean => {
-  if (customMap && customMap[role] && customMap[role][key] !== undefined) {
-    return !!customMap[role][key];
+  const normKey = key === 'master-data' ? 'masterData' : key;
+  if (customMap && customMap[role]) {
+    if (customMap[role][normKey] !== undefined) {
+      return !!customMap[role][normKey];
+    }
+    if (customMap[role][key] !== undefined) {
+      return !!customMap[role][key];
+    }
   }
   const config = ROLE_CONFIGS[role];
   if (!config) return false;
-  return !!config.permissions[key as keyof RoleConfig['permissions']];
+  if ((config.permissions as any)[normKey] !== undefined) {
+    return !!(config.permissions as any)[normKey];
+  }
+  if ((config.permissions as any)[key] !== undefined) {
+    return !!(config.permissions as any)[key];
+  }
+  return false;
 };

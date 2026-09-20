@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Drawer,
@@ -78,6 +78,31 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
 
   const userRole = currentUser?.role || 'ADMIN';
   const roleConfig = ROLE_CONFIGS[userRole] || ROLE_CONFIGS.ADMIN;
+
+  // Route Protection for CLIENT role
+  useEffect(() => {
+    if (userRole === 'CLIENT') {
+      const restrictedTabs = ['hpp', 'master-data', 'users', 'portfolio', 'pricing', 'contact', 'leads'];
+      const isRestrictedPath =
+        pathname?.includes('/dashboard/hpp') ||
+        pathname?.includes('/dashboard/master-data') ||
+        pathname?.includes('/dashboard/users') ||
+        pathname?.includes('/dashboard/portfolio') ||
+        pathname?.includes('/dashboard/pricing') ||
+        pathname?.includes('/dashboard/contact') ||
+        pathname?.includes('/dashboard/leads');
+
+      if (restrictedTabs.includes(dashboardTab) || isRestrictedPath) {
+        setDashboardTab('overview');
+        router.push('/dashboard');
+      }
+    }
+  }, [userRole, dashboardTab, pathname, router, setDashboardTab]);
+
+  const handleLogout = () => {
+    logout();
+    router.push('/login');
+  };
 
   const [masterDataOpen, setMasterDataOpen] = useState(() => {
     return (
@@ -165,7 +190,22 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
     },
   ];
 
-  const menuItems = rawMenuItems.filter((item) => hasRolePermission(userRole, item.id));
+  const menuItems = rawMenuItems
+    .filter((item) => {
+      if (userRole === 'CLIENT' && (item.id === 'hpp' || item.id === 'master-data' || item.id === 'leads')) {
+        return false;
+      }
+      return true;
+    })
+    .map((item) => {
+      if (item.children && item.children.length > 0) {
+        const permittedChildren = item.children.filter((child) => hasRolePermission(userRole, child.id));
+        if (permittedChildren.length === 0) return null;
+        return { ...item, children: permittedChildren };
+      }
+      return hasRolePermission(userRole, item.id) ? item : null;
+    })
+    .filter(Boolean) as typeof rawMenuItems;
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -186,7 +226,29 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
   const drawerContent = (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', p: 2 }}>
       {/* Brand Header */}
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, px: 1, py: 1.5, mb: 1.5 }}>
+      <Box
+        onClick={() => {
+          setActiveView('landing');
+          router.push('/');
+        }}
+        title="Kembali ke Halaman Depan"
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 0.5,
+          px: 1,
+          py: 1.5,
+          mb: 1.5,
+          cursor: 'pointer',
+          borderRadius: 2,
+          transition: 'all 0.2s ease-in-out',
+          '&:hover': {
+            opacity: 0.85,
+            backgroundColor:
+              theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
+          },
+        }}
+      >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <AtasiLabsLogo height={32} />
         </Box>
@@ -427,7 +489,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
             sx={{ height: 18, fontSize: '0.62rem', fontWeight: 800, mt: 0.2 }}
           />
         </Box>
-        <IconButton size="small" onClick={(e) => { e.stopPropagation(); logout(); }} title="Logout">
+
+        <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleLogout(); }} title="Logout / Keluar">
           <LogoutIcon fontSize="small" sx={{ fontSize: 18 }} />
         </IconButton>
       </Box>
@@ -466,11 +529,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
           </Box>
 
           {/* Right Action Icons */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <IconButton
               onClick={toggleTheme}
               color="inherit"
               sx={{ border: `1px solid ${theme.palette.divider}`, p: 0.8, borderRadius: 2 }}
+              title="Ganti Mode Tema (Terang/Gelap)"
             >
               {themeMode === 'dark' ? (
                 <LightIcon sx={{ color: '#fbbf24', fontSize: 18 }} />
@@ -478,6 +542,24 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                 <DarkIcon sx={{ color: '#475569', fontSize: 18 }} />
               )}
             </IconButton>
+
+            <Button
+              variant="outlined"
+              color="error"
+              size="small"
+              startIcon={<LogoutIcon sx={{ fontSize: '16px !important' }} />}
+              onClick={handleLogout}
+              sx={{
+                borderRadius: 2,
+                fontWeight: 700,
+                fontSize: '0.78rem',
+                textTransform: 'none',
+                px: 1.8,
+                py: 0.5,
+              }}
+            >
+              Keluar
+            </Button>
           </Box>
         </Toolbar>
       </AppBar>

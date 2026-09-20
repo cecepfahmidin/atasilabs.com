@@ -19,7 +19,7 @@ export const INITIAL_COMPANY_CONTACT: CompanyContact = {
 export const INITIAL_USER: User = {
   id: 'usr-ceo',
   email: 'ceo@atasilabs.com',
-  name: 'Cecep Fahmidin',
+  name: 'Irfan Aulia Ulumuddin',
   role: 'CEO',
   phone: '0812-3456-7890',
   company: 'PT Aulia Indoland Grup (Atasilabs)',
@@ -33,7 +33,7 @@ export const INITIAL_USERS: User[] = [
   {
     id: 'usr-cto',
     email: 'cto@atasilabs.com',
-    name: 'Rizky Ramadhan, S.Kom',
+    name: 'Cecep Fahmidin, S.Kom., M.Kom',
     role: 'CTO',
     phone: '0813-9876-5432',
     company: 'Atasilabs Tech Division',
@@ -44,7 +44,7 @@ export const INITIAL_USERS: User[] = [
   {
     id: 'usr-cmo',
     email: 'cmo@atasilabs.com',
-    name: 'Anisa Rahmawati, S.E',
+    name: 'Dian Hidayat, S.E., M.Pd.I',
     role: 'CMO',
     phone: '0857-1122-3344',
     company: 'Atasilabs Growth & Business Dev',

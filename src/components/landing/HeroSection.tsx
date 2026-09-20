@@ -60,11 +60,11 @@ export const HeroSection: React.FC = () => {
         </button>
 
         <button
-          onClick={() => router.push('/dashboard')}
-          className="flex items-center justify-center w-full max-w-[280px] sm:w-[230px] h-[56px] bg-[#0A0A0A] border-2 border-[#3D3D3D] hover:border-[#888888] transition-colors cursor-pointer text-[#F5F5F0]"
+          onClick={() => router.push('/login')}
+          className="flex items-center justify-center w-full max-w-[280px] sm:w-[230px] h-[56px] bg-[#0A0A0A] border-2 border-[#3D3D3D] hover:border-[#FFD600] transition-colors cursor-pointer text-[#F5F5F0] group"
         >
-          <span className="font-ibm-mono text-[12px] text-[#888888] hover:text-[#FFD600] tracking-[1.5px]">
-            MASUK DASHBOARD CMS &gt;
+          <span className="font-ibm-mono text-[12px] text-[#888888] group-hover:text-[#FFD600] tracking-[1.5px] transition-colors">
+            LOGIN &gt;
           </span>
         </button>
       </div>

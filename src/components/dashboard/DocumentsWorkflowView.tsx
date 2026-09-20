@@ -11,6 +11,7 @@ import {
   TextField,
   MenuItem,
   Alert,
+  useTheme,
 } from '@mui/material';
 import {
   Edit as EditIcon,
@@ -21,6 +22,7 @@ import {
   Sync as SyncIcon,
   Print as PrintIcon,
   ContentCopy as CopyIcon,
+  Description as DescriptionIcon,
 } from '@mui/icons-material';
 import {
   INITIAL_CIF_DATA,
@@ -54,6 +56,7 @@ const getSavedCustomDocs = (): Record<string, any> => {
 };
 
 export const DocumentsWorkflowView: React.FC = () => {
+  const theme = useTheme();
   const {
     projects: rawProjects,
     currentUser,
@@ -67,14 +70,20 @@ export const DocumentsWorkflowView: React.FC = () => {
   const isClientRole = currentUser?.role === 'CLIENT';
 
   const projects = useMemo(() => {
-    const filteredProjects = isClientRole
-      ? rawProjects.filter(
-          (p) =>
-            p.clientEmail?.toLowerCase() === currentUser?.email?.toLowerCase() ||
-            p.clientName?.toLowerCase().includes(currentUser?.company?.toLowerCase() || '___')
-        )
-      : rawProjects;
-    return filteredProjects.length > 0 ? filteredProjects : rawProjects;
+    if (isClientRole) {
+      const emailLower = currentUser?.email?.toLowerCase();
+      const compLower = currentUser?.company?.toLowerCase();
+      const nameLower = currentUser?.name?.toLowerCase();
+
+      return rawProjects.filter((p) => {
+        return (
+          (emailLower && p.clientEmail?.toLowerCase() === emailLower) ||
+          (compLower && p.clientName?.toLowerCase().includes(compLower)) ||
+          (nameLower && p.clientName?.toLowerCase().includes(nameLower))
+        );
+      });
+    }
+    return rawProjects;
   }, [rawProjects, currentUser, isClientRole]);
 
   const searchParams = useSearchParams();
@@ -373,6 +382,31 @@ export const DocumentsWorkflowView: React.FC = () => {
     );
   }
 
+  if (projects.length === 0) {
+    return (
+      <Box sx={{ width: '100%', p: 2 }}>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 5,
+            textAlign: 'center',
+            borderRadius: 3.5,
+            border: `1px dashed ${theme.palette.divider}`,
+            backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.01)' : 'rgba(0,0,0,0.01)',
+          }}
+        >
+          <DescriptionIcon sx={{ fontSize: 56, color: 'text.disabled', mb: 2 }} />
+          <Typography variant="h6" sx={{ fontWeight: 800, mb: 1 }}>
+            Tidak Ada Dokumen Terkait Klien
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 500, mx: 'auto' }}>
+            Belum ada proyek aktif terdaftar untuk akun <strong>{currentUser?.email}</strong>. Dokumen operasional (CIF, RSD, MoU, SPK, BAST) akan otomatis tampil di sini saat proyek Anda diproses oleh tim.
+          </Typography>
+        </Paper>
+      </Box>
+    );
+  }
+
   return (
     <Box sx={{ width: '100%' }}>
       {/* Title Header */}
@@ -494,7 +528,7 @@ export const DocumentsWorkflowView: React.FC = () => {
           )}
 
           <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 1 }}>
-            Pilih Dokumen Administrasi Operasional (SOP 6-Stage IPW):
+            Pilih Dokumen Administrasi Operasional:
           </Typography>
           <Grid container spacing={1.5}>
             {[
@@ -507,31 +541,31 @@ export const DocumentsWorkflowView: React.FC = () => {
             ]
               .filter((doc) => !isClientRole || !doc.internalOnly)
               .map((doc) => (
-              <Grid item xs={6} sm={2} key={doc.id}>
-                <Button
-                  fullWidth
-                  variant={activeDocType === doc.id ? 'contained' : 'outlined'}
-                  onClick={() => {
-                    setActiveDocType(doc.id as any);
-                    setSelectedDocumentType(doc.id as any);
-                  }}
-                  sx={{
-                    fontWeight: 700,
-                    fontSize: '0.78rem',
-                    py: 1,
-                    borderColor: doc.color,
-                    bgcolor: activeDocType === doc.id ? doc.color : 'transparent',
-                    color: activeDocType === doc.id ? '#fff' : 'text.primary',
-                    '&:hover': {
-                      bgcolor: doc.color,
-                      color: '#fff',
-                    },
-                  }}
-                >
-                  {doc.label}
-                </Button>
-              </Grid>
-            ))}
+                <Grid item xs={6} sm={2} key={doc.id}>
+                  <Button
+                    fullWidth
+                    variant={activeDocType === doc.id ? 'contained' : 'outlined'}
+                    onClick={() => {
+                      setActiveDocType(doc.id as any);
+                      setSelectedDocumentType(doc.id as any);
+                    }}
+                    sx={{
+                      fontWeight: 700,
+                      fontSize: '0.78rem',
+                      py: 1,
+                      borderColor: doc.color,
+                      bgcolor: activeDocType === doc.id ? doc.color : 'transparent',
+                      color: activeDocType === doc.id ? '#fff' : 'text.primary',
+                      '&:hover': {
+                        bgcolor: doc.color,
+                        color: '#fff',
+                      },
+                    }}
+                  >
+                    {doc.label}
+                  </Button>
+                </Grid>
+              ))}
           </Grid>
         </Paper>
 

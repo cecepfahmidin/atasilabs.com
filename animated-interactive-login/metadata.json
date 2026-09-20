@@ -1,0 +1,6 @@
+{
+  "name": "Animated Interactive Login",
+  "description": "Interactive animated login page with reactive geometric characters that track cursor and form input, matching the showcase video.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

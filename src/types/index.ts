@@ -27,7 +27,7 @@ export interface Portfolio {
   updatedAt: string;
 }
 
-export type ProjectStatus = 'PLANNING' | 'IN_PROGRESS' | 'REVIEW' | 'COMPLETED';
+export type ProjectStatus = 'PLANNING' | 'IN_PROGRESS' | 'REVIEW' | 'COMPLETED' | 'ARCHIVED';
 
 export type IPWStage = 
   | 'STAGE_1_DISCOVERY' 
@@ -55,6 +55,7 @@ export interface ClientProject {
   tierNumber?: 1 | 2 | 3 | 4 | 5;
   freelancerName?: string;
   freelancerFee?: number;
+  isArchived?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -343,6 +344,7 @@ export interface User {
   email: string;
   name: string;
   role: UserRole;
+  password?: string;
   phone?: string;
   company?: string;
   status: 'ACTIVE' | 'INACTIVE';

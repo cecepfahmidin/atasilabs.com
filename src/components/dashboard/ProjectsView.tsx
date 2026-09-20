@@ -38,6 +38,9 @@ import {
   Description as DescriptionIcon,
   ArrowForward as ArrowForwardIcon,
   Layers as LayersIcon,
+  Archive as ArchiveIcon,
+  Unarchive as UnarchiveIcon,
+  Inventory as InventoryIcon,
 } from '@mui/icons-material';
 import { useApp } from '../../context/AppContext';
 import { ClientProject, ProjectStatus, IPWStage } from '../../types';
@@ -50,6 +53,7 @@ export const ProjectsView: React.FC = () => {
     projects: rawProjects,
     users,
     currentUser,
+    pricingTiers,
     addProject,
     updateProject,
     deleteProject,
@@ -60,17 +64,54 @@ export const ProjectsView: React.FC = () => {
   } = useApp();
 
   const isClientRole = currentUser?.role === 'CLIENT';
+  const [filterStatus, setFilterStatus] = useState<'ALL' | 'ACTIVE' | 'COMPLETED' | 'ARCHIVED'>('ALL');
+
+  const baseProjects = useMemo(() => {
+    if (isClientRole) {
+      const emailLower = currentUser?.email?.toLowerCase();
+      const compLower = currentUser?.company?.toLowerCase();
+      const nameLower = currentUser?.name?.toLowerCase();
+
+      return rawProjects.filter((p) => {
+        const matchesClient =
+          (emailLower && p.clientEmail?.toLowerCase() === emailLower) ||
+          (compLower && p.clientName?.toLowerCase().includes(compLower)) ||
+          (nameLower && p.clientName?.toLowerCase().includes(nameLower));
+
+        return matchesClient && !p.isArchived && p.status !== 'ARCHIVED';
+      });
+    }
+    return rawProjects;
+  }, [rawProjects, currentUser, isClientRole]);
+
+  const counts = useMemo(() => {
+    const active = baseProjects.filter((p) => !p.isArchived && p.status !== 'ARCHIVED' && p.progress < 100).length;
+    const completed = baseProjects.filter((p) => !p.isArchived && (p.progress === 100 || p.status === 'COMPLETED')).length;
+    const archived = baseProjects.filter((p) => p.isArchived || p.status === 'ARCHIVED').length;
+    const all = baseProjects.length;
+    return { active, completed, archived, all };
+  }, [baseProjects]);
 
   const projects = useMemo(() => {
-    const filteredProjects = isClientRole
-      ? rawProjects.filter(
-          (p) =>
-            p.clientEmail?.toLowerCase() === currentUser?.email?.toLowerCase() ||
-            p.clientName?.toLowerCase().includes(currentUser?.company?.toLowerCase() || '___')
-        )
-      : rawProjects;
-    return filteredProjects.length > 0 ? filteredProjects : rawProjects;
-  }, [rawProjects, currentUser, isClientRole]);
+    if (filterStatus === 'ACTIVE') {
+      return baseProjects.filter((p) => !p.isArchived && p.status !== 'ARCHIVED' && p.progress < 100);
+    }
+    if (filterStatus === 'COMPLETED') {
+      return baseProjects.filter((p) => !p.isArchived && (p.progress === 100 || p.status === 'COMPLETED'));
+    }
+    if (filterStatus === 'ARCHIVED') {
+      return baseProjects.filter((p) => p.isArchived || p.status === 'ARCHIVED');
+    }
+    return baseProjects;
+  }, [baseProjects, filterStatus]);
+
+  const handleToggleArchive = (proj: ClientProject) => {
+    const nextArchived = !proj.isArchived;
+    updateProject(proj.id, {
+      isArchived: nextArchived,
+      status: nextArchived ? 'ARCHIVED' : proj.progress === 100 ? 'COMPLETED' : 'IN_PROGRESS',
+    });
+  };
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProj, setEditingProj] = useState<ClientProject | null>(null);
@@ -84,6 +125,7 @@ export const ProjectsView: React.FC = () => {
     description: '',
     deadline: '',
     budget: 25000000,
+    tierNumber: 3 as 1 | 2 | 3 | 4 | 5,
     progress: 15,
     status: 'PLANNING' as ProjectStatus,
     ipwStage: 'STAGE_1_DISCOVERY' as IPWStage,
@@ -102,13 +144,15 @@ export const ProjectsView: React.FC = () => {
 
   const handleOpenAdd = () => {
     setEditingProj(null);
+    const defaultTier = pricingTiers[1] || pricingTiers[0];
     setFormData({
       clientName: '',
       clientEmail: '',
       title: '',
       description: '',
       deadline: '2024-05-30',
-      budget: 25000000,
+      budget: defaultTier ? defaultTier.price : 25000000,
+      tierNumber: (defaultTier ? defaultTier.tierNumber : 2) as 1 | 2 | 3 | 4 | 5,
       progress: 15,
       status: 'PLANNING',
       ipwStage: 'STAGE_1_DISCOVERY',
@@ -121,6 +165,7 @@ export const ProjectsView: React.FC = () => {
   const handleOpenEdit = (proj: ClientProject) => {
     setEditingProj(proj);
     const stageCfg = getStageFromProgress(proj.progress, proj.ipwStage);
+    const matchedTier = pricingTiers.find((t) => t.price === proj.budget) || pricingTiers.find((t) => t.tierNumber === proj.tierNumber);
     setFormData({
       clientName: proj.clientName,
       clientEmail: proj.clientEmail,
@@ -128,6 +173,7 @@ export const ProjectsView: React.FC = () => {
       description: proj.description,
       deadline: proj.deadline,
       budget: proj.budget,
+      tierNumber: (matchedTier ? matchedTier.tierNumber : (proj.tierNumber || 1)) as 1 | 2 | 3 | 4 | 5,
       progress: proj.progress,
       status: proj.status,
       ipwStage: stageCfg.stage,
@@ -156,10 +202,16 @@ export const ProjectsView: React.FC = () => {
       return;
     }
 
+    const payload = {
+      ...formData,
+      budget: Number(formData.budget) || 0,
+      tierNumber: formData.tierNumber,
+    };
+
     if (editingProj) {
-      updateProject(editingProj.id, formData);
+      updateProject(editingProj.id, payload);
     } else {
-      addProject(formData);
+      addProject(payload as any);
     }
 
     setIsDialogOpen(false);
@@ -235,6 +287,66 @@ export const ProjectsView: React.FC = () => {
         )}
       </Box>
 
+      {/* Filter Status Pills */}
+      <Box sx={{ display: 'flex', gap: 1, mb: 3.5, flexWrap: 'wrap', alignItems: 'center' }}>
+        <Chip
+          label={`Semua Proyek (${counts.all})`}
+          color={filterStatus === 'ALL' ? 'primary' : 'default'}
+          variant={filterStatus === 'ALL' ? 'filled' : 'outlined'}
+          onClick={() => setFilterStatus('ALL')}
+          sx={{ fontWeight: 700, borderRadius: 2, cursor: 'pointer', py: 0.5 }}
+        />
+        <Chip
+          label={`Proyek Aktif (${counts.active})`}
+          color={filterStatus === 'ACTIVE' ? 'info' : 'default'}
+          variant={filterStatus === 'ACTIVE' ? 'filled' : 'outlined'}
+          onClick={() => setFilterStatus('ACTIVE')}
+          sx={{ fontWeight: 700, borderRadius: 2, cursor: 'pointer', py: 0.5 }}
+        />
+        <Chip
+          icon={<CheckCircleIcon sx={{ fontSize: '16px !important' }} />}
+          label={`Proyek Selesai (${counts.completed})`}
+          color={filterStatus === 'COMPLETED' ? 'success' : 'default'}
+          variant={filterStatus === 'COMPLETED' ? 'filled' : 'outlined'}
+          onClick={() => setFilterStatus('COMPLETED')}
+          sx={{ fontWeight: 700, borderRadius: 2, cursor: 'pointer', py: 0.5 }}
+        />
+        <Chip
+          icon={<ArchiveIcon sx={{ fontSize: '16px !important' }} />}
+          label={`Arsip Proyek (${counts.archived})`}
+          color={filterStatus === 'ARCHIVED' ? 'warning' : 'default'}
+          variant={filterStatus === 'ARCHIVED' ? 'filled' : 'outlined'}
+          onClick={() => setFilterStatus('ARCHIVED')}
+          sx={{ fontWeight: 700, borderRadius: 2, cursor: 'pointer', py: 0.5 }}
+        />
+      </Box>
+
+      {/* Empty State */}
+      {projects.length === 0 && (
+        <Paper
+          elevation={0}
+          sx={{
+            p: 5,
+            textAlign: 'center',
+            borderRadius: 3.5,
+            border: `1px dashed ${theme.palette.divider}`,
+            backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.01)' : 'rgba(0,0,0,0.01)',
+          }}
+        >
+          <ArchiveIcon sx={{ fontSize: 52, color: 'text.disabled', mb: 1.5 }} />
+          <Typography variant="h6" sx={{ fontWeight: 800, mb: 0.5 }}>
+            Tidak ada proyek dalam kategori ini
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {filterStatus === 'ARCHIVED'
+              ? 'Belum ada proyek yang diarsipkan.'
+              : filterStatus === 'COMPLETED'
+              ? 'Belum ada proyek yang telah menyelesaikan tahap 6 (100% Closure).'
+              : 'Belum ada proyek terdaftar.'}
+          </Typography>
+        </Paper>
+      )}
+
       {/* Projects Grid Cards */}
       <Grid container spacing={3}>
         {projects.map((proj) => {
@@ -277,6 +389,24 @@ export const ProjectsView: React.FC = () => {
                           border: `1px solid ${currentStageCfg.hexColor}40`,
                         }}
                       />
+                      {proj.isArchived && (
+                        <Chip
+                          icon={<ArchiveIcon sx={{ fontSize: '12px !important' }} />}
+                          label="Diarsipkan"
+                          size="small"
+                          color="warning"
+                          sx={{ height: 20, fontSize: '0.65rem', fontWeight: 800 }}
+                        />
+                      )}
+                      {!proj.isArchived && (proj.progress === 100 || proj.status === 'COMPLETED') && (
+                        <Chip
+                          icon={<CheckCircleIcon sx={{ fontSize: '12px !important' }} />}
+                          label="Selesai (Closure)"
+                          size="small"
+                          color="success"
+                          sx={{ height: 20, fontSize: '0.65rem', fontWeight: 800 }}
+                        />
+                      )}
                       <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
                         ID: #{proj.id.slice(-4)}
                       </Typography>
@@ -500,14 +630,14 @@ export const ProjectsView: React.FC = () => {
                               </MenuItem>
                             );
                           })}
-                        {proj.freelancerName &&
-                          !users.some((u) => `${u.name} (${u.role})` === proj.freelancerName || u.name === proj.freelancerName) && (
-                            <MenuItem value={proj.freelancerName}>
-                              <Typography variant="body2" sx={{ fontWeight: 700, fontSize: '0.85rem' }}>
-                                {proj.freelancerName}
-                              </Typography>
-                            </MenuItem>
-                          )}
+                        {Boolean(proj.freelancerName) &&
+                        !users.some((u) => `${u.name} (${u.role})` === proj.freelancerName || u.name === proj.freelancerName) ? (
+                          <MenuItem value={proj.freelancerName}>
+                            <Typography variant="body2" sx={{ fontWeight: 700, fontSize: '0.85rem' }}>
+                              {proj.freelancerName}
+                            </Typography>
+                          </MenuItem>
+                        ) : null}
                       </TextField>
                     </Box>
                   </Grid>
@@ -586,7 +716,21 @@ export const ProjectsView: React.FC = () => {
                   </Button>
 
                   {!isClientRole && (
-                    <Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <Tooltip title={proj.isArchived ? 'Pulihkan dari Arsip' : 'Arsipkan Proyek Selesai'}>
+                        <IconButton
+                          size="small"
+                          onClick={() => handleToggleArchive(proj)}
+                          color={proj.isArchived ? 'warning' : proj.progress === 100 ? 'success' : 'default'}
+                          sx={{
+                            border: `1px solid ${theme.palette.divider}`,
+                            borderRadius: 1.5,
+                            p: 0.5,
+                          }}
+                        >
+                          {proj.isArchived ? <UnarchiveIcon fontSize="small" /> : <ArchiveIcon fontSize="small" />}
+                        </IconButton>
+                      </Tooltip>
                       <IconButton size="small" onClick={() => handleOpenEdit(proj)} color="primary" title="Edit Proyek">
                         <EditIcon fontSize="small" />
                       </IconButton>
@@ -711,13 +855,61 @@ export const ProjectsView: React.FC = () => {
                 />
               </Grid>
 
+              {/* Select Tier Paket Proyek */}
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  select
+                  fullWidth
+                  required
+                  label="Pilih Tier Paket Proyek"
+                  value={formData.tierNumber || 1}
+                  onChange={(e) => {
+                    const selTierNum = Number(e.target.value) as 1 | 2 | 3 | 4 | 5;
+                    const selTier = pricingTiers.find((t) => t.tierNumber === selTierNum);
+                    setFormData((prev) => ({
+                      ...prev,
+                      tierNumber: selTierNum,
+                      budget: selTier ? selTier.price : prev.budget,
+                    }));
+                  }}
+                  helperText="Memilih tier otomatis mengisi harga standar paket"
+                >
+                  {pricingTiers.map((tier) => (
+                    <MenuItem key={tier.id} value={tier.tierNumber}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                        <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                          Tier {tier.tierNumber}: {tier.name}
+                        </Typography>
+                        <Chip
+                          label={formatRupiah(tier.price)}
+                          size="small"
+                          color={tier.popular ? 'primary' : 'default'}
+                          sx={{ height: 20, fontSize: '0.68rem', fontWeight: 800, ml: 1 }}
+                        />
+                      </Box>
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+
+              {/* Nilai Kontrak Proyek (IDR) Input */}
               <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   fullWidth
                   type="number"
+                  required
                   label="Nilai Kontrak (IDR)"
                   value={formData.budget}
-                  onChange={(e) => setFormData({ ...formData, budget: Number(e.target.value) })}
+                  onChange={(e) => {
+                    const newBudget = Number(e.target.value);
+                    const matchedTier = pricingTiers.find((t) => t.price === newBudget);
+                    setFormData((prev) => ({
+                      ...prev,
+                      budget: newBudget,
+                      tierNumber: matchedTier ? (matchedTier.tierNumber as 1 | 2 | 3 | 4 | 5) : prev.tierNumber,
+                    }));
+                  }}
+                  helperText={`Nominal Terpakai: ${formatRupiah(formData.budget || 0)}`}
                 />
               </Grid>
 
@@ -726,7 +918,7 @@ export const ProjectsView: React.FC = () => {
                   select
                   fullWidth
                   label="Nama Freelancer / Mitra Penanggung Jawab"
-                  value={formData.freelancerName}
+                  value={formData.freelancerName || ''}
                   onChange={(e) => setFormData({ ...formData, freelancerName: e.target.value })}
                   helperText="Pilih mitra freelancer / developer penanggung jawab proyek dari daftar pengguna"
                 >
@@ -734,7 +926,7 @@ export const ProjectsView: React.FC = () => {
                     <em>-- Belum Ditugaskan --</em>
                   </MenuItem>
                   {users
-                    .filter((u) => u.role === 'FREELANCER' || u.role === 'DEVELOPER' || u.role === 'CTO' || u.role === 'ADMIN')
+                    .filter((u) => u && (u.role === 'FREELANCER' || u.role === 'DEVELOPER' || u.role === 'CTO' || u.role === 'ADMIN'))
                     .map((u) => {
                       const displayVal = `${u.name} (${u.role})`;
                       return (
@@ -759,12 +951,12 @@ export const ProjectsView: React.FC = () => {
                         </MenuItem>
                       );
                     })}
-                  {formData.freelancerName &&
-                    !users.some((u) => `${u.name} (${u.role})` === formData.freelancerName || u.name === formData.freelancerName) && (
-                      <MenuItem value={formData.freelancerName}>
-                        {formData.freelancerName}
-                      </MenuItem>
-                    )}
+                  {Boolean(formData.freelancerName) &&
+                  !users.some((u) => `${u.name} (${u.role})` === formData.freelancerName || u.name === formData.freelancerName) ? (
+                    <MenuItem value={formData.freelancerName}>
+                      {formData.freelancerName}
+                    </MenuItem>
+                  ) : null}
                 </TextField>
               </Grid>
             </Grid>

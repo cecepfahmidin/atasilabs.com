@@ -75,24 +75,30 @@ export const ClientDashboardView: React.FC = () => {
 
   // Filter projects available to the client
   const availableProjects = useMemo(() => {
-    const clientProjects = isClientRole
-      ? projects.filter(
-          (p) =>
-            p.clientEmail?.toLowerCase() === currentUser?.email?.toLowerCase() ||
-            p.clientName?.toLowerCase().includes(currentUser?.company?.toLowerCase() || '___')
-        )
-      : projects;
+    if (isClientRole) {
+      const emailLower = currentUser?.email?.toLowerCase();
+      const compLower = currentUser?.company?.toLowerCase();
+      const nameLower = currentUser?.name?.toLowerCase();
 
-    return clientProjects.length > 0 ? clientProjects : projects;
+      return projects.filter((p) => {
+        const matchesClient =
+          (emailLower && p.clientEmail?.toLowerCase() === emailLower) ||
+          (compLower && p.clientName?.toLowerCase().includes(compLower)) ||
+          (nameLower && p.clientName?.toLowerCase().includes(nameLower));
+
+        return matchesClient && !p.isArchived && p.status !== 'ARCHIVED';
+      });
+    }
+    return projects;
   }, [projects, currentUser, isClientRole]);
 
   // Selected Project State
   const [selectedProjectId, setSelectedProjectId] = useState<string>(
-    availableProjects[0]?.id || projects[0]?.id || ''
+    availableProjects[0]?.id || ''
   );
 
   const selectedProject: ClientProject | undefined =
-    projects.find((p) => p.id === selectedProjectId) || availableProjects[0] || projects[0];
+    availableProjects.find((p) => p.id === selectedProjectId) || availableProjects[0];
 
   // Signature Dialog State
   const [signatureModal, setSignatureModal] = useState<{
@@ -113,16 +119,40 @@ export const ClientDashboardView: React.FC = () => {
     }).format(num || 0);
   };
 
-  if (!selectedProject) {
+  if (availableProjects.length === 0 || !selectedProject) {
     return (
-      <Box sx={{ p: 4, textAlign: 'center' }}>
-        <Typography variant="h6">Tidak ada data proyek aktif untuk akun ini.</Typography>
-      </Box>
+      <Paper
+        elevation={0}
+        sx={{
+          p: 5,
+          textAlign: 'center',
+          borderRadius: 3.5,
+          border: `1px dashed ${theme.palette.divider}`,
+          backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.01)' : 'rgba(0,0,0,0.01)',
+          mt: 2,
+        }}
+      >
+        <AssignmentIcon sx={{ fontSize: 56, color: 'primary.main', mb: 2 }} />
+        <Typography variant="h5" sx={{ fontWeight: 800, mb: 1 }}>
+          Selamat Datang di Portal Klien Atasilabs
+        </Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 600, mx: 'auto', mb: 2 }}>
+          Saat ini belum ada proyek aktif yang sedang berjalan untuk akun <strong>{currentUser?.email}</strong>.
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Tim PM / CTO Atasilabs akan mengaitkan proyek Anda ke alur SOP 6-Stage IPW (Discovery ➔ Spec ➔ Kontrak ➔ SPK ➔ Eksekusi ➔ BAST).
+        </Typography>
+      </Paper>
     );
   }
 
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
   // Generate Document set for the selected project
-  const docs = generateAutoDocumentsForProject(selectedProject);
+  const docs = useMemo(() => {
+    return generateAutoDocumentsForProject(selectedProject);
+  }, [selectedProject, refreshTrigger]);
+
   const stageCfg = getStageFromProgress(selectedProject.progress, selectedProject.ipwStage);
   const activeStepIndex = IPW_STAGES_LIST.findIndex((s) => s.stage === stageCfg.stage);
 
@@ -141,30 +171,38 @@ export const ClientDashboardView: React.FC = () => {
   };
 
   const handleSaveSignature = (sigData: DigitalSignatureData) => {
-    // Save signature to corresponding document key in localStorage/state
-    const storageKey = `webdev_sys_docs_${selectedProject.id}`;
+    const storageKey = 'atasilabs_custom_project_documents';
     try {
       const savedDocs = localStorage.getItem(storageKey);
-      let parsed = savedDocs ? JSON.parse(savedDocs) : generateAutoDocumentsForProject(selectedProject);
+      const allCustom = savedDocs ? JSON.parse(savedDocs) : {};
+      const projCustom = allCustom[selectedProject.id] || {};
+      const currentAuto = generateAutoDocumentsForProject(selectedProject);
 
-      if (signatureModal.docType === 'CIF' && parsed.cif) {
-        parsed.cif.party2Signature = sigData;
-      } else if (signatureModal.docType === 'RSD' && parsed.rsd) {
-        parsed.rsd.party2Signature = sigData;
-      } else if (signatureModal.docType === 'MOU' && parsed.mou) {
-        parsed.mou.party2Signature = sigData;
-      } else if (signatureModal.docType === 'BAST' && parsed.bast) {
-        parsed.bast.party2Signature = sigData;
-      } else if (signatureModal.docType === 'QA' && parsed.qa) {
-        parsed.qa.party2Signature = sigData;
-      }
+      const docTypeKey = signatureModal.docType.toLowerCase() as 'cif' | 'rsd' | 'mou' | 'spk' | 'bast' | 'qa';
+      const targetDoc = projCustom[docTypeKey] || currentAuto[docTypeKey];
 
-      localStorage.setItem(storageKey, JSON.stringify(parsed));
+      const newName = sigData.auditTrail?.signedBy || currentUser?.name || selectedProject.clientName;
+      const newRole = sigData.auditTrail?.signerRole || currentUser?.company || 'Klien / Pihak Kedua';
+
+      const updatedDoc = {
+        ...targetDoc,
+        party2Signature: sigData,
+        clientPic: newName,
+        clientRole: newRole,
+        updatedAt: new Date().toISOString(),
+      };
+
+      allCustom[selectedProject.id] = {
+        ...projCustom,
+        [docTypeKey]: updatedDoc,
+      };
+
+      localStorage.setItem(storageKey, JSON.stringify(allCustom));
       showNotification(`Tanda tangan digital ${signatureModal.docTitle} berhasil tersimpan & diverifikasi!`, 'success');
       setSignatureModal((prev) => ({ ...prev, open: false }));
-      // Trigger a light refresh force render by re-setting selected project id
-      setSelectedProjectId(selectedProject.id);
+      setRefreshTrigger((prev) => prev + 1);
     } catch (e) {
+      console.error(e);
       showNotification('Gagal menyimpan tanda tangan digital.', 'error');
     }
   };

@@ -2,13 +2,50 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-const INITIAL_USER = {
-  id: 'usr-9409681',
-  email: 'cecepfahmidin@gmail.com',
-  name: 'Cecep Fahmidin',
-  role: 'ADMIN',
-  avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
-};
+const INITIAL_USERS = [
+  {
+    id: 'usr-ceo',
+    email: 'ceo@atasilabs.com',
+    name: 'Irfan Aulia Ulumuddin',
+    role: 'CEO',
+    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
+  },
+  {
+    id: 'usr-9409681',
+    email: 'cecepfahmidin@gmail.com',
+    name: 'Cecep Fahmidin, S.Kom., M.Kom',
+    role: 'CTO',
+    avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80',
+  },
+  {
+    id: 'usr-cmo',
+    email: 'cmo@atasilabs.com',
+    name: 'Dian Hidayat, S.E., M.Pd.I',
+    role: 'CMO',
+    avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=250&q=80',
+  },
+  {
+    id: 'usr-admin',
+    email: 'admin@atasilabs.com',
+    name: 'Hendra Gunawan',
+    role: 'ADMIN',
+    avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=250&q=80',
+  },
+  {
+    id: 'usr-client',
+    email: 'budi.santoso@nusantaratech.id',
+    name: 'Budi Santoso',
+    role: 'CLIENT',
+    avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=250&q=80',
+  },
+  {
+    id: 'usr-freelancer',
+    email: 'doni.freelance@devmail.com',
+    name: 'Doni Wijaya',
+    role: 'FREELANCER',
+    avatarUrl: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=250&q=80',
+  },
+];
 
 const INITIAL_PORTFOLIOS = [
   {
@@ -416,12 +453,14 @@ const INITIAL_PRICING_TIERS = [
 async function main() {
   console.log('🌱 Starting Prisma database seeding for atasilabs.com studio...');
 
-  // Seed User
-  await prisma.user.upsert({
-    where: { email: INITIAL_USER.email },
-    update: INITIAL_USER,
-    create: INITIAL_USER,
-  });
+  // Seed Users
+  for (const item of INITIAL_USERS) {
+    await prisma.user.upsert({
+      where: { email: item.email },
+      update: item,
+      create: item,
+    });
+  }
 
   // Seed Portfolios
   for (const item of INITIAL_PORTFOLIOS) {

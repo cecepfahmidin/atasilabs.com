@@ -5,8 +5,9 @@ import { PaletteMode } from '@mui/material';
 import { Lead, Portfolio, ClientProject, User, UserRole, LeadStatus, ProjectStatus, PricingTier, CompanyContact } from '../types';
 import { INITIAL_LEADS, INITIAL_PORTFOLIOS, INITIAL_PROJECTS, INITIAL_USER, INITIAL_USERS, INITIAL_PRICING_TIERS, INITIAL_COMPANY_CONTACT } from '../data/initialData';
 import { generateAutoDocumentsForProject } from '../lib/documentGenerator';
-import { DEFAULT_ROLE_PERMISSIONS } from '../lib/rbac';
+import { DEFAULT_ROLE_PERMISSIONS, hasPermission } from '../lib/rbac';
 import { getStageFromProgress } from '../lib/ipwStages';
+import { supabase } from '../lib/supabase';
 
 interface NotificationState {
   open: boolean;
@@ -24,7 +25,7 @@ interface AppContextType {
   
   // Auth & RBAC
   currentUser: User | null;
-  login: (email?: string) => boolean;
+  login: (email?: string, sbUser?: any) => boolean;
   logout: () => void;
   isLoginModalOpen: boolean;
   setIsLoginModalOpen: (open: boolean) => void;
@@ -176,10 +177,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const hasRolePermission = (role: UserRole, key: string): boolean => {
-    if (rolePermissions && rolePermissions[role] && rolePermissions[role][key] !== undefined) {
-      return !!rolePermissions[role][key];
-    }
-    return true;
+    return hasPermission(role, key, rolePermissions);
   };
 
   // View state
@@ -223,6 +221,51 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       console.error('Error restoring state from localStorage:', e);
     }
   }, []);
+
+  // Synchronize Supabase Auth Session with App Context
+  const syncSupabaseUser = (sbUser: any) => {
+    if (!sbUser || !sbUser.email) return;
+    const userEmail = sbUser.email;
+    const metadata = sbUser.user_metadata || {};
+    const existingUser = users.find((u) => u.email.toLowerCase() === userEmail.toLowerCase());
+
+    const syncedUser: User = existingUser || {
+      id: sbUser.id || `usr-${Date.now()}`,
+      email: userEmail,
+      name: metadata.full_name || metadata.name || userEmail.split('@')[0] || 'Pengguna Supabase',
+      role: (metadata.role as UserRole) || 'CEO',
+      status: 'ACTIVE',
+      avatarUrl: metadata.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+      createdAt: sbUser.created_at || new Date().toISOString(),
+    };
+
+    setCurrentUser(syncedUser);
+    try {
+      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(syncedUser));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    // 1. Check existing session on mount
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        syncSupabaseUser(session.user);
+      }
+    });
+
+    // 2. Real-time auth listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        syncSupabaseUser(session.user);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [users]);
 
   // Helper State Setters with Automatic LocalStorage Sync (using functional state updates)
   const saveUsers = (next: User[] | ((prev: User[]) => User[])) => {
@@ -324,10 +367,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const login = (email?: string) => {
-    const foundUser = users.find((u) => u.email === email) || {
+  const login = (email?: string, sbUser?: any) => {
+    if (sbUser) {
+      syncSupabaseUser(sbUser);
+      showNotification(`Berhasil login via Supabase Auth (${sbUser.email})`, 'success');
+      return true;
+    }
+    const targetEmail = email || INITIAL_USER.email;
+    const foundUser = users.find((u) => u.email.toLowerCase() === targetEmail.toLowerCase()) || {
       ...INITIAL_USER,
-      email: email || INITIAL_USER.email,
+      email: targetEmail,
     };
     setCurrentUser(foundUser);
     try {
@@ -343,6 +392,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCurrentUser(null);
     try {
       localStorage.removeItem(STORAGE_KEYS.USER);
+      supabase.auth.signOut();
     } catch (e) {
       console.error(e);
     }
@@ -542,6 +592,44 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
     saveProjects((prev) => [tempProj, ...prev]);
 
+    // Auto-create CLIENT user if clientEmail does not exist in users list
+    let createdClientEmail = '';
+    if (proj.clientEmail && proj.clientEmail.trim()) {
+      const emailLower = proj.clientEmail.trim().toLowerCase();
+      const existingUser = users.find((u) => u.email.toLowerCase() === emailLower);
+      if (!existingUser) {
+        createdClientEmail = proj.clientEmail.trim();
+        const newClientUser: User = {
+          id: `usr-client-${Date.now()}`,
+          email: createdClientEmail,
+          name: proj.clientName.trim() || createdClientEmail.split('@')[0],
+          company: proj.clientCompany || proj.clientName.trim(),
+          role: 'CLIENT',
+          status: 'ACTIVE',
+          password: 'joinatasilabs',
+          avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+          createdAt: now,
+        };
+        saveUsers((prev) => [...prev, newClientUser]);
+
+        // Attempt Supabase Auth registration
+        try {
+          supabase.auth.signUp({
+            email: createdClientEmail,
+            password: 'joinatasilabs',
+            options: {
+              data: {
+                full_name: proj.clientName.trim(),
+                role: 'CLIENT',
+              },
+            },
+          });
+        } catch (authErr) {
+          console.error('Auto register client Supabase Auth error:', authErr);
+        }
+      }
+    }
+
     // Automatically generate 5 official documents (CIF, RSD, MoU, SPK, BAST) and lock them for this project
     try {
       const autoDocs = generateAutoDocumentsForProject(tempProj);
@@ -557,6 +645,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       console.error('Auto document generation error:', docErr);
     }
 
+    const clientMsg = createdClientEmail
+      ? ` & Akun Klien [${createdClientEmail}] dibuat otomatis (Password: joinatasilabs)`
+      : '';
+
     try {
       const res = await fetch('/api/projects', {
         method: 'POST',
@@ -566,14 +658,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const data = await res.json();
       if (data.success && data.data && !data.fallback) {
         saveProjects((prev) => prev.map((p) => (p.id === tempProj.id ? data.data : p)));
-        showNotification('Proyek dicatat & 5 Dokumen Operasional (CIF, RSD, MoU, SPK, BAST) dibuat otomatis!', 'success');
+        showNotification(`Proyek dicatat & 5 Dokumen Operasional dibuat otomatis${clientMsg}!`, 'success');
         return data.data;
       }
     } catch (e) {
       console.error(e);
     }
 
-    showNotification('Proyek dicatat & 5 Dokumen Operasional (CIF, RSD, MoU, SPK, BAST) dibuat otomatis!', 'success');
+    showNotification(`Proyek dicatat & 5 Dokumen Operasional dibuat otomatis${clientMsg}!`, 'success');
     return tempProj;
   };
 

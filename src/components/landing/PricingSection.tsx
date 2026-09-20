@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useRef } from 'react';
 import SectionHeader from './SectionHeader';
 import { useApp } from '../../context/AppContext';
 
@@ -14,6 +14,7 @@ const formatRupiah = (amount: number) => {
 
 export const PricingSection: React.FC = () => {
   const { pricingTiers, setSelectedServiceForInquiry } = useApp();
+  const carouselRef = useRef<HTMLDivElement>(null);
 
   const handleSelectTier = (tierName: string, tierNumber: number) => {
     setSelectedServiceForInquiry(`Paket Tier ${tierNumber}: ${tierName}`);
@@ -23,15 +24,59 @@ export const PricingSection: React.FC = () => {
     }
   };
 
-  return (
-    <section id="pricing" className="flex flex-col w-full bg-[#080808] py-16 px-6 md:py-[100px] md:px-[120px] gap-12 md:gap-[64px]">
-      <SectionHeader
-        label="[08] // INFORMASI HARGA"
-        title={"PAKET DEDIKASI.\nTRANSPARAN."}
-        subtitle="TANPA BIAYA TERSEMBUNYI. PENGEMBANGAN SOFTWARE INDUSTRIAL GRADE DENGAN MODEL SPRINT BISA DIATUR."
-      />
+  const scrollLeft = () => {
+    if (carouselRef.current) {
+      carouselRef.current.scrollBy({ left: -380, behavior: 'smooth' });
+    }
+  };
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 w-full items-stretch">
+  const scrollRight = () => {
+    if (carouselRef.current) {
+      carouselRef.current.scrollBy({ left: 380, behavior: 'smooth' });
+    }
+  };
+
+  return (
+    <section id="pricing" className="flex flex-col w-full bg-[#080808] py-16 px-6 md:py-[100px] md:px-[120px] gap-10 md:gap-[48px]">
+      {/* Header Banner & Navigation Buttons */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <SectionHeader
+          label="[08] // INFORMASI HARGA"
+          title={"PAKET DEDIKASI.\nTRANSPARAN."}
+          subtitle="TANPA BIAYA TERSEMBUNYI. PENGEMBANGAN SOFTWARE INDUSTRIAL GRADE DENGAN MODEL SPRINT BISA DIATUR."
+        />
+
+        {/* Navigation Buttons & Scroll Hint */}
+        <div className="flex items-center gap-3 shrink-0">
+          <span className="hidden sm:inline-block font-ibm-mono text-[10px] text-[#888888] tracking-[1.5px] uppercase">
+            ↔ GESER PAKET ({pricingTiers.length})
+          </span>
+          <button
+            onClick={scrollLeft}
+            aria-label="Previous Tier"
+            className="flex items-center justify-center w-11 h-11 bg-[#111111] border border-[#2D2D2D] hover:border-[#FFD600] text-[#F5F5F0] hover:text-[#FFD600] transition-colors cursor-pointer font-bold text-lg"
+          >
+            ←
+          </button>
+          <button
+            onClick={scrollRight}
+            aria-label="Next Tier"
+            className="flex items-center justify-center w-11 h-11 bg-[#111111] border border-[#2D2D2D] hover:border-[#FFD600] text-[#F5F5F0] hover:text-[#FFD600] transition-colors cursor-pointer font-bold text-lg"
+          >
+            →
+          </button>
+        </div>
+      </div>
+
+      {/* 1-Row Carousel Container */}
+      <div
+        ref={carouselRef}
+        className="flex flex-nowrap overflow-x-auto gap-6 md:gap-8 w-full items-stretch pb-6 snap-x snap-mandatory scroll-smooth"
+        style={{
+          scrollbarWidth: 'thin',
+          scrollbarColor: '#333333 #111111',
+        }}
+      >
         {pricingTiers.map((tier) => {
           const isPopular = tier.popular;
           const tierLabel = `TIER 0${tier.tierNumber}`;
@@ -39,19 +84,21 @@ export const PricingSection: React.FC = () => {
           return (
             <div
               key={tier.id}
-              className={`flex flex-col justify-between p-6 md:p-[36px] w-full transition-all duration-300 relative ${isPopular
-                ? 'bg-[#111111] border-2 border-[#FFD600] shadow-[0_0_35px_rgba(255,214,0,0.15)] lg:-translate-y-2'
-                : 'bg-[#0F0F0F] border border-[#2D2D2D] hover:border-[#555555]'
-                }`}
+              className={`flex flex-col justify-between p-6 md:p-[36px] w-[310px] sm:w-[350px] md:w-[390px] shrink-0 snap-start transition-all duration-300 relative ${
+                isPopular
+                  ? 'bg-[#111111] border-2 border-[#FFD600] shadow-[0_0_35px_rgba(255,214,0,0.15)]'
+                  : 'bg-[#0F0F0F] border border-[#2D2D2D] hover:border-[#555555]'
+              }`}
             >
               <div className="flex flex-col gap-6">
                 {/* Badge Header */}
                 <div className="flex items-center justify-between">
                   <div
-                    className={`flex items-center justify-center h-[28px] px-[12px] w-fit ${isPopular
-                      ? 'bg-[#FFD600] text-[#0A0A0A] font-bold'
-                      : 'bg-[#1A1A1A] border border-[#3D3D3D] text-[#888888]'
-                      }`}
+                    className={`flex items-center justify-center h-[28px] px-[12px] w-fit ${
+                      isPopular
+                        ? 'bg-[#FFD600] text-[#0A0A0A] font-bold'
+                        : 'bg-[#1A1A1A] border border-[#3D3D3D] text-[#888888]'
+                    }`}
                   >
                     <span className="font-ibm-mono text-[11px] tracking-[2px]">
                       {isPopular ? '★ RECOMMENDED' : tierLabel}
@@ -67,8 +114,9 @@ export const PricingSection: React.FC = () => {
                 {/* Title & Tagline */}
                 <div className="flex flex-col gap-1">
                   <h3
-                    className={`font-grotesk text-[24px] md:text-[26px] font-bold tracking-[0.5px] ${isPopular ? 'text-[#FFD600]' : 'text-[#F5F5F0]'
-                      }`}
+                    className={`font-grotesk text-[24px] md:text-[26px] font-bold tracking-[0.5px] ${
+                      isPopular ? 'text-[#FFD600]' : 'text-[#F5F5F0]'
+                    }`}
                   >
                     {tier.name}
                   </h3>
@@ -80,8 +128,9 @@ export const PricingSection: React.FC = () => {
                 {/* Price Display */}
                 <div className="flex items-end gap-[6px] py-2 border-y border-[#222222]">
                   <span
-                    className={`font-grotesk text-[26px] xl:text-[32px] font-bold tracking-[-1px] leading-none ${isPopular ? 'text-[#FFD600]' : 'text-[#F5F5F0]'
-                      }`}
+                    className={`font-grotesk text-[26px] xl:text-[32px] font-bold tracking-[-1px] leading-none ${
+                      isPopular ? 'text-[#FFD600]' : 'text-[#F5F5F0]'
+                    }`}
                   >
                     {formatRupiah(tier.price)}
                   </span>
@@ -108,8 +157,9 @@ export const PricingSection: React.FC = () => {
                   {(tier.features || []).map((feat, i) => (
                     <div key={`feat-${i}`} className="flex items-start gap-3">
                       <span
-                        className={`font-ibm-mono text-[13px] leading-none shrink-0 mt-0.5 ${isPopular ? 'text-[#FFD600]' : 'text-[#4ADE80]'
-                          }`}
+                        className={`font-ibm-mono text-[13px] leading-none shrink-0 mt-0.5 ${
+                          isPopular ? 'text-[#FFD600]' : 'text-[#4ADE80]'
+                        }`}
                       >
                         +
                       </span>
@@ -124,10 +174,11 @@ export const PricingSection: React.FC = () => {
               {/* CTA Button */}
               <button
                 onClick={() => handleSelectTier(tier.name, tier.tierNumber)}
-                className={`flex items-center justify-center w-full h-[48px] mt-8 font-grotesk text-[12px] font-bold tracking-[2px] transition-all duration-200 ${isPopular
-                  ? 'bg-[#FFD600] text-[#0A0A0A] hover:bg-[#e6c200] shadow-md'
-                  : 'bg-[#1A1A1A] text-[#CCCCCC] border-2 border-[#3D3D3D] hover:border-[#FFD600] hover:text-[#FFD600]'
-                  }`}
+                className={`flex items-center justify-center w-full h-[48px] mt-8 font-grotesk text-[12px] font-bold tracking-[2px] transition-all duration-200 ${
+                  isPopular
+                    ? 'bg-[#FFD600] text-[#0A0A0A] hover:bg-[#e6c200] shadow-md'
+                    : 'bg-[#1A1A1A] text-[#CCCCCC] border-2 border-[#3D3D3D] hover:border-[#FFD600] hover:text-[#FFD600]'
+                }`}
               >
                 {tier.ctaText ? tier.ctaText.toUpperCase() : 'PILIH PAKET PROYEK'} →
               </button>
