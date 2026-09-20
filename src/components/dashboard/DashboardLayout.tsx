@@ -115,6 +115,17 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
     }
   }, [userRole, dashboardTab, pathname, router, setDashboardTab]);
 
+  const [masterDataOpen, setMasterDataOpen] = useState(() => {
+    return (
+      pathname?.includes('/dashboard/portfolio') ||
+      pathname?.includes('/dashboard/pricing') ||
+      pathname?.includes('/dashboard/contact') ||
+      pathname?.includes('/dashboard/users') ||
+      pathname?.includes('/dashboard/master-data') ||
+      ['portfolio', 'pricing', 'contact', 'users', 'master-data'].includes(dashboardTab)
+    );
+  });
+
   if (isAuthChecking || !currentUser) {
     return (
       <Box
@@ -140,17 +151,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
     logout();
     router.push('/login');
   };
-
-  const [masterDataOpen, setMasterDataOpen] = useState(() => {
-    return (
-      pathname?.includes('/dashboard/portfolio') ||
-      pathname?.includes('/dashboard/pricing') ||
-      pathname?.includes('/dashboard/contact') ||
-      pathname?.includes('/dashboard/users') ||
-      pathname?.includes('/dashboard/master-data') ||
-      ['portfolio', 'pricing', 'contact', 'users', 'master-data'].includes(dashboardTab)
-    );
-  });
 
   const rawMenuItems = [
     {
