@@ -349,7 +349,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
         }}
       >
         {/* Full-bleed Header Image (public/header.png) */}
-        <Box sx={{ width: '100%', m: 0, p: 0, lineHeight: 0 }}>
+        <Box sx={{ width: '100%', m: 0, p: 0, lineHeight: 0, position: 'relative', zIndex: 0 }}>
           <Box
             component="img"
             src="/header.png"
@@ -367,8 +367,17 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
           />
         </Box>
 
-        {/* Document Content Body with Margins */}
-        <Box className="doc-content-body" sx={{ p: { xs: 2.5, sm: 4 }, pt: { xs: 1.5, sm: 2 } }}>
+        {/* Document Content Body overlay raised directly below header line */}
+        <Box
+          className="doc-content-body"
+          sx={{
+            position: 'relative',
+            zIndex: 1,
+            p: { xs: 2.5, sm: 4 },
+            pt: 0,
+            mt: { xs: -4, sm: -6, md: -7.5 },
+          }}
+        >
           {/* Top Header Title & Metadata Table */}
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2, pb: 1, borderBottom: '1px solid #e2e8f0' }}>
             <Box sx={{ pt: 0.5 }}>
