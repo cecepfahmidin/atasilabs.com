@@ -115,8 +115,13 @@ html, body {
     padding-left: 12mm !important;
     padding-right: 12mm !important;
     padding-bottom: 12mm !important;
-    padding-top: 0 !important;
-    margin-top: -52mm !important;
+    padding-top: 6mm !important;
+    margin-top: -42mm !important;
+  }
+
+  .printable-document .section-block {
+    margin-top: 20px !important;
+    padding-top: 10px !important;
   }
 
   .printable-document .no-print,

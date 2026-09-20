@@ -374,8 +374,8 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
             position: 'relative',
             zIndex: 1,
             p: { xs: 2.5, sm: 4 },
-            pt: 0,
-            mt: { xs: '-130px', sm: '-190px', md: '-220px' },
+            pt: 1.5,
+            mt: { xs: '-100px', sm: '-145px', md: '-170px' },
           }}
         >
           {/* Top Header Title & Metadata Table */}
@@ -549,7 +549,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
         </Box>
 
         {/* 4. DESAIN & BRANDING */}
-        <Box sx={{ mb: 2.5 }}>
+        <Box className="section-block" sx={{ mb: 2.5, pt: 1 }}>
           <Typography variant="subtitle2" sx={{ fontWeight: 800, textTransform: 'uppercase', color: '#000', mb: 0.5 }}>
             4. DESAIN & BRANDING
           </Typography>
