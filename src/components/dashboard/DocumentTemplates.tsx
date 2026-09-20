@@ -347,20 +347,30 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
           '& .MuiTableCell-root': { color: '#0f172a' },
         }}
       >
-        {/* Header Image (public/header.png) */}
-        <Box sx={{ width: '100%', mb: 2, textAlign: 'center' }}>
+        {/* Full-bleed Header Image (public/header.png) */}
+        <Box
+          sx={{
+            mt: { xs: -2.5, sm: -4 },
+            mx: { xs: -2.5, sm: -4 },
+            mb: 2.5,
+            borderTopLeftRadius: 'calc(12px - 1px)',
+            borderTopRightRadius: 'calc(12px - 1px)',
+            overflow: 'hidden',
+          }}
+        >
           <Box
             component="img"
             src="/header.png"
             alt="Header Dokumen CIF Atasilabs"
             sx={{
               width: '100%',
-              maxHeight: 140,
-              objectFit: 'contain',
-              borderRadius: 1,
+              display: 'block',
+              height: 'auto',
             }}
             onError={(e: any) => {
-              e.target.style.display = 'none';
+              if (e.target.parentElement) {
+                e.target.parentElement.style.display = 'none';
+              }
             }}
           />
         </Box>
