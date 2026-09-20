@@ -1,14 +1,18 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { AppProvider } from '@/context/AppContext';
 import { ThemeWrapper } from '@/components/ThemeWrapper';
 import '@/index.css';
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+};
 
 export const metadata: Metadata = {
   title: 'AtasiLabs - Modern Web Development Studio & Enterprise Dashboard (Next.js, Prisma, Supabase)',
   description: 'Studio pengembangan aplikasi web full-stack profesional berbasis Next.js App Router, Prisma ORM, dan Supabase PostgreSQL. Layanan pembuatan SaaS, E-Commerce, dan Portal Enterprise.',
   keywords: ['Next.js', 'Prisma ORM', 'Supabase', 'PostgreSQL', 'Material UI', 'React 19', 'Full-Stack Web Development', 'AtasiLabs'],
   authors: [{ name: 'Cecep Fahmidin', url: 'https://atasilabs.com' }],
-  viewport: 'width=device-width, initial-scale=1',
   icons: {
     icon: '/favicon.png',
     shortcut: '/favicon.png',
