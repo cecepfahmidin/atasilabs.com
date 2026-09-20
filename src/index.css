@@ -75,7 +75,16 @@ html, body {
 @media print {
   @page {
     size: A4 portrait;
-    margin: 10mm 12mm 12mm 12mm;
+    margin-top: 18mm;
+    margin-bottom: 12mm;
+    margin-left: 12mm;
+    margin-right: 12mm;
+  }
+
+  @page :first {
+    margin-top: 0;
+    margin-left: 0;
+    margin-right: 0;
   }
 
   html, body {
@@ -115,13 +124,19 @@ html, body {
     padding-left: 12mm !important;
     padding-right: 12mm !important;
     padding-bottom: 12mm !important;
-    padding-top: 6mm !important;
-    margin-top: -42mm !important;
+    padding-top: 4mm !important;
+    margin-top: 0 !important;
+  }
+
+  .printable-document .doc-header-top {
+    margin-top: -36mm !important;
   }
 
   .printable-document .section-block {
-    margin-top: 20px !important;
-    padding-top: 10px !important;
+    margin-top: 24px !important;
+    padding-top: 12px !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
 
   .printable-document .no-print,

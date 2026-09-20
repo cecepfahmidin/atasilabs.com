@@ -367,7 +367,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
           />
         </Box>
 
-        {/* Document Content Body overlay raised directly below header line */}
+        {/* Document Content Body overlay */}
         <Box
           className="doc-content-body"
           sx={{
@@ -375,11 +375,21 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
             zIndex: 1,
             p: { xs: 2.5, sm: 4 },
             pt: 1.5,
-            mt: { xs: '-100px', sm: '-145px', md: '-170px' },
           }}
         >
           {/* Top Header Title & Metadata Table */}
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2, pb: 1, borderBottom: '1px solid #e2e8f0' }}>
+          <Box
+            className="doc-header-top"
+            sx={{
+              display: 'flex',
+              justify: 'space-between',
+              alignItems: 'flex-start',
+              mb: 2,
+              pb: 1,
+              borderBottom: '1px solid #e2e8f0',
+              mt: { xs: '-100px', sm: '-145px', md: '-170px' },
+            }}
+          >
             <Box sx={{ pt: 0.5 }}>
               <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', fontSize: '1.25rem', lineHeight: 1.2 }}>
                 Client Intake Form (CIF)
