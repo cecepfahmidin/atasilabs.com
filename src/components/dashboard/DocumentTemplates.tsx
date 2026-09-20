@@ -347,6 +347,24 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
           '& .MuiTableCell-root': { color: '#0f172a' },
         }}
       >
+        {/* Header Image (public/header.png) */}
+        <Box sx={{ width: '100%', mb: 2, textAlign: 'center' }}>
+          <Box
+            component="img"
+            src="/header.png"
+            alt="Header Dokumen CIF Atasilabs"
+            sx={{
+              width: '100%',
+              maxHeight: 140,
+              objectFit: 'contain',
+              borderRadius: 1,
+            }}
+            onError={(e: any) => {
+              e.target.style.display = 'none';
+            }}
+          />
+        </Box>
+
         {/* Custom PDF Kop & Top Header Table */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2, pb: 1, borderBottom: '2px solid #000' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
