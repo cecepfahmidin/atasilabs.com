@@ -387,7 +387,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
               mb: 2,
               pb: 1,
               borderBottom: '1px solid #e2e8f0',
-              mt: { xs: '-100px', sm: '-145px', md: '-170px' },
+              mt: { xs: '-135px', sm: '-195px', md: '-225px' },
             }}
           >
             <Box sx={{ pt: 0.5 }}>
@@ -422,7 +422,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
           </Box>
 
         {/* RINGKASAN EKSEKUTIF */}
-        <Box sx={{ mb: 2.5 }}>
+        <Box className="section-block" sx={{ mb: 2.5, mt: 2 }}>
           <Typography variant="subtitle2" sx={{ fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#000', mb: 0.5 }}>
             RINGKASAN EKSEKUTIF
           </Typography>
@@ -432,7 +432,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
         </Box>
 
         {/* 1. INFORMASI UMUM KLIEN DAN PROYEK */}
-        <Box sx={{ mb: 2.5 }}>
+        <Box className="section-block" sx={{ mb: 2.5, mt: 2 }}>
           <Typography variant="subtitle2" sx={{ fontWeight: 800, textTransform: 'uppercase', color: '#000', mb: 0.5 }}>
             1. INFORMASI UMUM KLIEN DAN PROYEK
           </Typography>
@@ -472,7 +472,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
         </Box>
 
         {/* 2. PROFIL PROYEK & TUJUAN BISNIS */}
-        <Box sx={{ mb: 2.5 }}>
+        <Box className="section-block" sx={{ mb: 2.5, mt: 3, pt: 1 }}>
           <Typography variant="subtitle2" sx={{ fontWeight: 800, textTransform: 'uppercase', color: '#000', mb: 0.5 }}>
             2. PROFIL PROYEK & TUJUAN BISNIS
           </Typography>
@@ -520,7 +520,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
         </Box>
 
         {/* 3. RUANG LINGKUP & FITUR WEBSITE */}
-        <Box sx={{ mb: 2.5 }}>
+        <Box className="section-block" sx={{ mb: 2.5, mt: 3, pt: 1 }}>
           <Typography variant="subtitle2" sx={{ fontWeight: 800, textTransform: 'uppercase', color: '#000', mb: 0.5 }}>
             3. RUANG LINGKUP & FITUR WEBSITE
           </Typography>
@@ -600,7 +600,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
         </Box>
 
         {/* 5. MATERI & ASET KONTEN */}
-        <Box sx={{ mb: 2.5 }}>
+        <Box className="section-block" sx={{ mb: 2.5, mt: 3, pt: 1 }}>
           <Typography variant="subtitle2" sx={{ fontWeight: 800, textTransform: 'uppercase', color: '#000', mb: 0.5 }}>
             5. MATERI & ASET KONTEN
           </Typography>
@@ -637,7 +637,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
         </Box>
 
         {/* 6. ESTIMASI WAKTU, ANGGARAN & PERSETUJUAN */}
-        <Box sx={{ mb: 2.5 }}>
+        <Box className="section-block" sx={{ mb: 2.5, mt: 3, pt: 1 }}>
           <Typography variant="subtitle2" sx={{ fontWeight: 800, textTransform: 'uppercase', color: '#000', mb: 0.5 }}>
             6. ESTIMASI WAKTU, ANGGARAN & PERSETUJUAN
           </Typography>
@@ -672,7 +672,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
         </Box>
 
         {/* 7. CATATAN TAMBAHAN & PERSETUJUAN */}
-        <Box sx={{ mb: 2.5 }}>
+        <Box className="section-block" sx={{ mb: 2.5, mt: 3, pt: 1 }}>
           <Typography variant="subtitle2" sx={{ fontWeight: 800, textTransform: 'uppercase', color: '#000', mb: 0.5 }}>
             7. CATATAN TAMBAHAN & PERSETUJUAN
           </Typography>

@@ -75,7 +75,7 @@ html, body {
 @media print {
   @page {
     size: A4 portrait;
-    margin-top: 18mm;
+    margin-top: 26mm;
     margin-bottom: 12mm;
     margin-left: 12mm;
     margin-right: 12mm;
@@ -129,12 +129,12 @@ html, body {
   }
 
   .printable-document .doc-header-top {
-    margin-top: -36mm !important;
+    margin-top: -48mm !important;
   }
 
   .printable-document .section-block {
-    margin-top: 24px !important;
-    padding-top: 12px !important;
+    margin-top: 28px !important;
+    padding-top: 14px !important;
     break-inside: avoid !important;
     page-break-inside: avoid !important;
   }
