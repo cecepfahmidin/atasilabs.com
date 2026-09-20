@@ -338,9 +338,13 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
           p: { xs: 2.5, sm: 4 },
           borderRadius: 3,
           border: '1px solid rgba(0,0,0,0.12)',
-          bgcolor: 'background.paper',
+          bgcolor: '#ffffff',
+          color: '#0f172a',
           fontFamily: 'Inter, Arial, sans-serif',
-          color: '#1e293b',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
+          '& .MuiTypography-root': { color: 'inherit' },
+          '& .MuiTypography-colorTextSecondary': { color: '#475569 !important' },
+          '& .MuiTableCell-root': { color: '#0f172a' },
         }}
       >
         {/* Custom PDF Kop & Top Header Table */}
@@ -740,9 +744,13 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
           p: { xs: 2.5, sm: 4 },
           borderRadius: 3,
           border: '1px solid rgba(0,0,0,0.12)',
-          bgcolor: 'background.paper',
+          bgcolor: '#ffffff',
+          color: '#0f172a',
           fontFamily: 'Inter, Arial, sans-serif',
-          color: '#1e293b',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
+          '& .MuiTypography-root': { color: 'inherit' },
+          '& .MuiTypography-colorTextSecondary': { color: '#475569 !important' },
+          '& .MuiTableCell-root': { color: '#0f172a' },
         }}
       >
         {/* Custom PDF Kop & Top Header Table */}
@@ -1151,9 +1159,13 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
           p: { xs: 2.5, sm: 4 },
           borderRadius: 3,
           border: '1px solid rgba(0,0,0,0.12)',
-          bgcolor: 'background.paper',
+          bgcolor: '#ffffff',
+          color: '#0f172a',
           fontFamily: 'Inter, Arial, sans-serif',
-          color: '#1e293b',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
+          '& .MuiTypography-root': { color: 'inherit' },
+          '& .MuiTypography-colorTextSecondary': { color: '#475569 !important' },
+          '& .MuiTableCell-root': { color: '#0f172a' },
         }}
       >
         {/* Header Kop PDF MoU */}
@@ -1444,9 +1456,13 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
           p: { xs: 2.5, sm: 4 },
           borderRadius: 3,
           border: '1px solid rgba(0,0,0,0.12)',
-          bgcolor: 'background.paper',
+          bgcolor: '#ffffff',
+          color: '#0f172a',
           fontFamily: 'Inter, Arial, sans-serif',
-          color: '#1e293b',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
+          '& .MuiTypography-root': { color: 'inherit' },
+          '& .MuiTypography-colorTextSecondary': { color: '#475569 !important' },
+          '& .MuiTableCell-root': { color: '#0f172a' },
         }}
       >
         {/* Header Kop PDF SPK */}
@@ -1790,9 +1806,13 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
           p: { xs: 2.5, sm: 4 },
           borderRadius: 3,
           border: '1px solid rgba(0,0,0,0.12)',
-          bgcolor: 'background.paper',
-          fontFamily: 'Inter, sans-serif',
-          color: '#000',
+          bgcolor: '#ffffff',
+          color: '#0f172a',
+          fontFamily: 'Inter, Arial, sans-serif',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
+          '& .MuiTypography-root': { color: 'inherit' },
+          '& .MuiTypography-colorTextSecondary': { color: '#475569 !important' },
+          '& .MuiTableCell-root': { color: '#0f172a' },
         }}
       >
         <Letterhead title="BERITA ACARA SERAH TERIMA (BAST)" />
@@ -1979,7 +1999,18 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
       <Paper
         elevation={0}
         className="printable-document"
-        sx={{ p: { xs: 3, md: 5 }, borderRadius: 3, border: '1px solid', borderColor: 'divider', bgcolor: '#fff' }}
+        sx={{
+          p: { xs: 3, md: 5 },
+          borderRadius: 3,
+          border: '1px solid rgba(0,0,0,0.12)',
+          bgcolor: '#ffffff',
+          color: '#0f172a',
+          fontFamily: 'Inter, Arial, sans-serif',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
+          '& .MuiTypography-root': { color: 'inherit' },
+          '& .MuiTypography-colorTextSecondary': { color: '#475569 !important' },
+          '& .MuiTableCell-root': { color: '#0f172a' },
+        }}
       >
         {/* Document Actions Bar (Hidden on Print) */}
         <Box
