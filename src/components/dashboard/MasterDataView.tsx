@@ -391,7 +391,7 @@ export const MasterDataView: React.FC = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <CheckCircleIcon sx={{ fontSize: 16, color: 'success.main' }} />
                   <Typography variant="caption" sx={{ fontWeight: 600 }}>
-                    Email Support ({companyContact?.email || 'contact@atasilabs.com'})
+                    Email Support ({companyContact?.email || 'atasilabs@gmail.com'})
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

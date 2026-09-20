@@ -23,7 +23,7 @@ export const AnimatedInteractiveLoginCard: React.FC<AnimatedInteractiveLoginCard
   const [showIntro, setShowIntro] = useState(false);
   const [focusField, setFocusField] = useState<FocusField>('none');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  const [emailValue, setEmailValue] = useState('cecepfahmidin@gmail.com');
+  const [emailValue, setEmailValue] = useState('atasilabs@gmail.com');
   const [passwordValue, setPasswordValue] = useState('7770555A888!');
   const [lastClickedCharacter, setLastClickedCharacter] = useState<string | null>(null);
 

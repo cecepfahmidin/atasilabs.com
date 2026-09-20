@@ -291,7 +291,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
             Jl. Cinangsi, RT 003 RW 001, Desa Cinangsi, Kec. Cibogo, Kab. Subang – Jawa Barat
           </Typography>
           <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.72rem' }}>
-            Website: www.atasilabs.com | Email: cecepfahmidin@gmail.com
+            Website: www.atasilabs.com | Email: atasilabs@gmail.com
           </Typography>
         </Box>
         <Chip
@@ -1508,7 +1508,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
                   <TableRow><TableCell sx={{ fontWeight: 700 }}>Jabatan</TableCell><TableCell>: {party1Role}</TableCell></TableRow>
                   <TableRow><TableCell sx={{ fontWeight: 700 }}>Alamat</TableCell><TableCell>: {spk.atasilabsAddress || 'Jl. Cinangsi, RT 003 RW 001, Subang'}</TableCell></TableRow>
                   <TableRow><TableCell sx={{ fontWeight: 700 }}>No. WhatsApp</TableCell><TableCell>: {spk.atasilabsWhatsapp || '0812-3456-7890'}</TableCell></TableRow>
-                  <TableRow><TableCell sx={{ fontWeight: 700 }}>Email Perusahaan</TableCell><TableCell>: {spk.atasilabsEmail || 'cecepfahmidin@gmail.com'}</TableCell></TableRow>
+                  <TableRow><TableCell sx={{ fontWeight: 700 }}>Email Perusahaan</TableCell><TableCell>: {spk.atasilabsEmail || 'atasilabs@gmail.com'}</TableCell></TableRow>
                 </TableBody>
               </Table>
               <Typography variant="caption" sx={{ fontStyle: 'italic', display: 'block', mt: 1, color: '#475569' }}>

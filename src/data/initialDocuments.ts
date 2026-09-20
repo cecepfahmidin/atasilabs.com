@@ -235,7 +235,7 @@ export const INITIAL_SPK_DATA: SPKData[] = [
     atasilabsRole: 'IT Lead & Managing Director',
     atasilabsAddress: 'Jl. Cinangsi RT 003 RW 001, Subang, Jawa Barat',
     atasilabsWhatsapp: '0812-9876-5432',
-    atasilabsEmail: 'cecepfahmidin@gmail.com',
+    atasilabsEmail: 'atasilabs@gmail.com',
 
     freelancerName: 'Rian Hidayat',
     freelancerNik: '3213012508950002',

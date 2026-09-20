@@ -871,7 +871,7 @@ export const ClientDashboardView: React.FC = () => {
                 variant="outlined"
                 color="inherit"
                 startIcon={<EmailIcon />}
-                href="mailto:support@atasilabs.com"
+                href="mailto:atasilabs@gmail.com"
                 sx={{ fontWeight: 700, borderRadius: 2.5 }}
               >
                 Kirim Email Dukungan

@@ -262,7 +262,7 @@ export function generateAutoDocumentsForProject(proj: ClientProject) {
     atasilabsRole: '',
     atasilabsAddress: '',
     atasilabsWhatsapp: '0821-6361-428',
-    atasilabsEmail: 'contact@atasilabs.com',
+    atasilabsEmail: 'atasilabs@gmail.com',
     freelancerName: proj.freelancerName || '',
     freelancerNik: '',
     freelancerAddress: '',

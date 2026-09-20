@@ -4,7 +4,7 @@ export const INITIAL_COMPANY_CONTACT: CompanyContact = {
   companyName: 'ATASILABS HQ & STUDIO',
   subtitle: 'BUILD YOUR DIGITAL FUTURE',
   description: 'Siap mendiskusikan kebutuhan arsitektur Next.js, Material UI, Prisma ORM, maupun integrasi workflow internal perusahaan Anda.',
-  email: 'contact@atasilabs.com',
+  email: 'atasilabs@gmail.com',
   phone: '+62 821-6361-428',
   whatsapp: '+62 821-6361-428',
   whatsappRaw: '628216361428',
