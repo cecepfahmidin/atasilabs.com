@@ -243,8 +243,8 @@ export function generateAutoDocumentsForProject(proj: ClientProject) {
       ? { dpPercent: 50, dpNominal: Math.round(proj.budget * 0.5), finalPercent: 50, finalNominal: Math.round(proj.budget * 0.5) }
       : { dpPercent: 30, dpNominal: Math.round(proj.budget * 0.3), midPercent: 30, midNominal: Math.round(proj.budget * 0.3), finalPercent: 40, finalNominal: Math.round(proj.budget * 0.4) },
     bankAccount: {
-      bankName: 'Bank Rakyat Indonesia (BRI)',
-      accountNumber: '4388-01-00025-56-7',
+      bankName: 'Bank BRI',
+      accountNumber: '4388-01-0000-25-56-7',
       accountHolder: 'PT AULIA INDOLAND GRUP',
     },
     warrantyDays: 30,

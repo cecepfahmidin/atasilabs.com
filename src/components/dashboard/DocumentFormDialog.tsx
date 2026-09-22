@@ -1409,7 +1409,7 @@ export const DocumentFormDialog: React.FC<DocumentFormDialogProps> = ({
                   fullWidth
                   size="small"
                   label="Nama Bank"
-                  value={formData?.bankAccount?.bankName || 'Bank Rakyat Indonesia (BRI)'}
+                  value={formData?.bankAccount?.bankName || 'Bank BRI'}
                   onChange={(e) => handleNestedChange('bankAccount', 'bankName', e.target.value)}
                 />
               </Grid>

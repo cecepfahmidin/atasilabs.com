@@ -215,8 +215,8 @@ export const INITIAL_MOU_DATA: MoUData[] = [
       finalNominal: 18000000,
     },
     bankAccount: {
-      bankName: 'Bank Rakyat Indonesia (BRI)',
-      accountNumber: '4388-01-00025-56-7',
+      bankName: 'Bank BRI',
+      accountNumber: '4388-01-0000-25-56-7',
       accountHolder: 'PT AULIA INDOLAND GRUP',
     },
     warrantyDays: 30,

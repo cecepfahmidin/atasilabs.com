@@ -1329,7 +1329,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
             </Typography>
             <Paper variant="outlined" sx={{ p: 1.5, mx: 2, my: 1, bgcolor: '#f8fafc', borderColor: '#cbd5e1' }}>
               <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#0f172a' }}>
-                {mou.bankAccount?.bankName || 'BRI'} &nbsp;&nbsp;|&nbsp;&nbsp; No. Rekening: {mou.bankAccount?.accountNumber || '4388-01-00025-56-7'} &nbsp;&nbsp;|&nbsp;&nbsp; a.n. {mou.bankAccount?.accountHolder || 'PT AULIA INDOLAND GRUP'}
+                {mou.bankAccount?.bankName || 'Bank BRI'} &nbsp;&nbsp;|&nbsp;&nbsp; No. Rekening: {mou.bankAccount?.accountNumber || '4388-01-0000-25-56-7'} &nbsp;&nbsp;|&nbsp;&nbsp; a.n. {mou.bankAccount?.accountHolder || 'PT AULIA INDOLAND GRUP'}
               </Typography>
             </Paper>
             <Typography variant="body2" sx={{ lineHeight: 1.5 }}>
