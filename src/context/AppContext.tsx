@@ -258,7 +258,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       name: metadata.full_name || metadata.name || userEmail.split('@')[0] || 'Pengguna Supabase',
       role: (metadata.role as UserRole) || 'CEO',
       status: 'ACTIVE',
-      avatarUrl: metadata.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+      avatarUrl: metadata.avatar_url || '',
       createdAt: sbUser.created_at || new Date().toISOString(),
     };
 
@@ -677,7 +677,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           role: 'CLIENT',
           status: 'ACTIVE',
           password: 'joinatasilabs',
-          avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+          avatarUrl: '',
           createdAt: now,
         };
         saveUsers((prev) => [...prev, newClientUser]);

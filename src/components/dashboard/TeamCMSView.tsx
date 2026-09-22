@@ -50,8 +50,6 @@ const PRESET_AVATARS = [
   { label: 'CEO Irfan', url: '/team/ceo.jpg' },
   { label: 'CTO Cecep', url: '/team/cto.jpg' },
   { label: 'CMO Dian', url: '/team/cmo.jpg' },
-  { label: 'Unsplash Male', url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80' },
-  { label: 'Unsplash Female', url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=250&q=80' },
 ];
 
 export const TeamCMSView: React.FC = () => {

@@ -24,7 +24,7 @@ export const INITIAL_USER: User = {
   phone: '0812-3456-7890',
   company: 'PT Aulia Indoland Grup (Atasilabs)',
   status: 'ACTIVE',
-  avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
+  avatarUrl: '/team/ceo.jpg',
   createdAt: '2024-01-15T08:00:00.000Z',
 };
 
@@ -38,7 +38,7 @@ export const INITIAL_USERS: User[] = [
     phone: '0813-9876-5432',
     company: 'Atasilabs Tech Division',
     status: 'ACTIVE',
-    avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80',
+    avatarUrl: '/team/cto.jpg',
     createdAt: '2024-01-16T09:00:00.000Z',
   },
   {
@@ -49,7 +49,7 @@ export const INITIAL_USERS: User[] = [
     phone: '0857-1122-3344',
     company: 'Atasilabs Growth & Business Dev',
     status: 'ACTIVE',
-    avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=250&q=80',
+    avatarUrl: '/team/cmo.jpg',
     createdAt: '2024-01-17T10:00:00.000Z',
   },
   {
@@ -60,7 +60,7 @@ export const INITIAL_USERS: User[] = [
     phone: '0821-4455-6677',
     company: 'Atasilabs Operations',
     status: 'ACTIVE',
-    avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=250&q=80',
+    avatarUrl: '',
     createdAt: '2024-01-18T11:00:00.000Z',
   },
   {
@@ -71,7 +71,7 @@ export const INITIAL_USERS: User[] = [
     phone: '0811-2233-4455',
     company: 'PT Nusantara Teknologi Mandiri',
     status: 'ACTIVE',
-    avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=250&q=80',
+    avatarUrl: '',
     createdAt: '2024-02-01T08:00:00.000Z',
   },
   {
@@ -82,7 +82,7 @@ export const INITIAL_USERS: User[] = [
     phone: '0896-5566-7788',
     company: 'Mitra Developer Senior',
     status: 'ACTIVE',
-    avatarUrl: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=250&q=80',
+    avatarUrl: '',
     createdAt: '2024-02-05T14:00:00.000Z',
   },
 ];

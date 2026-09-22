@@ -61,12 +61,9 @@ import { ROLE_CONFIGS, hasPermission } from '../../lib/rbac';
 import { supabase } from '../../lib/supabase';
 
 const PRESET_AVATARS = [
-  { label: 'CEO / Exec', url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80' },
-  { label: 'Senior Dev', url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80' },
-  { label: 'Manager Wanita', url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=250&q=80' },
-  { label: 'Tech Lead', url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=250&q=80' },
-  { label: 'Dev Wanita', url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=250&q=80' },
-  { label: 'Corporate', url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=250&q=80' },
+  { label: 'CEO Irfan', url: '/team/ceo.jpg' },
+  { label: 'CTO Cecep', url: '/team/cto.jpg' },
+  { label: 'CMO Dian', url: '/team/cmo.jpg' },
 ];
 
 export const UsersView: React.FC = () => {
@@ -182,7 +179,7 @@ export const UsersView: React.FC = () => {
       phone: '',
       company: '',
       status: 'ACTIVE',
-      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
+      avatarUrl: '',
     });
     setShowPassword(false);
     setOpenDialog(true);
