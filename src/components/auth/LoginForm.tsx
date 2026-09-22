@@ -91,9 +91,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({
       const systemUser = allUsers.find((u) => u.email.trim().toLowerCase() === email.trim().toLowerCase());
 
       if (systemUser) {
-        // Validate password against user's password or default system password
+        // Validate password against user's updated password or default master password
         const expectedPassword = systemUser.password || '7770555A888!';
-        if (password === expectedPassword || password === '7770555A888!') {
+        const isValidPassword = password === expectedPassword || password === '7770555A888!';
+
+        if (isValidPassword) {
           login(systemUser.email);
           setIsLoading(false);
           onLoginSuccess(systemUser.email);
@@ -105,16 +107,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         }
       }
 
-      // 3. Fallback: Log in dynamically for any entered user/email
-      login(email.trim());
+      // 3. User not found in system
+      showNotification('Email pengguna tidak ditemukan dalam sistem!');
       setIsLoading(false);
-      onLoginSuccess(email.trim());
       return;
     } catch (err: any) {
       console.error('Login exception:', err);
-      login(email.trim());
+      showNotification('Terjadi kesalahan saat verifikasi login.');
       setIsLoading(false);
-      onLoginSuccess(email.trim());
     }
   };
 
