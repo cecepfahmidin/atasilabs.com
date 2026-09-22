@@ -1,9 +1,29 @@
 import { MetadataRoute } from 'next';
+import { prisma } from '@/lib/prisma';
 import { INITIAL_PORTFOLIOS, INITIAL_PRICING_TIERS } from '@/data/initialData';
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export const revalidate = 3600; // Refresh dynamic sitemap every hour
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.atasilabs.com';
   const currentDate = new Date();
+
+  // Fetch dynamic data from PostgreSQL Database
+  let dbPortfolios: any[] = [];
+  let dbPricing: any[] = [];
+
+  try {
+    const [portfolios, pricing] = await Promise.all([
+      prisma.portfolio.findMany({ orderBy: { createdAt: 'desc' } }),
+      prisma.pricingTier.findMany({ orderBy: { tierNumber: 'asc' } }),
+    ]);
+
+    dbPortfolios = portfolios.length > 0 ? portfolios : INITIAL_PORTFOLIOS;
+    dbPricing = pricing.length > 0 ? pricing : INITIAL_PRICING_TIERS;
+  } catch (error) {
+    dbPortfolios = INITIAL_PORTFOLIOS;
+    dbPricing = INITIAL_PRICING_TIERS;
+  }
 
   // Landing Page Main Navigation & Section Anchors
   const landingSections: MetadataRoute.Sitemap = [
@@ -69,17 +89,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   ];
 
-  // Dynamic Portfolio Entries from Landing Content
-  const portfolioEntries: MetadataRoute.Sitemap = (INITIAL_PORTFOLIOS || []).map((item) => ({
+  // Dynamic Portfolio Entries from Database
+  const portfolioEntries: MetadataRoute.Sitemap = dbPortfolios.map((item) => ({
     url: `${baseUrl}/#portfolio-${item.id}`,
-    lastModified: item.createdAt ? new Date(item.createdAt) : currentDate,
+    lastModified: item.updatedAt ? new Date(item.updatedAt) : (item.createdAt ? new Date(item.createdAt) : currentDate),
     changeFrequency: 'weekly',
     priority: 0.8,
   }));
 
-  // Dynamic Pricing Tier Entries from Landing Content
-  const pricingEntries: MetadataRoute.Sitemap = (INITIAL_PRICING_TIERS || []).map((tier) => ({
-    url: `${baseUrl}/#pricing-tier-${tier.tierNumber}`,
+  // Dynamic Pricing Tier Entries from Database
+  const pricingEntries: MetadataRoute.Sitemap = dbPricing.map((tier) => ({
+    url: `${baseUrl}/#pricing-tier-${tier.tierNumber || tier.id}`,
     lastModified: tier.updatedAt ? new Date(tier.updatedAt) : currentDate,
     changeFrequency: 'weekly',
     priority: 0.85,
@@ -103,3 +123,4 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   return [...landingSections, ...pricingEntries, ...portfolioEntries, ...portalPages];
 }
+
