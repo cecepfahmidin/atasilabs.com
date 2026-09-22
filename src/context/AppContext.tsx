@@ -229,11 +229,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
 
     setCurrentUser(syncedUser);
-    try {
-      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(syncedUser));
-    } catch (e) {
-      console.error(e);
-    }
   };
 
   useEffect(() => {
@@ -256,98 +251,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   }, [users]);
 
-  // Helper State Setters with Automatic LocalStorage Sync (using functional state updates)
+  // Helper State Setters (pure state updates, DB APIs handle persistence)
   const saveUsers = (next: User[] | ((prev: User[]) => User[])) => {
-    setUsers((prev) => {
-      const updated = typeof next === 'function' ? next(prev) : next;
-      try {
-        localStorage.setItem(STORAGE_KEYS.USERS_LIST, JSON.stringify(updated));
-      } catch (e) {
-        console.error(e);
-      }
-      return updated;
-    });
+    setUsers((prev) => (typeof next === 'function' ? next(prev) : next));
   };
 
   const saveLeads = (next: Lead[] | ((prev: Lead[]) => Lead[])) => {
-    setLeads((prev) => {
-      const updated = typeof next === 'function' ? next(prev) : next;
-      try {
-        localStorage.setItem(STORAGE_KEYS.LEADS, JSON.stringify(updated));
-      } catch (e) {
-        console.error(e);
-      }
-      return updated;
-    });
+    setLeads((prev) => (typeof next === 'function' ? next(prev) : next));
   };
 
   const savePortfolios = (next: Portfolio[] | ((prev: Portfolio[]) => Portfolio[])) => {
-    setPortfolios((prev) => {
-      const updated = typeof next === 'function' ? next(prev) : next;
-      try {
-        localStorage.setItem(STORAGE_KEYS.PORTFOLIOS, JSON.stringify(updated));
-      } catch (e) {
-        console.error(e);
-      }
-      return updated;
-    });
+    setPortfolios((prev) => (typeof next === 'function' ? next(prev) : next));
   };
 
   const saveProjects = (next: ClientProject[] | ((prev: ClientProject[]) => ClientProject[])) => {
-    setProjects((prev) => {
-      const updated = typeof next === 'function' ? next(prev) : next;
-      try {
-        localStorage.setItem(STORAGE_KEYS.PROJECTS, JSON.stringify(updated));
-      } catch (e) {
-        console.error(e);
-      }
-      return updated;
-    });
+    setProjects((prev) => (typeof next === 'function' ? next(prev) : next));
   };
 
   const savePricingTiers = (next: PricingTier[] | ((prev: PricingTier[]) => PricingTier[])) => {
-    setPricingTiers((prev) => {
-      const updated = typeof next === 'function' ? next(prev) : next;
-      try {
-        localStorage.setItem(STORAGE_KEYS.PRICING, JSON.stringify(updated));
-      } catch (e) {
-        console.error(e);
-      }
-      return updated;
-    });
+    setPricingTiers((prev) => (typeof next === 'function' ? next(prev) : next));
   };
 
   const saveCompanyContact = (next: CompanyContact | ((prev: CompanyContact) => CompanyContact)) => {
-    setCompanyContact((prev) => {
-      const updated = typeof next === 'function' ? next(prev) : next;
-      try {
-        localStorage.setItem(STORAGE_KEYS.COMPANY_CONTACT, JSON.stringify(updated));
-      } catch (e) {
-        console.error(e);
-      }
-      return updated;
-    });
+    setCompanyContact((prev) => (typeof next === 'function' ? next(prev) : next));
   };
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEYS.USER);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        const existing = users.find((u) => u.id === parsed.id || u.email?.toLowerCase() === parsed.email?.toLowerCase() || (u.role === parsed.role && ['CEO', 'CTO', 'CMO'].includes(u.role)));
-        if (existing) {
-          const merged = { ...parsed, ...existing };
-          setCurrentUser(merged);
-        } else {
-          setCurrentUser(parsed);
-        }
-      } else {
-        setCurrentUser(null);
-      }
-    } catch {
-      setCurrentUser(null);
-    }
-  }, [users]);
 
   // Keep currentUser continuously in sync with the matching user in `users` list
   useEffect(() => {
@@ -367,11 +294,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ) {
         const updated = { ...currentUser, ...matched };
         setCurrentUser(updated);
-        try {
-          localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(updated));
-        } catch (e) {
-          console.error(e);
-        }
       }
     }
   }, [users, currentUser?.id, currentUser?.email, currentUser?.role]);
@@ -380,11 +302,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const targetUser = users.find((u) => u.id === userId);
     if (targetUser) {
       setCurrentUser(targetUser);
-      try {
-        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(targetUser));
-      } catch (e) {
-        console.error(e);
-      }
       showNotification(`Beralih simulasi ke role: ${targetUser.role} (${targetUser.name})`, 'info');
     }
   };
@@ -401,11 +318,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       email: targetEmail,
     };
     setCurrentUser(foundUser);
-    try {
-      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(foundUser));
-    } catch (e) {
-      console.error(e);
-    }
     showNotification(`Berhasil login sebagai ${foundUser.name} [${foundUser.role}]`, 'success');
     return true;
   };
@@ -413,7 +325,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const logout = () => {
     setCurrentUser(null);
     try {
-      localStorage.removeItem(STORAGE_KEYS.USER);
       supabase.auth.signOut();
     } catch (e) {
       console.error(e);
@@ -456,17 +367,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       (currentUser?.email && fields.email && currentUser.email.toLowerCase() === fields.email.toLowerCase()) ||
       (currentUser?.role && fields.role && currentUser.role === fields.role)
     ) {
-      setCurrentUser((prev) => {
-        const updated = prev ? { ...prev, ...fields } : null;
-        if (updated) {
-          try {
-            localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(updated));
-          } catch (e) {
-            console.error(e);
-          }
-        }
-        return updated;
-      });
+      setCurrentUser((prev) => (prev ? { ...prev, ...fields } : null));
     }
 
     try {
@@ -708,13 +609,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // Automatically generate 5 official documents (CIF, RSD, MoU, SPK, BAST) and lock them for this project
     try {
       const autoDocs = generateAutoDocumentsForProject(tempProj);
-      if (typeof window !== 'undefined') {
-        const key = 'atasilabs_custom_project_documents';
-        const existingStr = localStorage.getItem(key);
-        const existingDocs = existingStr ? JSON.parse(existingStr) : {};
-        existingDocs[tempProj.id] = autoDocs;
-        localStorage.setItem(key, JSON.stringify(existingDocs));
-      }
       console.log('Auto-generated & locked documents for project:', tempProj.id, autoDocs);
     } catch (docErr) {
       console.error('Auto document generation error:', docErr);
@@ -943,19 +837,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     saveCompanyContact(INITIAL_COMPANY_CONTACT);
     saveUsers(INITIAL_USERS);
     setCurrentUser(INITIAL_USER);
-
-    try {
-      localStorage.removeItem(STORAGE_KEYS.PROJECTS);
-      localStorage.removeItem(STORAGE_KEYS.LEADS);
-      localStorage.removeItem(STORAGE_KEYS.PORTFOLIOS);
-      localStorage.removeItem(STORAGE_KEYS.PRICING);
-      localStorage.removeItem(STORAGE_KEYS.COMPANY_CONTACT);
-      localStorage.removeItem(STORAGE_KEYS.USERS_LIST);
-      localStorage.removeItem(STORAGE_KEYS.USER);
-    } catch (e) {
-      console.error(e);
-    }
-
     showNotification('Basis data & akun pengguna berhasil direset ke data sampel awal', 'info');
   };
 
