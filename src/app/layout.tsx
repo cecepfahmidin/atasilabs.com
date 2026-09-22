@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import { AppProvider } from '@/context/AppContext';
 import { ThemeWrapper } from '@/components/ThemeWrapper';
 import '@/index.css';
@@ -42,6 +43,7 @@ export default function RootLayout({
         <AppProvider>
           <ThemeWrapper>{children}</ThemeWrapper>
         </AppProvider>
+        <SpeedInsights />
       </body>
     </html>
   );
