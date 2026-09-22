@@ -112,3 +112,34 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 }
+
+model Testimonial {
+  id          String   @id @default(uuid())
+  name        String
+  role        String
+  company     String?
+  quote       String
+  avatarUrl   String?
+  bgColor     String?  @default("#161616")
+  accentColor String   @default("#FFD600")
+  featured    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+}
+
+model CompanyContact {
+  id           String   @id @default("singleton-contact")
+  companyName  String
+  subtitle     String
+  description  String
+  email        String
+  phone        String
+  whatsapp     String
+  whatsappRaw  String
+  address      String
+  workingHours String
+  facebookUrl  String
+  instagramUrl String
+  ndaNotice    String
+  updatedAt    DateTime @default(now()) @updatedAt
+}

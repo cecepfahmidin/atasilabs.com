@@ -206,43 +206,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [companyContact, setCompanyContact] = useState<CompanyContact>(INITIAL_COMPANY_CONTACT);
   const [testimonials, setTestimonials] = useState<Testimonial[]>(INITIAL_TESTIMONIALS);
 
-  // Restore state from LocalStorage after initial mount (hydration complete)
+  // Always fetch fresh data directly from Database APIs on mount
   useEffect(() => {
-    const loadSavedState = () => {
-      try {
-        const savedUsers = localStorage.getItem(STORAGE_KEYS.USERS_LIST);
-        if (savedUsers) setUsers(JSON.parse(savedUsers));
-
-        const savedLeads = localStorage.getItem(STORAGE_KEYS.LEADS);
-        if (savedLeads) setLeads(JSON.parse(savedLeads));
-
-        const savedPortfolios = localStorage.getItem(STORAGE_KEYS.PORTFOLIOS);
-        if (savedPortfolios) setPortfolios(JSON.parse(savedPortfolios));
-
-        const savedProjects = localStorage.getItem(STORAGE_KEYS.PROJECTS);
-        if (savedProjects) setProjects(JSON.parse(savedProjects));
-
-        const savedPricing = localStorage.getItem(STORAGE_KEYS.PRICING);
-        if (savedPricing) setPricingTiers(JSON.parse(savedPricing));
-
-        const savedContact = localStorage.getItem(STORAGE_KEYS.COMPANY_CONTACT);
-        if (savedContact) setCompanyContact(JSON.parse(savedContact));
-
-        const savedTestimonials = localStorage.getItem(STORAGE_KEYS.TESTIMONIALS);
-        if (savedTestimonials) setTestimonials(JSON.parse(savedTestimonials));
-      } catch (e) {
-        console.error('Error restoring state from localStorage:', e);
-      }
-    };
-
-    loadSavedState();
-
-    const handleStorageChange = (e: StorageEvent) => {
-      loadSavedState();
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    refreshDataFromBackend();
   }, []);
 
   // Synchronize Supabase Auth Session with App Context
@@ -528,49 +494,50 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showNotification('Pengguna telah dihapus dari sistem', 'warning');
   };
 
-  // Fetch initial data from Next.js API Routes (only if local storage is completely empty)
+  // Fetch initial data from Next.js API Routes (unconditionally from DB)
   const refreshDataFromBackend = async () => {
     try {
-      const [leadsRes, portRes, projRes, pricingRes, usersRes] = await Promise.all([
+      const [leadsRes, portRes, projRes, pricingRes, usersRes, testiRes, contactRes] = await Promise.all([
         fetch('/api/leads').then((res) => res.json()).catch(() => null),
         fetch('/api/portfolio').then((res) => res.json()).catch(() => null),
         fetch('/api/projects').then((res) => res.json()).catch(() => null),
         fetch('/api/pricing').then((res) => res.json()).catch(() => null),
         fetch('/api/users').then((res) => res.json()).catch(() => null),
+        fetch('/api/testimonials').then((res) => res.json()).catch(() => null),
+        fetch('/api/contact').then((res) => res.json()).catch(() => null),
       ]);
-
-      const hasLocalLeads = typeof window !== 'undefined' && !!localStorage.getItem(STORAGE_KEYS.LEADS);
-      const hasLocalPortfolios = typeof window !== 'undefined' && !!localStorage.getItem(STORAGE_KEYS.PORTFOLIOS);
-      const hasLocalProjects = typeof window !== 'undefined' && !!localStorage.getItem(STORAGE_KEYS.PROJECTS);
-      const hasLocalPricing = typeof window !== 'undefined' && !!localStorage.getItem(STORAGE_KEYS.PRICING);
 
       if (usersRes?.success && Array.isArray(usersRes.data) && usersRes.data.length > 0) {
         saveUsers(usersRes.data);
       }
 
-      if (!hasLocalLeads && leadsRes?.success && Array.isArray(leadsRes.data) && leadsRes.data.length > 0) {
+      if (leadsRes?.success && Array.isArray(leadsRes.data) && leadsRes.data.length > 0) {
         saveLeads(leadsRes.data);
       }
 
-      if (!hasLocalPortfolios && portRes?.success && Array.isArray(portRes.data) && portRes.data.length > 0) {
+      if (portRes?.success && Array.isArray(portRes.data) && portRes.data.length > 0) {
         savePortfolios(portRes.data);
       }
 
-      if (!hasLocalProjects && projRes?.success && Array.isArray(projRes.data) && projRes.data.length > 0) {
+      if (projRes?.success && Array.isArray(projRes.data) && projRes.data.length > 0) {
         saveProjects(projRes.data);
       }
 
-      if (!hasLocalPricing && pricingRes?.success && Array.isArray(pricingRes.data) && pricingRes.data.length > 0) {
+      if (pricingRes?.success && Array.isArray(pricingRes.data) && pricingRes.data.length > 0) {
         savePricingTiers(pricingRes.data);
       }
+
+      if (testiRes?.success && Array.isArray(testiRes.data) && testiRes.data.length > 0) {
+        setTestimonials(testiRes.data);
+      }
+
+      if (contactRes?.success && contactRes.data) {
+        setCompanyContact(contactRes.data);
+      }
     } catch (err) {
-      console.warn('Could not fetch from backend APIs, keeping local storage state:', err);
+      console.warn('Could not fetch from backend APIs:', err);
     }
   };
-
-  useEffect(() => {
-    refreshDataFromBackend();
-  }, []);
 
   // Leads CRUD
   const addLead = async (leadData: Omit<Lead, 'id' | 'createdAt' | 'status'>): Promise<Lead> => {
@@ -867,12 +834,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateCompanyContact = async (updatedFields: Partial<CompanyContact>) => {
-    saveCompanyContact((prev) => ({
+    setCompanyContact((prev) => ({
       ...prev,
       ...updatedFields,
       updatedAt: new Date().toISOString(),
     }));
-    showNotification('Data kontak perusahaan berhasil diperbarui!', 'success');
+    try {
+      await fetch('/api/contact', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedFields),
+      });
+    } catch (e) {
+      console.error('Database update contact error:', e);
+    }
+    showNotification('Data kontak perusahaan berhasil diperbarui ke Database!', 'success');
   };
 
   const resetCompanyContactToDefault = () => {
@@ -886,52 +862,54 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ...item,
       id: `testi-${Date.now()}`,
     };
-    setTestimonials((prev) => {
-      const updated = [newTesti, ...prev];
-      try {
-        localStorage.setItem(STORAGE_KEYS.TESTIMONIALS, JSON.stringify(updated));
-      } catch (e) {
-        console.error(e);
+    setTestimonials((prev) => [newTesti, ...prev]);
+
+    try {
+      const res = await fetch('/api/testimonials', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(item),
+      });
+      const data = await res.json();
+      if (data.success && data.data) {
+        setTestimonials((prev) => prev.map((t) => (t.id === newTesti.id ? data.data : t)));
       }
-      return updated;
-    });
-    showNotification('Testimoni baru berhasil ditambahkan!', 'success');
+    } catch (e) {
+      console.error('Database add testimonial error:', e);
+    }
+
+    showNotification('Testimoni baru berhasil ditambahkan ke Database!', 'success');
     return newTesti;
   };
 
   const updateTestimonial = async (id: string, item: Partial<Testimonial>): Promise<void> => {
-    setTestimonials((prev) => {
-      const updated = prev.map((t) => (t.id === id ? { ...t, ...item } : t));
-      try {
-        localStorage.setItem(STORAGE_KEYS.TESTIMONIALS, JSON.stringify(updated));
-      } catch (e) {
-        console.error(e);
-      }
-      return updated;
-    });
-    showNotification('Data testimoni berhasil diperbarui!', 'success');
+    setTestimonials((prev) => prev.map((t) => (t.id === id ? { ...t, ...item } : t)));
+    try {
+      await fetch('/api/testimonials', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, ...item }),
+      });
+    } catch (e) {
+      console.error('Database update testimonial error:', e);
+    }
+    showNotification('Data testimoni berhasil diperbarui ke Database!', 'success');
   };
 
   const deleteTestimonial = async (id: string): Promise<void> => {
-    setTestimonials((prev) => {
-      const updated = prev.filter((t) => t.id !== id);
-      try {
-        localStorage.setItem(STORAGE_KEYS.TESTIMONIALS, JSON.stringify(updated));
-      } catch (e) {
-        console.error(e);
-      }
-      return updated;
-    });
-    showNotification('Testimoni berhasil dihapus!', 'info');
+    setTestimonials((prev) => prev.filter((t) => t.id !== id));
+    try {
+      await fetch(`/api/testimonials?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      });
+    } catch (e) {
+      console.error('Database delete testimonial error:', e);
+    }
+    showNotification('Testimoni berhasil dihapus dari Database!', 'info');
   };
 
   const resetTestimonialsToDefault = () => {
     setTestimonials(INITIAL_TESTIMONIALS);
-    try {
-      localStorage.removeItem(STORAGE_KEYS.TESTIMONIALS);
-    } catch (e) {
-      console.error(e);
-    }
     showNotification('Testimoni dikembalikan ke data default', 'info');
   };
 
