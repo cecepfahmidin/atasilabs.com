@@ -47,7 +47,6 @@ import {
   GroupWork as GroupIcon,
   CheckCircle as CheckIcon,
   Cancel as CancelIcon,
-  SwapHoriz as SwitchRoleIcon,
   Info as InfoIcon,
   Lock as LockIcon,
   RestartAlt as ResetIcon,
@@ -261,72 +260,6 @@ export const UsersView: React.FC = () => {
 
   return (
     <Box sx={{ pb: 6 }}>
-      {/* Role Simulation Switcher Bar */}
-      <Card
-        elevation={0}
-        sx={{
-          mb: 4,
-          borderRadius: 3,
-          background:
-            theme.palette.mode === 'dark'
-              ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(59, 130, 246, 0.12) 100%)'
-              : 'linear-gradient(135deg, #fef3c7 0%, #dbeafe 100%)',
-          border: `1px solid ${theme.palette.divider}`,
-          p: 2.5,
-        }}
-      >
-        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, alignItems: { md: 'center' }, justifyContent: 'space-between', gap: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Avatar sx={{ bgcolor: theme.palette.primary.main, width: 44, height: 44 }}>
-              <SwitchRoleIcon />
-            </Avatar>
-            <Box>
-              <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
-                Simulasi Peran Akses RBAC (Live Test)
-              </Typography>
-              <Box component="div" sx={{ fontSize: '0.875rem', color: 'text.secondary', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 0.5 }}>
-                <span>Pengguna Aktif: <strong>{currentUser?.name}</strong> | Role Saat Ini:</span>
-                <Chip
-                  label={currentUser?.role ? ROLE_CONFIGS[currentUser.role]?.label : 'Unknown'}
-                  size="small"
-                  color={currentUser?.role ? (ROLE_CONFIGS[currentUser.role]?.badgeColor as any) : 'default'}
-                  sx={{ fontWeight: 700 }}
-                />
-              </Box>
-            </Box>
-          </Box>
-
-          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
-            <Typography variant="caption" sx={{ fontWeight: 700, color: theme.palette.text.secondary, mr: 0.5 }}>
-              Uji Beralih Peran:
-            </Typography>
-            {(['CEO', 'CTO', 'CMO', 'ADMIN', 'CLIENT', 'FREELANCER'] as UserRole[]).map((r) => {
-              const uForRole = users.find((usr) => usr.role === r);
-              const isActive = currentUser?.role === r;
-              return (
-                <Button
-                  key={r}
-                  size="small"
-                  variant={isActive ? 'contained' : 'outlined'}
-                  color={ROLE_CONFIGS[r].badgeColor as any}
-                  onClick={() => uForRole && switchUserRole(uForRole.id)}
-                  disabled={!uForRole}
-                  sx={{
-                    borderRadius: 2,
-                    textTransform: 'none',
-                    fontWeight: 700,
-                    fontSize: '0.75rem',
-                    py: 0.5,
-                    px: 1.2,
-                  }}
-                >
-                  {r}
-                </Button>
-              );
-            })}
-          </Box>
-        </Box>
-      </Card>
 
       {/* Header Title */}
       <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { sm: 'center' }, gap: 2, mb: 3 }}>
