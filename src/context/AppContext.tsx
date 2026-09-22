@@ -141,45 +141,41 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
-  // Dynamic RBAC Permissions State
+  // Dynamic RBAC Permissions State (persisted via DB /api/rbac)
   const [rolePermissions, setRolePermissions] = useState<Record<UserRole, Record<string, boolean>>>(DEFAULT_ROLE_PERMISSIONS);
 
-  useEffect(() => {
-    try {
-      const savedPerms = localStorage.getItem(STORAGE_KEYS.RBAC);
-      if (savedPerms) {
-        setRolePermissions(JSON.parse(savedPerms));
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  }, []);
+  const updateRolePermission = async (role: UserRole, key: string, allowed: boolean) => {
+    const updated = {
+      ...rolePermissions,
+      [role]: {
+        ...(rolePermissions[role] || {}),
+        [key]: allowed,
+      },
+    };
+    setRolePermissions(updated);
 
-  const updateRolePermission = (role: UserRole, key: string, allowed: boolean) => {
-    setRolePermissions((prev) => {
-      const updated = {
-        ...prev,
-        [role]: {
-          ...(prev[role] || {}),
-          [key]: allowed,
-        },
-      };
-      try {
-        localStorage.setItem(STORAGE_KEYS.RBAC, JSON.stringify(updated));
-      } catch (e) {
-        console.error(e);
-      }
-      return updated;
-    });
+    try {
+      await fetch('/api/rbac', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ permissions: updated }),
+      });
+    } catch (e) {
+      console.error('Database update RBAC error:', e);
+    }
     showNotification(`Hak akses '${key}' untuk role [${role}] telah diubah menjadi: ${allowed ? 'DIIZINKAN' : 'DIBLOKIR'}`, 'info');
   };
 
-  const resetRolePermissionsToDefault = () => {
+  const resetRolePermissionsToDefault = async () => {
     setRolePermissions(DEFAULT_ROLE_PERMISSIONS);
     try {
-      localStorage.removeItem(STORAGE_KEYS.RBAC);
+      await fetch('/api/rbac', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ permissions: DEFAULT_ROLE_PERMISSIONS }),
+      });
     } catch (e) {
-      console.error(e);
+      console.error('Database reset RBAC error:', e);
     }
     showNotification('Matriks Hak Akses RBAC telah dikembalikan ke standar default.', 'success');
   };
@@ -398,7 +394,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Fetch initial data from Next.js API Routes (unconditionally from DB)
   const refreshDataFromBackend = async () => {
     try {
-      const [leadsRes, portRes, projRes, pricingRes, usersRes, testiRes, contactRes] = await Promise.all([
+      const [leadsRes, portRes, projRes, pricingRes, usersRes, testiRes, contactRes, rbacRes] = await Promise.all([
         fetch('/api/leads').then((res) => res.json()).catch(() => null),
         fetch('/api/portfolio').then((res) => res.json()).catch(() => null),
         fetch('/api/projects').then((res) => res.json()).catch(() => null),
@@ -406,6 +402,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         fetch('/api/users').then((res) => res.json()).catch(() => null),
         fetch('/api/testimonials').then((res) => res.json()).catch(() => null),
         fetch('/api/contact').then((res) => res.json()).catch(() => null),
+        fetch('/api/rbac').then((res) => res.json()).catch(() => null),
       ]);
 
       if (usersRes?.success && Array.isArray(usersRes.data) && usersRes.data.length > 0) {
@@ -434,6 +431,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       if (contactRes?.success && contactRes.data) {
         setCompanyContact(contactRes.data);
+      }
+
+      if (rbacRes?.success && rbacRes.data) {
+        setRolePermissions(rbacRes.data);
       }
     } catch (err) {
       console.warn('Could not fetch from backend APIs:', err);

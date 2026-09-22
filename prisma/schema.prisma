@@ -143,3 +143,9 @@ model CompanyContact {
   ndaNotice    String
   updatedAt    DateTime @default(now()) @updatedAt
 }
+
+model RbacMatrix {
+  id          String   @id @default("singleton-rbac")
+  permissions Json
+  updatedAt   DateTime @default(now()) @updatedAt
+}
