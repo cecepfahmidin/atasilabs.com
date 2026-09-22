@@ -91,9 +91,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({
       const systemUser = allUsers.find((u) => u.email.trim().toLowerCase() === email.trim().toLowerCase());
 
       if (systemUser) {
-        // Validate password against user's updated password or default master password
+        // Validate password against user's exact updated password (or initial default if not set)
         const expectedPassword = systemUser.password || '7770555A888!';
-        const isValidPassword = password === expectedPassword || password === '7770555A888!';
+        const isValidPassword = password === expectedPassword;
 
         if (isValidPassword) {
           login(systemUser.email);
