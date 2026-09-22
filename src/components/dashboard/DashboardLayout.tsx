@@ -94,7 +94,14 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
     }
   }, [currentUser, isAuthChecking, router]);
 
-  const userRole = currentUser?.role || 'CLIENT';
+  const activeUser = users.find(
+    (u) =>
+      u.id === currentUser?.id ||
+      (u.email && currentUser?.email && u.email.toLowerCase() === currentUser.email.toLowerCase()) ||
+      (u.role === currentUser?.role && ['CEO', 'CTO', 'CMO'].includes(u.role))
+  ) || currentUser;
+
+  const userRole = activeUser?.role || currentUser?.role || 'CLIENT';
   const roleConfig = ROLE_CONFIGS[userRole] || ROLE_CONFIGS.CLIENT;
 
   // Route Protection for CLIENT role
@@ -530,15 +537,15 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
         title="Klik untuk kelola profil & ganti foto avatar user"
       >
         <Avatar
-          src={currentUser?.avatarUrl}
+          src={activeUser?.avatarUrl || currentUser?.avatarUrl}
           sx={{ width: 34, height: 34, bgcolor: roleConfig.hexColor, border: '1.5px solid', borderColor: 'primary.main' }}
         >
-          {currentUser?.name?.[0] || 'A'}
+          {(activeUser?.name || currentUser?.name)?.[0] || 'A'}
         </Avatar>
         <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <Typography variant="body2" noWrap sx={{ fontWeight: 700, fontSize: '0.84rem' }}>
-              {currentUser?.name || 'Administrator'}
+              {activeUser?.name || currentUser?.name || 'Administrator'}
             </Typography>
           </Box>
           <Chip

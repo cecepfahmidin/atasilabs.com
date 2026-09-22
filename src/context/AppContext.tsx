@@ -368,16 +368,47 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const saved = localStorage.getItem(STORAGE_KEYS.USER);
       if (saved) {
         const parsed = JSON.parse(saved);
-        const existing = users.find((u) => u.id === parsed.id || u.email === parsed.email);
-        if (existing) setCurrentUser(existing);
-        else setCurrentUser(parsed);
+        const existing = users.find((u) => u.id === parsed.id || u.email?.toLowerCase() === parsed.email?.toLowerCase() || (u.role === parsed.role && ['CEO', 'CTO', 'CMO'].includes(u.role)));
+        if (existing) {
+          const merged = { ...parsed, ...existing };
+          setCurrentUser(merged);
+        } else {
+          setCurrentUser(parsed);
+        }
       } else {
         setCurrentUser(null);
       }
     } catch {
       setCurrentUser(null);
     }
-  }, []);
+  }, [users]);
+
+  // Keep currentUser continuously in sync with the matching user in `users` list
+  useEffect(() => {
+    if (!currentUser) return;
+    const matched = users.find(
+      (u) =>
+        u.id === currentUser.id ||
+        (u.email && currentUser.email && u.email.toLowerCase() === currentUser.email.toLowerCase()) ||
+        (u.role === currentUser.role && ['CEO', 'CTO', 'CMO'].includes(u.role))
+    );
+    if (matched) {
+      if (
+        matched.avatarUrl !== currentUser.avatarUrl ||
+        matched.name !== currentUser.name ||
+        matched.role !== currentUser.role ||
+        matched.company !== currentUser.company
+      ) {
+        const updated = { ...currentUser, ...matched };
+        setCurrentUser(updated);
+        try {
+          localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(updated));
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+  }, [users, currentUser?.id, currentUser?.email, currentUser?.role]);
 
   const switchUserRole = (userId: string) => {
     const targetUser = users.find((u) => u.id === userId);
@@ -439,8 +470,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const updateUser = async (id: string, fields: Partial<User>) => {
     saveUsers((prev) => prev.map((u) => (u.id === id ? { ...u, ...fields } : u)));
-    if (currentUser?.id === id) {
-      setCurrentUser((prev) => (prev ? { ...prev, ...fields } : null));
+    if (
+      currentUser?.id === id ||
+      (currentUser?.email && fields.email && currentUser.email.toLowerCase() === fields.email.toLowerCase()) ||
+      (currentUser?.role && fields.role && currentUser.role === fields.role)
+    ) {
+      setCurrentUser((prev) => {
+        const updated = prev ? { ...prev, ...fields } : null;
+        if (updated) {
+          try {
+            localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(updated));
+          } catch (e) {
+            console.error(e);
+          }
+        }
+        return updated;
+      });
     }
     showNotification('Data pengguna & hak akses RBAC berhasil diperbarui!', 'success');
   };
