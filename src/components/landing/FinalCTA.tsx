@@ -27,7 +27,7 @@ export const FinalCTA: React.FC = () => {
 
       {/* Subtitle */}
       <p className="font-ibm-mono text-[15px] md:text-[18px] text-[#888888] tracking-[0.5px] text-center w-full max-w-[700px] px-2">
-        <GlitchText text="BERGABUNG BERSAMA PULUHAN PERUSAHAAN YANG MENGGUNAKAN ARSITEKTUR NEXT.JS ATASILABS." speed={20} delay={450} />
+        <GlitchText text="APAKAH ANDA SIAP MENGUBAH IDE MENJADI KENYATAAN? KAMI SIAP MEMBANTU MEWUJUDKANNYA." speed={20} delay={450} />
       </p>
 
       {/* CTAs */}
