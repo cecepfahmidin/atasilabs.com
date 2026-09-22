@@ -464,6 +464,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       createdAt: new Date().toISOString(),
     };
     saveUsers((prev) => [...prev, newUser]);
+
+    try {
+      const res = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData),
+      });
+      const data = await res.json();
+      if (data.success && data.data) {
+        saveUsers((prev) => prev.map((u) => (u.email === newUser.email ? data.data : u)));
+      }
+    } catch (e) {
+      console.error('Database user create sync error:', e);
+    }
+
     showNotification(`Pengguna ${newUser.name} [${newUser.role}] berhasil ditambahkan`, 'success');
     return newUser;
   };
@@ -487,28 +502,51 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return updated;
       });
     }
+
+    try {
+      await fetch('/api/users', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, ...fields }),
+      });
+    } catch (e) {
+      console.error('Database user update sync error:', e);
+    }
+
     showNotification('Data pengguna & hak akses RBAC berhasil diperbarui!', 'success');
   };
 
   const deleteUser = async (id: string) => {
     saveUsers((prev) => prev.filter((u) => u.id !== id));
+    try {
+      await fetch(`/api/users?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      });
+    } catch (e) {
+      console.error('Database user delete sync error:', e);
+    }
     showNotification('Pengguna telah dihapus dari sistem', 'warning');
   };
 
   // Fetch initial data from Next.js API Routes (only if local storage is completely empty)
   const refreshDataFromBackend = async () => {
     try {
-      const [leadsRes, portRes, projRes, pricingRes] = await Promise.all([
+      const [leadsRes, portRes, projRes, pricingRes, usersRes] = await Promise.all([
         fetch('/api/leads').then((res) => res.json()).catch(() => null),
         fetch('/api/portfolio').then((res) => res.json()).catch(() => null),
         fetch('/api/projects').then((res) => res.json()).catch(() => null),
         fetch('/api/pricing').then((res) => res.json()).catch(() => null),
+        fetch('/api/users').then((res) => res.json()).catch(() => null),
       ]);
 
       const hasLocalLeads = typeof window !== 'undefined' && !!localStorage.getItem(STORAGE_KEYS.LEADS);
       const hasLocalPortfolios = typeof window !== 'undefined' && !!localStorage.getItem(STORAGE_KEYS.PORTFOLIOS);
       const hasLocalProjects = typeof window !== 'undefined' && !!localStorage.getItem(STORAGE_KEYS.PROJECTS);
       const hasLocalPricing = typeof window !== 'undefined' && !!localStorage.getItem(STORAGE_KEYS.PRICING);
+
+      if (usersRes?.success && Array.isArray(usersRes.data) && usersRes.data.length > 0) {
+        saveUsers(usersRes.data);
+      }
 
       if (!hasLocalLeads && leadsRes?.success && Array.isArray(leadsRes.data) && leadsRes.data.length > 0) {
         saveLeads(leadsRes.data);
