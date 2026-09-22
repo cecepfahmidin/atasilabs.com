@@ -1,4 +1,4 @@
-import { Portfolio, Lead, ClientProject, ServiceItem, User, PricingTier, CompanyContact } from '../types';
+import { Portfolio, Lead, ClientProject, ServiceItem, User, PricingTier, CompanyContact, Testimonial } from '../types';
 
 export const INITIAL_COMPANY_CONTACT: CompanyContact = {
   companyName: 'ATASILABS HQ & STUDIO',
@@ -33,7 +33,7 @@ export const INITIAL_USERS: User[] = [
   {
     id: 'usr-cto',
     email: 'cto@atasilabs.com',
-    name: 'Cecep Fahmidin, S.Kom., M.Kom',
+    name: 'Cecep Fahmidin, S.Kom., M.Kom., Gr.',
     role: 'CTO',
     phone: '0813-9876-5432',
     company: 'Atasilabs Tech Division',
@@ -535,6 +535,33 @@ export const INITIAL_PRICING_TIERS: PricingTier[] = [
       { label: 'CMS Dashboard', value: 'Custom Intelligence & BI Dashboard' },
       { label: 'Garansi Bug', value: '1 Tahun Dedicated SLA' },
     ],
+  },
+];
+
+export const INITIAL_TESTIMONIALS: Testimonial[] = [
+  {
+    id: 'testi-1',
+    quote: 'TERIMA KASIH ATASILABS SUDAH BANTU BIKIN WEBSITE UNTUK PT. NUSANTARA TEKNOLOGI. HASILNYA SANGAT MEMUASKAN',
+    name: 'YOGI AHMAD PRATAMA',
+    role: 'CEO, PT NUSANTARA TEKNOLOGI',
+    accentColor: '#FFD600',
+    bgColor: '#111111',
+  },
+  {
+    id: 'testi-2',
+    quote: 'HASILNYA SANGAT MEMUASKAN. TIDAK MENYESAL MEMILIH ATASILABS SEBAGAI PARTNER UNTUK MEMBANGUN WEBSITE KAMI',
+    name: 'ANDRI WAHYUDI',
+    role: 'CEO, ALPHA CAPITAL PARTNERS',
+    accentColor: '#FF6B35',
+    bgColor: '#0D0D0D',
+  },
+  {
+    id: 'testi-3',
+    quote: 'PROSES PEMBUATAN WEBSITE SANGAT CEPAT DAN MEMUASKAN. TERIMA KASIH ATASILABS',
+    name: 'EVA DAHLIAWATI',
+    role: 'CEO, KREASI BUSANA INDONESIA',
+    accentColor: '#F5F5F0',
+    bgColor: '#111111',
   },
 ];
 

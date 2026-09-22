@@ -14,6 +14,8 @@ export interface RoleConfig {
     portfolio: boolean;
     pricing: boolean;
     contact: boolean;
+    testimonials: boolean;
+    team: boolean;
     users: boolean;
     schema: boolean;
     hpp: boolean;
@@ -43,6 +45,8 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
       portfolio: true,
       pricing: true,
       contact: true,
+      testimonials: true,
+      team: true,
       users: true,
       schema: true,
       hpp: true,
@@ -69,6 +73,8 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
       portfolio: true,
       pricing: true,
       contact: true,
+      testimonials: true,
+      team: true,
       users: true,
       schema: true,
       hpp: true,
@@ -95,6 +101,8 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
       portfolio: true,
       pricing: true,
       contact: true,
+      testimonials: true,
+      team: true,
       users: false,
       schema: false,
       hpp: false,
@@ -121,6 +129,8 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
       portfolio: true,
       pricing: true,
       contact: true,
+      testimonials: true,
+      team: true,
       users: true,
       schema: true,
       hpp: true,
@@ -147,6 +157,8 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
       portfolio: false,
       pricing: false,
       contact: false,
+      testimonials: false,
+      team: false,
       users: false,
       schema: false,
       hpp: false,
@@ -173,6 +185,8 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
       portfolio: false,
       pricing: false,
       contact: false,
+      testimonials: false,
+      team: false,
       users: false,
       schema: false,
       hpp: false,
@@ -199,6 +213,8 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
       portfolio: true,
       pricing: false,
       contact: false,
+      testimonials: true,
+      team: true,
       users: false,
       schema: true,
       hpp: false,

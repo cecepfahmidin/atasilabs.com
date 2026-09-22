@@ -22,11 +22,11 @@ export const FinalCTA: React.FC = () => {
 
       {/* Title */}
       <h2 className="font-grotesk text-[40px] md:text-[72px] font-bold text-[#F5F5F0] tracking-[-1px] leading-none text-center w-full max-w-[1000px] whitespace-pre-line">
-        <GlitchText text={"BERHENTI RAGU.\nMULAI SHIPPING PROYEK."} speed={40} delay={200} />
+        <GlitchText text={"BERHENTI RAGU\nMULAI PROYEK ANDA SEKARANG"} speed={40} delay={200} />
       </h2>
 
       {/* Subtitle */}
-      <p className="font-ibm-mono text-[11px] md:text-[14px] text-[#888888] tracking-[0.5px] text-center w-full max-w-[700px] px-2">
+      <p className="font-ibm-mono text-[15px] md:text-[18px] text-[#888888] tracking-[0.5px] text-center w-full max-w-[700px] px-2">
         <GlitchText text="BERGABUNG BERSAMA PULUHAN PERUSAHAAN YANG MENGGUNAKAN ARSITEKTUR NEXT.JS ATASILABS." speed={20} delay={450} />
       </p>
 

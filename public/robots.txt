@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard/hpp
+Disallow: /dashboard/master-data
+Disallow: /api/
+
+Sitemap: https://www.atasilabs.com/sitemap.xml

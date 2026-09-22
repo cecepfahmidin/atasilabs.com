@@ -108,8 +108,8 @@ export const ContactSection: React.FC = () => {
     <section id="contact" className="flex flex-col w-full bg-[#050505] py-16 px-6 md:py-[100px] md:px-[120px] gap-12 md:gap-[64px] border-t border-[#1D1D1D]">
       <SectionHeader
         label="[10] // GET IN TOUCH"
-        title={"MULAI PROYEK\nSOFTWARE ANDA."}
-        subtitle="KIRIMKAN RINCIAN PROYEK. TIM ARCHITECT ATASILABS AKAN MERESPONS DALAM 24 JAM BERSAMA ESTIMASI SOW."
+        title={"MULAI PROYEK\nWEBSITE ANDA"}
+        subtitle="KIRIMKAN RINCIAN PROYEK ANDA. TIM ATASILABS AKAN SEGERA MERESPONS SEJALAN DENGAN KEBUTUHAN ANDA."
       />
 
       {submittedLeadId ? (
@@ -158,56 +158,48 @@ export const ContactSection: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
           {/* Left Column: Direct Info */}
-          <div className="lg:col-span-5 flex flex-col gap-8 bg-[#0F0F0F] p-8 border border-[#2D2D2D]">
-            <div className="flex flex-col gap-2">
-              <span className="font-ibm-mono text-[10px] text-[#FFD600] tracking-[2px] font-bold">
+          <div className="lg:col-span-5 flex flex-col gap-8 bg-[#0F0F0F] p-8 md:p-10 border border-[#2D2D2D]">
+            <div className="flex flex-col gap-3">
+              <span className="font-ibm-mono text-[12px] md:text-[13px] text-[#FFD600] tracking-[2px] font-bold">
                 [CONTACT DIRECTORY]
               </span>
-              <h3 className="font-grotesk text-[22px] font-bold text-[#F5F5F0]">
+              <h3 className="font-grotesk text-[26px] md:text-[28px] font-bold text-[#F5F5F0]">
                 {companyContact.companyName}
               </h3>
-              <p className="font-ibm-mono text-[11px] text-[#888888] leading-[1.6]">
+              <p className="font-ibm-mono text-[14px] md:text-[15px] text-[#888888] leading-[1.6]">
                 {companyContact.description}
               </p>
             </div>
 
-            <div className="flex flex-col gap-6 pt-4 border-t border-[#1D1D1D]">
-              <div className="flex flex-col gap-1">
-                <span className="font-ibm-mono text-[9px] text-[#555555] tracking-[2px] font-bold">EMAIL SUPPORT</span>
-                <a href={`mailto:${companyContact.email}`} className="font-ibm-mono text-[13px] text-[#F5F5F0] font-bold hover:text-[#FFD600]">
+            <div className="flex flex-col gap-6 pt-6 border-t border-[#1D1D1D]">
+              <div className="flex flex-col gap-1.5">
+                <span className="font-ibm-mono text-[11px] md:text-[12px] text-[#555555] tracking-[2px] font-bold">EMAIL SUPPORT</span>
+                <a href={`mailto:${companyContact.email}`} className="font-ibm-mono text-[15px] md:text-[16px] text-[#F5F5F0] font-bold hover:text-[#FFD600] transition-colors">
                   {companyContact.email}
                 </a>
               </div>
 
-              <div className="flex flex-col gap-1">
-                <span className="font-ibm-mono text-[9px] text-[#555555] tracking-[2px] font-bold">WHATSAPP / CONSULTATION</span>
+              <div className="flex flex-col gap-1.5">
+                <span className="font-ibm-mono text-[11px] md:text-[12px] text-[#555555] tracking-[2px] font-bold">WHATSAPP / CONSULTATION</span>
                 <a
                   href={`https://wa.me/${companyContact.whatsappRaw || '628216361428'}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-ibm-mono text-[13px] text-[#FFD600] font-bold hover:underline"
+                  className="font-ibm-mono text-[15px] md:text-[16px] text-[#FFD600] font-bold hover:underline"
                 >
                   {companyContact.whatsapp}
                 </a>
               </div>
 
-              <div className="flex flex-col gap-1">
-                <span className="font-ibm-mono text-[9px] text-[#555555] tracking-[2px] font-bold">STUDIO LOCATION</span>
-                <span className="font-ibm-mono text-[12px] text-[#CCCCCC]">{companyContact.address}</span>
+              <div className="flex flex-col gap-1.5">
+                <span className="font-ibm-mono text-[11px] md:text-[12px] text-[#555555] tracking-[2px] font-bold">STUDIO LOCATION</span>
+                <span className="font-ibm-mono text-[14px] md:text-[15px] text-[#CCCCCC]">{companyContact.address}</span>
               </div>
 
-              <div className="flex flex-col gap-1">
-                <span className="font-ibm-mono text-[9px] text-[#555555] tracking-[2px] font-bold">WORKING HOURS</span>
-                <span className="font-ibm-mono text-[12px] text-[#CCCCCC]">{companyContact.workingHours}</span>
+              <div className="flex flex-col gap-1.5">
+                <span className="font-ibm-mono text-[11px] md:text-[12px] text-[#555555] tracking-[2px] font-bold">WORKING HOURS</span>
+                <span className="font-ibm-mono text-[14px] md:text-[15px] text-[#CCCCCC]">{companyContact.workingHours}</span>
               </div>
-            </div>
-
-            {/* NDA Guarantee Tag */}
-            <div className="flex items-center gap-3 p-4 bg-[#141414] border border-[#2D2D2D] mt-auto">
-              <span className="font-ibm-mono text-[14px] text-[#FFD600]">🔒</span>
-              <span className="font-ibm-mono text-[10px] text-[#888888] leading-[1.4]">
-                {companyContact.ndaNotice}
-              </span>
             </div>
           </div>
 
@@ -215,7 +207,7 @@ export const ContactSection: React.FC = () => {
           <div className="lg:col-span-7 bg-[#111111] p-8 md:p-10 border-2 border-[#2D2D2D]">
             <form onSubmit={handleSubmit} className="flex flex-col gap-6">
               {errorMsg && (
-                <div className="p-4 bg-[#FF6B35]/10 border border-[#FF6B35] font-ibm-mono text-[11px] text-[#FF6B35]">
+                <div className="p-4 bg-[#FF6B35]/10 border border-[#FF6B35] font-ibm-mono text-[12px] text-[#FF6B35]">
                   ⚠️ {errorMsg}
                 </div>
               )}
@@ -223,7 +215,7 @@ export const ContactSection: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Name */}
                 <div className="flex flex-col gap-2">
-                  <label className="font-ibm-mono text-[10px] text-[#888888] tracking-[1.5px] font-bold uppercase">
+                  <label className="font-ibm-mono text-[11px] md:text-[12px] text-[#888888] tracking-[1.5px] font-bold uppercase">
                     NAMA LENGKAP *
                   </label>
                   <input
@@ -232,13 +224,13 @@ export const ContactSection: React.FC = () => {
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="e.g. John Doe"
-                    className="w-full h-12 bg-[#0A0A0A] border border-[#2D2D2D] focus:border-[#FFD600] px-4 font-ibm-mono text-[12px] text-[#F5F5F0] outline-none transition-colors"
+                    className="w-full h-12 bg-[#0A0A0A] border border-[#2D2D2D] focus:border-[#FFD600] px-4 font-ibm-mono text-[13px] md:text-[14px] text-[#F5F5F0] outline-none transition-colors"
                   />
                 </div>
 
                 {/* Email */}
                 <div className="flex flex-col gap-2">
-                  <label className="font-ibm-mono text-[10px] text-[#888888] tracking-[1.5px] font-bold uppercase">
+                  <label className="font-ibm-mono text-[11px] md:text-[12px] text-[#888888] tracking-[1.5px] font-bold uppercase">
                     EMAIL BISNIS *
                   </label>
                   <input
@@ -247,7 +239,7 @@ export const ContactSection: React.FC = () => {
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     placeholder="john@company.com"
-                    className="w-full h-12 bg-[#0A0A0A] border border-[#2D2D2D] focus:border-[#FFD600] px-4 font-ibm-mono text-[12px] text-[#F5F5F0] outline-none transition-colors"
+                    className="w-full h-12 bg-[#0A0A0A] border border-[#2D2D2D] focus:border-[#FFD600] px-4 font-ibm-mono text-[13px] md:text-[14px] text-[#F5F5F0] outline-none transition-colors"
                   />
                 </div>
               </div>
@@ -255,7 +247,7 @@ export const ContactSection: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Company */}
                 <div className="flex flex-col gap-2">
-                  <label className="font-ibm-mono text-[10px] text-[#888888] tracking-[1.5px] font-bold uppercase">
+                  <label className="font-ibm-mono text-[11px] md:text-[12px] text-[#888888] tracking-[1.5px] font-bold uppercase">
                     NAMA PERUSAHAAN / STARTUP
                   </label>
                   <input
@@ -263,19 +255,19 @@ export const ContactSection: React.FC = () => {
                     value={formData.company}
                     onChange={(e) => setFormData({ ...formData, company: e.target.value })}
                     placeholder="PT Tech Innovation"
-                    className="w-full h-12 bg-[#0A0A0A] border border-[#2D2D2D] focus:border-[#FFD600] px-4 font-ibm-mono text-[12px] text-[#F5F5F0] outline-none transition-colors"
+                    className="w-full h-12 bg-[#0A0A0A] border border-[#2D2D2D] focus:border-[#FFD600] px-4 font-ibm-mono text-[13px] md:text-[14px] text-[#F5F5F0] outline-none transition-colors"
                   />
                 </div>
 
                 {/* Service Type */}
                 <div className="flex flex-col gap-2">
-                  <label className="font-ibm-mono text-[10px] text-[#888888] tracking-[1.5px] font-bold uppercase">
+                  <label className="font-ibm-mono text-[11px] md:text-[12px] text-[#888888] tracking-[1.5px] font-bold uppercase">
                     JENIS LAYANAN / PAKET
                   </label>
                   <select
                     value={formData.serviceType}
                     onChange={(e) => setFormData({ ...formData, serviceType: e.target.value })}
-                    className="w-full h-12 bg-[#0A0A0A] border border-[#2D2D2D] focus:border-[#FFD600] px-4 font-ibm-mono text-[12px] text-[#F5F5F0] outline-none transition-colors"
+                    className="w-full h-12 bg-[#0A0A0A] border border-[#2D2D2D] focus:border-[#FFD600] px-4 font-ibm-mono text-[13px] md:text-[14px] text-[#F5F5F0] outline-none transition-colors"
                   >
                     <option value="">-- Pilih Layanan --</option>
                     {serviceOptions.map((opt) => (
@@ -289,7 +281,7 @@ export const ContactSection: React.FC = () => {
 
               {/* Message */}
               <div className="flex flex-col gap-2">
-                <label className="font-ibm-mono text-[10px] text-[#888888] tracking-[1.5px] font-bold uppercase">
+                <label className="font-ibm-mono text-[11px] md:text-[12px] text-[#888888] tracking-[1.5px] font-bold uppercase">
                   RINGKASAN PROYEK & KEBUTUHAN UTAMA *
                 </label>
                 <textarea
@@ -298,7 +290,7 @@ export const ContactSection: React.FC = () => {
                   value={formData.message}
                   onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                   placeholder="Jelaskan kebutuhan aplikasi, target launching, atau integrasi yang diinginkan..."
-                  className="w-full bg-[#0A0A0A] border border-[#2D2D2D] focus:border-[#FFD600] p-4 font-ibm-mono text-[12px] text-[#F5F5F0] outline-none transition-colors resize-none"
+                  className="w-full bg-[#0A0A0A] border border-[#2D2D2D] focus:border-[#FFD600] p-4 font-ibm-mono text-[13px] md:text-[14px] text-[#F5F5F0] outline-none transition-colors resize-none"
                 />
               </div>
 
@@ -306,10 +298,18 @@ export const ContactSection: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full h-14 bg-[#FFD600] hover:bg-[#e6c200] disabled:bg-[#333333] text-[#0A0A0A] font-grotesk font-bold text-[13px] tracking-[2px] transition-colors flex items-center justify-center gap-2"
+                className="w-full h-14 bg-[#FFD600] hover:bg-[#e6c200] disabled:bg-[#333333] text-[#0A0A0A] font-grotesk font-bold text-[14px] md:text-[15px] tracking-[2px] transition-colors flex items-center justify-center gap-2"
               >
-                {loading ? 'SENDING INQUIRY...' : 'KIRIM INQUIRY PROYEK →'}
+                {loading ? 'SENDING INQUIRY...' : 'KIRIM PESAN DAN KONSULTASI →'}
               </button>
+
+              {/* NDA Guarantee Tag */}
+              <div className="flex items-center gap-3 p-4 bg-[#141414] border border-[#2D2D2D]">
+                <span className="font-ibm-mono text-[18px] text-[#FFD600]">🔒</span>
+                <span className="font-ibm-mono text-[12px] md:text-[13px] text-[#888888] leading-[1.4]">
+                  {companyContact.ndaNotice}
+                </span>
+              </div>
             </form>
           </div>
         </div>

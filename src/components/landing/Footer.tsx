@@ -48,7 +48,7 @@ export const Footer: React.FC = () => {
           <div className="flex items-center gap-[12px]">
             <AtasiLabsLogo height={32} />
           </div>
-          <p className="font-ibm-mono text-[11px] text-[#888888] tracking-[0.5px] leading-[1.6]">
+          <p className="font-ibm-mono text-[13px] md:text-[14px] text-[#888888] tracking-[0.5px] leading-[1.6]">
             INDUSTRIAL-GRADE SOFTWARE ENGINEERING STUDIO. REKAYASA ARSITEKTUR NEXT.JS, MATERIAL UI & PRISMA ORM UNTUK ENTERPRISE DENGAN SYSTEM SPRINT MANAJEMEN PRESISI TINGGI.
           </p>
           <div className="flex gap-[12px]">
@@ -134,14 +134,14 @@ export const Footer: React.FC = () => {
         <span className="font-ibm-mono text-[11px] text-[#666666] tracking-[1px]">
           © 2026 ATASILABS SYSTEMS. HAK CIPTA DILINDUNGI.
         </span>
-        <div className="flex items-center gap-6 md:gap-[32px]">
-          <span className="font-ibm-mono text-[11px] text-[#666666] tracking-[1px]">
-            NEXT.JS 15 + MUI V6 + PRISMA
-          </span>
-          <span className="font-ibm-mono text-[11px] font-bold text-[#FFD600] tracking-[1px]">
-            V2.0.0 IPW
-          </span>
-        </div>
+        <a
+          href="https://www.atasilabs.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-ibm-mono text-[12px] md:text-[13px] font-bold text-[#FFD600] tracking-[1px] hover:underline"
+        >
+          www.atasilabs.com
+        </a>
       </div>
     </footer>
   );

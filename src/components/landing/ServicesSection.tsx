@@ -58,7 +58,7 @@ function FeatureCard({
           {title}
         </h3>
 
-        <p className="font-ibm-mono text-[12px] text-[#888888] tracking-[0.5px] leading-[1.65]">
+        <p className="font-ibm-mono text-[14px] md:text-[15px] text-[#888888] tracking-[0.5px] leading-[1.65]">
           {description}
         </p>
       </div>
@@ -117,7 +117,7 @@ export const ServicesSection: React.FC = () => {
         <FeatureCard
           numberStr="[03/03]"
           iconColor="#F5F5F0"
-          title={"Bayar Lunas Setelah Jadi"}
+          title={"Bayar Lunas Setelah Selesai"}
           description="Garansi kepuasan 100%. Bayar lunas setelah website Anda selesai dan sesuai dengan yang diinginkan."
           tag="WORKFLOW"
           tagColor="#4ADE80"

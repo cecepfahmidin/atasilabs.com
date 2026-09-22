@@ -2,8 +2,8 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { PaletteMode } from '@mui/material';
-import { Lead, Portfolio, ClientProject, User, UserRole, LeadStatus, ProjectStatus, PricingTier, CompanyContact } from '../types';
-import { INITIAL_LEADS, INITIAL_PORTFOLIOS, INITIAL_PROJECTS, INITIAL_USER, INITIAL_USERS, INITIAL_PRICING_TIERS, INITIAL_COMPANY_CONTACT } from '../data/initialData';
+import { Lead, Portfolio, ClientProject, User, UserRole, LeadStatus, ProjectStatus, PricingTier, CompanyContact, Testimonial } from '../types';
+import { INITIAL_LEADS, INITIAL_PORTFOLIOS, INITIAL_PROJECTS, INITIAL_USER, INITIAL_USERS, INITIAL_PRICING_TIERS, INITIAL_COMPANY_CONTACT, INITIAL_TESTIMONIALS } from '../data/initialData';
 import { generateAutoDocumentsForProject } from '../lib/documentGenerator';
 import { DEFAULT_ROLE_PERMISSIONS, hasPermission } from '../lib/rbac';
 import { getStageFromProgress } from '../lib/ipwStages';
@@ -20,8 +20,8 @@ interface AppContextType {
   toggleTheme: () => void;
   activeView: 'landing' | 'dashboard';
   setActiveView: (view: 'landing' | 'dashboard') => void;
-  dashboardTab: 'overview' | 'leads' | 'portfolio' | 'projects' | 'pricing' | 'documents' | 'users' | 'hpp' | 'master-data' | 'contact';
-  setDashboardTab: (tab: 'overview' | 'leads' | 'portfolio' | 'projects' | 'pricing' | 'documents' | 'users' | 'hpp' | 'master-data' | 'contact') => void;
+  dashboardTab: 'overview' | 'leads' | 'portfolio' | 'projects' | 'pricing' | 'documents' | 'users' | 'hpp' | 'master-data' | 'contact' | 'testimonials' | 'team';
+  setDashboardTab: (tab: 'overview' | 'leads' | 'portfolio' | 'projects' | 'pricing' | 'documents' | 'users' | 'hpp' | 'master-data' | 'contact' | 'testimonials' | 'team') => void;
   
   // Auth & RBAC
   currentUser: User | null;
@@ -72,6 +72,13 @@ interface AppContextType {
   updateCompanyContact: (data: Partial<CompanyContact>) => Promise<void>;
   resetCompanyContactToDefault: () => void;
 
+  // Testimonials (Admin manageable)
+  testimonials: Testimonial[];
+  addTestimonial: (item: Omit<Testimonial, 'id'>) => Promise<Testimonial>;
+  updateTestimonial: (id: string, item: Partial<Testimonial>) => Promise<void>;
+  deleteTestimonial: (id: string) => Promise<void>;
+  resetTestimonialsToDefault: () => void;
+
   // Global Notification / Toast
   notification: NotificationState;
   showNotification: (message: string, severity?: 'success' | 'info' | 'warning' | 'error') => void;
@@ -104,6 +111,7 @@ const STORAGE_KEYS = {
   PORTFOLIOS: 'webdev_sys_portfolios',
   PRICING: 'webdev_sys_pricing_tiers',
   COMPANY_CONTACT: 'webdev_sys_company_contact',
+  TESTIMONIALS: 'webdev_sys_testimonials',
 };
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -182,7 +190,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // View state
   const [activeView, setActiveView] = useState<'landing' | 'dashboard'>('landing');
-  const [dashboardTab, setDashboardTab] = useState<'overview' | 'pricing' | 'leads' | 'portfolio' | 'projects' | 'documents' | 'users' | 'hpp' | 'master-data' | 'contact'>('overview');
+  const [dashboardTab, setDashboardTab] = useState<'overview' | 'pricing' | 'leads' | 'portfolio' | 'projects' | 'documents' | 'users' | 'hpp' | 'master-data' | 'contact' | 'testimonials' | 'team'>('overview');
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [selectedServiceForInquiry, setSelectedServiceForInquiry] = useState('');
   const [selectedDocumentProjectId, setSelectedDocumentProjectId] = useState<string>('proj-1');
@@ -196,30 +204,45 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [projects, setProjects] = useState<ClientProject[]>(INITIAL_PROJECTS);
   const [pricingTiers, setPricingTiers] = useState<PricingTier[]>(INITIAL_PRICING_TIERS);
   const [companyContact, setCompanyContact] = useState<CompanyContact>(INITIAL_COMPANY_CONTACT);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>(INITIAL_TESTIMONIALS);
 
   // Restore state from LocalStorage after initial mount (hydration complete)
   useEffect(() => {
-    try {
-      const savedUsers = localStorage.getItem(STORAGE_KEYS.USERS_LIST);
-      if (savedUsers) setUsers(JSON.parse(savedUsers));
+    const loadSavedState = () => {
+      try {
+        const savedUsers = localStorage.getItem(STORAGE_KEYS.USERS_LIST);
+        if (savedUsers) setUsers(JSON.parse(savedUsers));
 
-      const savedLeads = localStorage.getItem(STORAGE_KEYS.LEADS);
-      if (savedLeads) setLeads(JSON.parse(savedLeads));
+        const savedLeads = localStorage.getItem(STORAGE_KEYS.LEADS);
+        if (savedLeads) setLeads(JSON.parse(savedLeads));
 
-      const savedPortfolios = localStorage.getItem(STORAGE_KEYS.PORTFOLIOS);
-      if (savedPortfolios) setPortfolios(JSON.parse(savedPortfolios));
+        const savedPortfolios = localStorage.getItem(STORAGE_KEYS.PORTFOLIOS);
+        if (savedPortfolios) setPortfolios(JSON.parse(savedPortfolios));
 
-      const savedProjects = localStorage.getItem(STORAGE_KEYS.PROJECTS);
-      if (savedProjects) setProjects(JSON.parse(savedProjects));
+        const savedProjects = localStorage.getItem(STORAGE_KEYS.PROJECTS);
+        if (savedProjects) setProjects(JSON.parse(savedProjects));
 
-      const savedPricing = localStorage.getItem(STORAGE_KEYS.PRICING);
-      if (savedPricing) setPricingTiers(JSON.parse(savedPricing));
+        const savedPricing = localStorage.getItem(STORAGE_KEYS.PRICING);
+        if (savedPricing) setPricingTiers(JSON.parse(savedPricing));
 
-      const savedContact = localStorage.getItem(STORAGE_KEYS.COMPANY_CONTACT);
-      if (savedContact) setCompanyContact(JSON.parse(savedContact));
-    } catch (e) {
-      console.error('Error restoring state from localStorage:', e);
-    }
+        const savedContact = localStorage.getItem(STORAGE_KEYS.COMPANY_CONTACT);
+        if (savedContact) setCompanyContact(JSON.parse(savedContact));
+
+        const savedTestimonials = localStorage.getItem(STORAGE_KEYS.TESTIMONIALS);
+        if (savedTestimonials) setTestimonials(JSON.parse(savedTestimonials));
+      } catch (e) {
+        console.error('Error restoring state from localStorage:', e);
+      }
+    };
+
+    loadSavedState();
+
+    const handleStorageChange = (e: StorageEvent) => {
+      loadSavedState();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   // Synchronize Supabase Auth Session with App Context
@@ -774,6 +797,61 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showNotification('Data kontak dikembalikan ke konfigurasi default', 'info');
   };
 
+  // Testimonials Management
+  const addTestimonial = async (item: Omit<Testimonial, 'id'>): Promise<Testimonial> => {
+    const newTesti: Testimonial = {
+      ...item,
+      id: `testi-${Date.now()}`,
+    };
+    setTestimonials((prev) => {
+      const updated = [newTesti, ...prev];
+      try {
+        localStorage.setItem(STORAGE_KEYS.TESTIMONIALS, JSON.stringify(updated));
+      } catch (e) {
+        console.error(e);
+      }
+      return updated;
+    });
+    showNotification('Testimoni baru berhasil ditambahkan!', 'success');
+    return newTesti;
+  };
+
+  const updateTestimonial = async (id: string, item: Partial<Testimonial>): Promise<void> => {
+    setTestimonials((prev) => {
+      const updated = prev.map((t) => (t.id === id ? { ...t, ...item } : t));
+      try {
+        localStorage.setItem(STORAGE_KEYS.TESTIMONIALS, JSON.stringify(updated));
+      } catch (e) {
+        console.error(e);
+      }
+      return updated;
+    });
+    showNotification('Data testimoni berhasil diperbarui!', 'success');
+  };
+
+  const deleteTestimonial = async (id: string): Promise<void> => {
+    setTestimonials((prev) => {
+      const updated = prev.filter((t) => t.id !== id);
+      try {
+        localStorage.setItem(STORAGE_KEYS.TESTIMONIALS, JSON.stringify(updated));
+      } catch (e) {
+        console.error(e);
+      }
+      return updated;
+    });
+    showNotification('Testimoni berhasil dihapus!', 'info');
+  };
+
+  const resetTestimonialsToDefault = () => {
+    setTestimonials(INITIAL_TESTIMONIALS);
+    try {
+      localStorage.removeItem(STORAGE_KEYS.TESTIMONIALS);
+    } catch (e) {
+      console.error(e);
+    }
+    showNotification('Testimoni dikembalikan ke data default', 'info');
+  };
+
   // Notification Toast
   const [notification, setNotification] = useState<NotificationState>({
     open: false,
@@ -864,6 +942,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         companyContact,
         updateCompanyContact,
         resetCompanyContactToDefault,
+        testimonials,
+        addTestimonial,
+        updateTestimonial,
+        deleteTestimonial,
+        resetTestimonialsToDefault,
         notification,
         showNotification,
         closeNotification,

@@ -349,6 +349,8 @@ export interface User {
   company?: string;
   status: 'ACTIVE' | 'INACTIVE';
   avatarUrl?: string;
+  bio?: string;
+  tagline?: string;
   createdAt: string;
   updatedAt?: string;
 }
@@ -402,5 +404,18 @@ export interface CompanyContact {
   ndaNotice: string;
   updatedAt?: string;
 }
+
+export interface Testimonial {
+  id: string;
+  quote: string;
+  name: string;
+  role: string;
+  company?: string;
+  avatarUrl?: string;
+  bgColor?: string;
+  accentColor: string;
+  featured?: boolean;
+}
+
 
 

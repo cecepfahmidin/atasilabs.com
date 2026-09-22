@@ -29,7 +29,7 @@ export function SectionHeader({
       </h2>
       {subtitle && (
         <p
-          className={`font-ibm-mono text-[11px] md:text-[14px] text-[#888888] tracking-[0.5px] md:tracking-[1px] leading-[1.6] text-pretty ${subtitleWidth}`}
+          className={`font-ibm-mono text-[15px] md:text-[18px] text-[#888888] tracking-[0.5px] md:tracking-[1px] leading-[1.6] text-pretty ${subtitleWidth}`}
         >
           <GlitchText text={subtitle} speed={20} delay={350} />
         </p>

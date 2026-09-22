@@ -45,7 +45,7 @@ export function HowItWorks() {
     <section id="workflow" className="flex flex-col w-full bg-[#0A0A0A] py-16 px-6 md:py-[100px] md:px-[80px] gap-10 md:gap-[48px]">
       <SectionHeader
         label="[02] // OPERATIONAL WORKFLOW"
-        title={'ALUR PEMESANAN.\nPEMBUATAN WEBSITE.'}
+        title={'ALUR PEMESANAN\nWEBSITE'}
         subtitle="Setiap proyek diproses mengikuti 5 tahap SOP operasional bergaransi dengan penerbitan dokumen legal resmi."
       />
 
@@ -69,7 +69,7 @@ export function HowItWorks() {
                 {stg.title}
               </h3>
 
-              <p className="font-ibm-mono text-[12px] text-[#888888] leading-[1.65] mb-6">
+              <p className="font-ibm-mono text-[14px] md:text-[15px] text-[#888888] leading-[1.65] mb-6">
                 {stg.desc}
               </p>
             </div>

@@ -25,8 +25,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   onLoginSuccess,
 }) => {
   const { login, users, setActiveView } = useApp();
-  const [email, setEmail] = useState('ceo@atasilabs.com');
-  const [password, setPassword] = useState('7770555A888!');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -141,47 +141,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({
             Selamat Datang Kembali!
           </h1>
           <p className="text-neutral-500 text-xs sm:text-sm">
-            Silakan pilih role atau masukkan kredensial akun Anda
+            Silakan masukkan alamat email dan kata sandi akun Anda
           </p>
-        </div>
-
-        {/* Quick Role Selector Pills */}
-        <div className="mb-5 space-y-1.5">
-          <label className="block text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">
-            Pilih Kredensial Akun Role:
-          </label>
-          <div className="flex flex-wrap gap-1.5">
-            {[
-              { role: 'CEO', email: 'ceo@atasilabs.com', label: '👑 CEO' },
-              { role: 'CTO', email: 'cto@atasilabs.com', label: '💻 CTO' },
-              { role: 'CMO', email: 'cmo@atasilabs.com', label: '📈 CMO' },
-              { role: 'ADMIN', email: 'admin@atasilabs.com', label: '🛡️ ADMIN' },
-              { role: 'CLIENT', email: 'budi.santoso@nusantaratech.id', label: '🤝 CLIENT' },
-              { role: 'FREELANCER', email: 'doni.freelance@devmail.com', label: '⚡ FREELANCER' },
-            ].map((p) => {
-              const isActive = email.toLowerCase() === p.email.toLowerCase();
-              return (
-                <button
-                  key={p.role}
-                  type="button"
-                  onClick={() => {
-                    setEmail(p.email);
-                    setPassword('7770555A888!');
-                    onEmailChange(p.email);
-                    onPasswordChange('7770555A888!');
-                    showNotification(`Kredensial Akun [${p.role}] dimuat!`);
-                  }}
-                  className={`text-[11px] font-medium px-2.5 py-1 rounded-lg border transition cursor-pointer ${
-                    isActive
-                      ? 'bg-neutral-900 text-white border-neutral-900 shadow-sm'
-                      : 'bg-neutral-50 text-neutral-600 border-neutral-200 hover:border-neutral-400 hover:text-neutral-900'
-                  }`}
-                >
-                  {p.label}
-                </button>
-              );
-            })}
-          </div>
         </div>
 
         {/* Login Form */}

@@ -42,7 +42,7 @@ export const HeroSection: React.FC = () => {
       <div className="h-8 md:h-[32px]" />
 
       {/* Subheading */}
-      <p className="font-ibm-mono text-[13px] md:text-[15px] text-[#888888] tracking-[1px] leading-[1.6] text-center w-full max-w-[800px]">
+      <p className="font-ibm-mono text-[15px] md:text-[18px] text-[#888888] tracking-[1px] leading-[1.6] text-center w-full max-w-[800px]">
         Ceritain aja konsep web impianmu, pilih paketnya, dan biarkan tim kami yang handle sisanya dengan transparan dan profesional.
       </p>
 

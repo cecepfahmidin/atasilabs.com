@@ -610,8 +610,7 @@ export const AnimatedCharacters: React.FC<AnimatedCharactersProps> = ({
         transition={{ delay: 1 }}
         className="absolute top-4 left-4 text-xs font-medium text-neutral-400 select-none flex items-center gap-1.5"
       >
-        <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-        Interactive Characters (Click to bounce)
+       
       </motion.div>
     </div>
   );

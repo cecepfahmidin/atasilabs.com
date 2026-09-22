@@ -9,10 +9,10 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: 'AtasiLabs - Modern Web Development Studio & Enterprise Dashboard (Next.js, Prisma, Supabase)',
-  description: 'Studio pengembangan aplikasi web full-stack profesional berbasis Next.js App Router, Prisma ORM, dan Supabase PostgreSQL. Layanan pembuatan SaaS, E-Commerce, dan Portal Enterprise.',
-  keywords: ['Next.js', 'Prisma ORM', 'Supabase', 'PostgreSQL', 'Material UI', 'React 19', 'Full-Stack Web Development', 'AtasiLabs'],
-  authors: [{ name: 'Cecep Fahmidin', url: 'https://atasilabs.com' }],
+  title: 'AtasiLabs - Modern Web Development Studio & Enterprise Dashboard',
+  description: 'Studio pengembangan aplikasi web full-stack profesional. Layanan pembuatan website, Landing Page, E-Commerce, dan Portal Enterprise.',
+  keywords: ['website', 'landing page', 'E-Commerce', 'Portal Enterprise', 'AtasiLabs', 'Full-Stack Web Development', 'Jasa Pembuatan Website', 'Jasa Pembuatan Landing Page', 'Jasa Pembuatan E-Commerce', 'Jasa Pembuatan Portal Enterprise', 'Jasa Pembuatan Full-Stack Web Development', 'Jasa Pembuatan SaaS', 'Jasa Pembuatan Enterprise Dashboard', 'Jasa Pembuatan Aplikasi Web Full-Stack'],
+  authors: [{ name: 'Cecep Fahmidin', url: 'https://www.atasilabs.com' }],
   icons: {
     icon: '/favicon.png',
     shortcut: '/favicon.png',

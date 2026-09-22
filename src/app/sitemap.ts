@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next';
 import { INITIAL_PORTFOLIOS, INITIAL_PRICING_TIERS } from '@/data/initialData';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://atasilabs.com';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.atasilabs.com';
   const currentDate = new Date();
 
   // Landing Page Main Navigation & Section Anchors
@@ -18,6 +18,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: currentDate,
       changeFrequency: 'weekly',
       priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/#testimonials`,
+      lastModified: currentDate,
+      changeFrequency: 'weekly',
+      priority: 0.85,
     },
     {
       url: `${baseUrl}/#workflow`,
@@ -44,16 +50,22 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.95,
     },
     {
+      url: `${baseUrl}/#team`,
+      lastModified: currentDate,
+      changeFrequency: 'weekly',
+      priority: 0.9,
+    },
+    {
       url: `${baseUrl}/#faq`,
       lastModified: currentDate,
       changeFrequency: 'monthly',
-      priority: 0.7,
+      priority: 0.75,
     },
     {
       url: `${baseUrl}/#contact`,
       lastModified: currentDate,
       changeFrequency: 'monthly',
-      priority: 0.8,
+      priority: 0.85,
     },
   ];
 

@@ -31,7 +31,7 @@ export const TechStackArchitectureSection: React.FC = () => {
     },
     {
       numStr: '[03/03]',
-      title: 'KEAMANAN DATA & PENYIMPANAN AMAN',
+      title: 'KEAMANAN DATA & PENYIMPANAN',
       badge: 'PROTEKSI PRIVASI BISNIS',
       tagColor: '#FF6B35',
       desc: 'Seluruh informasi rahasia, transaksi, dan berkas bisnis Anda dilindungi dengan sistem keamanan modern agar terjaga dari kebocoran.',
@@ -85,7 +85,7 @@ export const TechStackArchitectureSection: React.FC = () => {
                 {pillar.title}
               </h3>
 
-              <p className="font-ibm-mono text-[12px] text-[#888888] tracking-[0.5px] leading-[1.65]">
+              <p className="font-ibm-mono text-[14px] md:text-[15px] text-[#888888] tracking-[0.5px] leading-[1.65]">
                 {pillar.desc}
               </p>
 
@@ -104,34 +104,6 @@ export const TechStackArchitectureSection: React.FC = () => {
         ))}
       </div>
 
-      {/* Data Flow Pipeline Box */}
-      <div className="flex flex-col gap-6 p-8 md:p-10 bg-[#0F0F0F] border border-[#2D2D2D]">
-        <div className="flex items-center gap-3">
-          <span className="font-ibm-mono text-[14px] text-[#FFD600] font-bold">⚡</span>
-          <h4 className="font-grotesk text-[18px] md:text-[20px] font-bold text-[#F5F5F0] tracking-[1px]">
-            ALUR KERJA OPERASIONAL: 5 TAHAP DARI PEMESANAN HINGGA SERAH TERIMA
-          </h4>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 w-full">
-          {dataFlowSteps.map((step) => (
-            <div
-              key={step.step}
-              className="flex flex-col gap-2 p-5 bg-[#141414] border border-[#222222] hover:border-[#FFD600] transition-colors"
-            >
-              <span className="font-ibm-mono text-[10px] font-bold text-[#FFD600] tracking-[2px]">
-                {step.step}
-              </span>
-              <h5 className="font-grotesk text-[15px] font-bold text-[#F5F5F0]">
-                {step.title}
-              </h5>
-              <p className="font-ibm-mono text-[11px] text-[#888888] leading-[1.5]">
-                {step.desc}
-              </p>
-            </div>
-          ))}
-        </div>
-      </div>
     </section>
   );
 };

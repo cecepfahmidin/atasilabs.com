@@ -5,30 +5,40 @@ import SectionHeader from './SectionHeader';
 
 const faqs = [
   {
-    question: "APAKAH ATASILABS MENYEDIAKAN DASHBOARD & PORTAL WORKFLOW KLIEN?",
+    question: "BERAPA LAMA PROSES PEMBUATAN WEBSITE HINGGA BISA DIAKSES?",
     answer:
-      "YA. SETIAP KLIEN MENDAPATKAN AKSES KE DASHBOARD SISTEM INTEGRASI TERMASUK WORKFLOW PROYEK, REVISE DOKUMEN, PEMBAYARAN, SERTA PENANDATANGANAN DOKUMEN DIGITAL (E-SIGN).",
+      "Waktu pengerjaan bervariasi sesuai paket pilihan Anda. Paket Landing Page Express membutuhkan 3-7 hari kerja, sedangkan Company Profile & E-Commerce membutuhkan 1-3 minggu kerja.",
     defaultOpen: true,
   },
   {
-    question: "BERAPA LAMA PROSES DEVELOPMENT BERJALAN?",
+    question: "APAKAH BIAYA SUDAH TERMASUK DOMAIN, HOSTING, DAN SSL?",
     answer:
-      "TERGANTUNG SKALA PAKET: SPRINT EXPRESS MVP HANYA MEMBUTHUKAN 1-2 MINGGU. SPRINT ENTERPRISE SAAS MEMBUTUHKAN 3-6 MINGGU DENGAN METODOLOGI IPW (ITERATIVE PHASED WORKFLOW).",
+      "YA. Seluruh paket layanan di AtasiLabs sudah termasuk nama domain (.com / .id), cloud hosting berkecepatan tinggi, sertifikat keamanan SSL (HTTPS), dan optimasi dasar.",
   },
   {
-    question: "APAKAH SAYA MENDAPATKAN AKSES CODEBASE SECARA PENUH?",
+    question: "BAGAIMANA SISTEM PEMBAYARAN DAN GARANSI KEAMANANNYA?",
     answer:
-      "YA. 100% REPOSITORI GITHUB DENGAN AKSES DEPLOYMENT SECARA MANDIRI (VERCEL / SUPABASE / DOCKER). TANPA VENDOR LOCK-IN TERSEMBUNYI.",
+      "Pembayaran dilakukan secara bertahap (DP awal untuk memulai pengerjaan dan pelunasan setelah proyek selesai 100%). Kami memberikan jaminan garansi kepuasan serta dokumen kontrak legal resmi.",
   },
   {
-    question: "BAGAIMANA CARA MEMULAI DISKUSI DAN MEMBUAT KONTRAK KERJA?",
+    question: "APAKAH WEBSITE DILENGKAPI TAMPILAN MOBILE FRIENDLY & CEPAT?",
     answer:
-      "ANDA DAPAT MENGISI FORM INQUIRY PROYEK DI BAWAH INI. TIM KAMI AKAN MENYIAPKAN DOKUMEN PROPOSAL & SOW LANGSUNG DI DASHBOARD KLIEN.",
+      "Sangat responsif. Setiap halaman diuji khusus di berbagai perangkat (Smartphone, Tablet, & Laptop) agar muat secara cepat (super-fast loading) dan nyaman dibaca pengunjung.",
   },
   {
-    question: "TEKNOLOGI APA YANG UTAMA DIGUNAKAN?",
+    question: "APAKAH SAYA BISA MENGEDIT TEKS DAN PRODUK WEBSITE SENDIRI?",
     answer:
-      "NEXT.JS 15 (APP ROUTER), TYPESCRIPT, MATERIAL UI V6, TAILWIND CSS, PRISMA ORM, SUPABASE POSTGRESQL, DAN AUTOMATED DOC WORKFLOW ENGINES.",
+      "Tentu saja. Anda akan mendapatkan akses ke dashboard pengelola yang sangat mudah digunakan tanpa perlu keahlian koding, lengkap dengan panduan operasinya.",
+  },
+  {
+    question: "BAGAIMANA JIKA TERJADI KENDALA ATAU ERROR SETELAH WEBSITE SELESAI?",
+    answer:
+      "AtasiLabs menyediakan garansi pemeliharaan & dukungan teknis gratis (30 hingga 90 hari) setelah serah terima untuk memastikan website Anda selalu aktif dan lancar.",
+  },
+  {
+    question: "DAPATKAH INTEGRASI FITUR KHUSUS DITAMBAHKAN DI MASA DEPAN?",
+    answer:
+      "Bisa. Website kami dibangun dengan arsitektur modern yang modular, sehingga fitur baru seperti pembayaran otomatis, WhatsApp catalog, atau sistem booking bisa ditambahkan kapan saja.",
   },
 ];
 
@@ -40,8 +50,8 @@ export const FAQSection: React.FC = () => {
       <div className="w-full max-w-[540px]">
         <SectionHeader
           label="[09] // FAQ"
-          title={"PERTANYAAN\nPOPULER."}
-          subtitle="SEMUA INFORMASI DASAR SEBELUM MEMULAI PROJECT SPRINT BERSAMA ATASILABS."
+          title={"PERTANYAAN\nYANG SERING MUNCUL"}
+          subtitle="SEMUA INFORMASI DASAR SEBELUM MEMULAI PROJECT BERSAMA ATASILABS."
           titleWidth="w-full"
           subtitleWidth="w-full"
         />
@@ -79,7 +89,7 @@ export const FAQSection: React.FC = () => {
               </button>
               {isOpen && faq.answer && (
                 <div className="pb-8">
-                  <p className="font-ibm-mono text-[12px] md:text-[13px] text-[#888888] tracking-[0.5px] leading-[1.6]">
+                  <p className="font-ibm-mono text-[14px] md:text-[15px] text-[#888888] tracking-[0.5px] leading-[1.6]">
                     {faq.answer}
                   </p>
                 </div>

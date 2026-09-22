@@ -18,7 +18,9 @@ import { PricingSection } from '@/components/landing/PricingSection';
 import { FAQSection } from '@/components/landing/FAQSection';
 import { FinalCTA } from '@/components/landing/FinalCTA';
 import { ContactSection } from '@/components/landing/ContactSection';
+import { TeamSection } from '@/components/landing/TeamSection';
 import { Footer } from '@/components/landing/Footer';
+import { FloatingWhatsApp } from '@/components/landing/FloatingWhatsApp';
 
 export default function MainPage() {
   return (
@@ -39,8 +41,10 @@ export default function MainPage() {
         <FAQSection />
         <FinalCTA />
         <ContactSection />
+        <TeamSection />
       </main>
       <Footer />
+      <FloatingWhatsApp />
     </div>
   );
 }

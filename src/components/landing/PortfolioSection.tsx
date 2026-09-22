@@ -20,9 +20,9 @@ export const PortfolioSection: React.FC = () => {
   return (
     <section id="portfolio" className="flex flex-col w-full bg-[#080808] py-16 px-6 md:py-[100px] md:px-[120px] gap-10 md:gap-[48px]">
       <SectionHeader
-        label="[07] // PORTFOLIO & CASE STUDIES"
-        title={"BUILT WITH\nATASILABS."}
-        subtitle="KOLEKSI PROYEK & REKAYASA ARSITEKTUR SOFTWARE LINTAS INDUSTRI YANG TELAH KAMI SHIPPING."
+        label="[07] // PORTOFOLIO PILIHAN"
+        title={"PORTOFOLIO PILIHAN\nATASILABS"}
+        subtitle="BERBAGAI PROYEK WEBSITE DAN APLIKASI YANG BERHASIL KAMI BANAGUN BERSAMA PARA KLIEN"
       />
 
       {/* Category filter tabs */}
@@ -33,11 +33,10 @@ export const PortfolioSection: React.FC = () => {
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`flex items-center h-[36px] px-4 font-ibm-mono text-[11px] tracking-[1px] transition-colors border ${
-                isActive
-                  ? 'bg-[#FFD600] text-[#0A0A0A] font-bold border-[#FFD600]'
-                  : 'bg-[#111111] text-[#888888] hover:text-[#CCCCCC] border-[#2D2D2D]'
-              }`}
+              className={`flex items-center h-[36px] px-4 font-ibm-mono text-[11px] tracking-[1px] transition-colors border ${isActive
+                ? 'bg-[#FFD600] text-[#0A0A0A] font-bold border-[#FFD600]'
+                : 'bg-[#111111] text-[#888888] hover:text-[#CCCCCC] border-[#2D2D2D]'
+                }`}
             >
               [{cat.toUpperCase()}]
             </button>
@@ -94,7 +93,7 @@ export const PortfolioSection: React.FC = () => {
                   {item.title}
                 </h3>
 
-                <p className="font-ibm-mono text-[11px] text-[#888888] tracking-[0.5px] line-clamp-3 leading-[1.6]">
+                <p className="font-ibm-mono text-[14px] md:text-[15px] text-[#888888] tracking-[0.5px] line-clamp-3 leading-[1.6]">
                   {item.description}
                 </p>
 

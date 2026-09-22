@@ -41,6 +41,8 @@ import {
   Calculate as CalculateIcon,
   Storage as MasterDataIcon,
   Phone as PhoneIcon,
+  RateReview as RateReviewIcon,
+  SupervisorAccount as CLevelIcon,
   ExpandLess,
   ExpandMore,
 } from '@mui/icons-material';
@@ -98,14 +100,16 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
   // Route Protection for CLIENT role
   useEffect(() => {
     if (userRole === 'CLIENT') {
-      const restrictedTabs = ['hpp', 'master-data', 'users', 'portfolio', 'pricing', 'contact', 'leads'];
+      const restrictedTabs = ['hpp', 'master-data', 'users', 'team', 'portfolio', 'pricing', 'contact', 'testimonials', 'leads'];
       const isRestrictedPath =
         pathname?.includes('/dashboard/hpp') ||
         pathname?.includes('/dashboard/master-data') ||
         pathname?.includes('/dashboard/users') ||
+        pathname?.includes('/dashboard/team') ||
         pathname?.includes('/dashboard/portfolio') ||
         pathname?.includes('/dashboard/pricing') ||
         pathname?.includes('/dashboard/contact') ||
+        pathname?.includes('/dashboard/testimonials') ||
         pathname?.includes('/dashboard/leads');
 
       if (restrictedTabs.includes(dashboardTab) || isRestrictedPath) {
@@ -120,9 +124,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
       pathname?.includes('/dashboard/portfolio') ||
       pathname?.includes('/dashboard/pricing') ||
       pathname?.includes('/dashboard/contact') ||
+      pathname?.includes('/dashboard/testimonials') ||
+      pathname?.includes('/dashboard/team') ||
       pathname?.includes('/dashboard/users') ||
       pathname?.includes('/dashboard/master-data') ||
-      ['portfolio', 'pricing', 'contact', 'users', 'master-data'].includes(dashboardTab)
+      ['portfolio', 'pricing', 'contact', 'testimonials', 'team', 'users', 'master-data'].includes(dashboardTab)
     );
   });
 
@@ -223,6 +229,20 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
           icon: <PhoneIcon />,
           badge: 0,
         },
+        {
+          id: 'team',
+          label: 'Tim Manajemen',
+          href: '/dashboard/team',
+          icon: <CLevelIcon />,
+          badge: 0,
+        },
+        {
+          id: 'testimonials',
+          label: 'Manajemen Testimoni',
+          href: '/dashboard/testimonials',
+          icon: <RateReviewIcon />,
+          badge: 0,
+        },
       ],
     },
   ];
@@ -252,6 +272,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
   if (dashboardTab === 'portfolio') activeTitle = 'Master Data - Manajemen Portofolio';
   else if (dashboardTab === 'pricing') activeTitle = 'Master Data - Atur Pricelist & Spec';
   else if (dashboardTab === 'contact') activeTitle = 'Master Data - Kontak Perusahaan';
+  else if (dashboardTab === 'testimonials') activeTitle = 'Master Data - Manajemen Testimoni Klien';
+  else if (dashboardTab === 'team') activeTitle = 'Master Data - Tim Manajemen & Leadership';
   else if (dashboardTab === 'users') activeTitle = 'Master Data - Manajemen User & RBAC';
   else if (dashboardTab === 'master-data') activeTitle = 'Pusat Master Data';
   else {

@@ -19,10 +19,11 @@ import {
   Bolt as BoltIcon,
   ArrowForward as ArrowForwardIcon,
   Storage as MasterDataIcon,
-  Verified as VerifiedIcon,
   CheckCircle as CheckCircleIcon,
   Phone as PhoneIcon,
   People as PeopleIcon,
+  RateReview as TestimonialIcon,
+  SupervisorAccount as CLevelIcon,
 } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
 import { useApp } from '../../context/AppContext';
@@ -30,12 +31,17 @@ import { useApp } from '../../context/AppContext';
 export const MasterDataView: React.FC = () => {
   const theme = useTheme();
   const router = useRouter();
-  const { setDashboardTab, portfolios, pricingTiers, companyContact, users } = useApp();
+  const { setDashboardTab, portfolios, pricingTiers, companyContact, users, testimonials } = useApp();
 
-  const handleNavigate = (tab: 'users' | 'portfolio' | 'pricing' | 'contact', href: string) => {
+  const handleNavigate = (
+    tab: 'users' | 'portfolio' | 'pricing' | 'contact' | 'testimonials' | 'team',
+    href: string
+  ) => {
     setDashboardTab(tab);
     router.push(href);
   };
+
+  const cLevelCount = users?.filter((u) => ['CEO', 'CTO', 'CMO'].includes(u.role)).length || 3;
 
   return (
     <Box sx={{ maxWidth: 1200, mx: 'auto', pb: 4 }}>
@@ -67,14 +73,104 @@ export const MasterDataView: React.FC = () => {
         <Typography variant="h4" sx={{ fontWeight: 800, mb: 1, fontSize: { xs: '1.5rem', sm: '2rem' } }}>
           Manajemen Master Data System
         </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 800, lineHeight: 1.6 }}>
-          Pusat kendali master data Atasilabs. Kelola hak akses pengguna (User & RBAC), katalog portofolio, konfigurasi paket harga (Pricelist & Spesifikasi), serta informasi kontak resmi perusahaan.
+        <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 860, lineHeight: 1.6 }}>
+          Pusat kendali master data Atasilabs. Kelola profil eksekutif tim manajemen (Tim Leadership CEO, CTO, CMO), hak akses pengguna (User & RBAC), ulasan klien (Testimoni & Review), katalog portofolio, konfigurasi paket harga (Pricelist & Spesifikasi), serta kontak perusahaan.
         </Typography>
       </Paper>
 
       {/* Grid Cards */}
       <Grid container spacing={3}>
-        {/* Card 1: Manajemen User & RBAC */}
+        {/* Card 1: Tim Manajemen & Leadership */}
+        <Grid item xs={12} sm={6} md={6}>
+          <Card
+            elevation={0}
+            sx={{
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              borderRadius: 3,
+              border: `1px solid ${theme.palette.divider}`,
+              transition: 'all 0.25s ease-in-out',
+              '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: theme.shadows[8],
+                borderColor: '#f59e0b',
+              },
+            }}
+          >
+            <CardContent sx={{ p: 3, flexGrow: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                <Box
+                  sx={{
+                    p: 1.5,
+                    borderRadius: 2.5,
+                    bgcolor: 'rgba(245, 158, 11, 0.12)',
+                    color: '#f59e0b',
+                    display: 'flex',
+                    alignItems: 'center',
+                  }}
+                >
+                  <CLevelIcon sx={{ fontSize: 28 }} />
+                </Box>
+                <Chip
+                  label={`${cLevelCount} Eksekutif C-Level`}
+                  color="warning"
+                  size="small"
+                  sx={{ fontWeight: 700 }}
+                />
+              </Box>
+
+              <Typography variant="h6" sx={{ fontWeight: 800, mb: 1 }}>
+                Tim Manajemen & Leadership
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6, mb: 2.5 }}>
+                Kelola profil eksekutif C-Level (CEO Irfan Aulia, CTO Cecep Fahmidin, CMO Dian Hidayat), biografi profesional, foto avatar (R2 Cloudflare), dan sinkronisasi real-time ke landing page.
+              </Typography>
+
+              <Divider sx={{ my: 2 }} />
+
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <CheckCircleIcon sx={{ fontSize: 16, color: 'success.main' }} />
+                  <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                    Profil Eksekutif CEO, CTO & CMO
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <CheckCircleIcon sx={{ fontSize: 16, color: 'success.main' }} />
+                  <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                    Upload Foto Profil ke Cloudflare R2
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <CheckCircleIcon sx={{ fontSize: 16, color: 'success.main' }} />
+                  <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                    Live Sync ke Section [11] Landing Page
+                  </Typography>
+                </Box>
+              </Box>
+            </CardContent>
+
+            <CardActions sx={{ p: 3, pt: 0 }}>
+              <Button
+                fullWidth
+                variant="contained"
+                endIcon={<ArrowForwardIcon />}
+                onClick={() => handleNavigate('team', '/dashboard/team')}
+                sx={{
+                  fontWeight: 800,
+                  borderRadius: 2,
+                  py: 1,
+                  background: 'linear-gradient(135deg, #f59e0b 0%, #b45309 100%)',
+                }}
+              >
+                Buka CMS Tim Manajemen
+              </Button>
+            </CardActions>
+          </Card>
+        </Grid>
+
+        {/* Card 2: Manajemen User & RBAC */}
         <Grid item xs={12} sm={6} md={6}>
           <Card
             elevation={0}
@@ -160,7 +256,101 @@ export const MasterDataView: React.FC = () => {
           </Card>
         </Grid>
 
-        {/* Card 2: Manajemen Portofolio */}
+        {/* Card 3: Manajemen Testimoni Klien */}
+        <Grid item xs={12} sm={6} md={6}>
+          <Card
+            elevation={0}
+            sx={{
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              borderRadius: 3,
+              border: `1px solid ${theme.palette.divider}`,
+              transition: 'all 0.25s ease-in-out',
+              '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: theme.shadows[8],
+                borderColor: '#FFD600',
+              },
+            }}
+          >
+            <CardContent sx={{ p: 3, flexGrow: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                <Box
+                  sx={{
+                    p: 1.5,
+                    borderRadius: 2.5,
+                    bgcolor: 'rgba(255, 214, 0, 0.12)',
+                    color: '#FFD600',
+                    display: 'flex',
+                    alignItems: 'center',
+                  }}
+                >
+                  <TestimonialIcon sx={{ fontSize: 28 }} />
+                </Box>
+                <Chip
+                  label={`${testimonials?.length || 0} Testimoni Klien`}
+                  color="warning"
+                  size="small"
+                  sx={{ fontWeight: 700, bgcolor: 'rgba(255, 214, 0, 0.16)', color: '#FFD600', border: '1px solid #FFD600' }}
+                />
+              </Box>
+
+              <Typography variant="h6" sx={{ fontWeight: 800, mb: 1 }}>
+                Manajemen Testimoni Klien
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6, mb: 2.5 }}>
+                Kelola testimoni ulasan klien, founder, dan partner bisnis. Atur foto profil (R2 Cloudflare), kutipan ulasan, serta status publikasi landing page.
+              </Typography>
+
+              <Divider sx={{ my: 2 }} />
+
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <CheckCircleIcon sx={{ fontSize: 16, color: 'success.main' }} />
+                  <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                    Kutipan Ulasan & Rating Bintang
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <CheckCircleIcon sx={{ fontSize: 16, color: 'success.main' }} />
+                  <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                    Upload Foto Klien ke Cloudflare R2 Storage
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <CheckCircleIcon sx={{ fontSize: 16, color: 'success.main' }} />
+                  <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                    Realtime Sync ke Landing Page Testimonials
+                  </Typography>
+                </Box>
+              </Box>
+            </CardContent>
+
+            <CardActions sx={{ p: 3, pt: 0 }}>
+              <Button
+                fullWidth
+                variant="contained"
+                endIcon={<ArrowForwardIcon />}
+                onClick={() => handleNavigate('testimonials', '/dashboard/testimonials')}
+                sx={{
+                  fontWeight: 800,
+                  borderRadius: 2,
+                  py: 1,
+                  background: 'linear-gradient(135deg, #FFD600 0%, #d97706 100%)',
+                  color: '#000000',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #ffe033 0%, #b45309 100%)',
+                  },
+                }}
+              >
+                Buka CMS Testimoni
+              </Button>
+            </CardActions>
+          </Card>
+        </Grid>
+
+        {/* Card 4: Manajemen Portofolio */}
         <Grid item xs={12} sm={6} md={6}>
           <Card
             elevation={0}
@@ -246,7 +436,7 @@ export const MasterDataView: React.FC = () => {
           </Card>
         </Grid>
 
-        {/* Card 3: Atur Pricelist & Spec */}
+        {/* Card 5: Atur Pricelist & Spec */}
         <Grid item xs={12} sm={6} md={6}>
           <Card
             elevation={0}
@@ -332,7 +522,7 @@ export const MasterDataView: React.FC = () => {
           </Card>
         </Grid>
 
-        {/* Card 4: Kontak Perusahaan */}
+        {/* Card 6: Kontak Perusahaan */}
         <Grid item xs={12} sm={6} md={6}>
           <Card
             elevation={0}
@@ -421,3 +611,5 @@ export const MasterDataView: React.FC = () => {
     </Box>
   );
 };
+
+export default MasterDataView;

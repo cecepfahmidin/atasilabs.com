@@ -116,7 +116,9 @@ export const UsersView: React.FC = () => {
     avatarUrl: '',
   });
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -125,15 +127,50 @@ export const UsersView: React.FC = () => {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const base64 = event.target?.result as string;
-      if (base64) {
-        setFormData((prev) => ({ ...prev, avatarUrl: base64 }));
-        showNotification('Foto profil berhasil diupload!', 'success');
+    setUploadingAvatar(true);
+    showNotification('Mengunggah foto profil ke Cloudflare R2...', 'info');
+
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', file);
+      uploadFormData.append('folder', 'avatars');
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: uploadFormData,
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.url) {
+        setFormData((prev) => ({ ...prev, avatarUrl: data.url }));
+        showNotification('Foto profil berhasil disimpan ke Cloudflare R2!', 'success');
+      } else {
+        // Fallback to local DataURL if R2 is initializing
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const base64 = event.target?.result as string;
+          if (base64) {
+            setFormData((prev) => ({ ...prev, avatarUrl: base64 }));
+            showNotification('Foto profil berhasil dimuat!', 'success');
+          }
+        };
+        reader.readAsDataURL(file);
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      console.error('Avatar R2 upload error:', err);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const base64 = event.target?.result as string;
+        if (base64) {
+          setFormData((prev) => ({ ...prev, avatarUrl: base64 }));
+          showNotification('Foto profil berhasil dimuat!', 'success');
+        }
+      };
+      reader.readAsDataURL(file);
+    } finally {
+      setUploadingAvatar(false);
+    }
   };
 
   const handleOpenAdd = () => {
@@ -672,7 +709,7 @@ export const UsersView: React.FC = () => {
               </Box>
 
               <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, mb: 1.5, textAlign: 'center' }}>
-                Klik ikon kamera untuk upload foto dari laptop/HP (PNG/JPG, Maks 5MB)
+                Klik ikon kamera untuk upload foto profil langsung ke Cloudflare R2 (PNG/JPG, Maks 5MB)
               </Typography>
 
               <Box sx={{ width: '100%', mb: 1.5 }}>

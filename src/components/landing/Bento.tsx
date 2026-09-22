@@ -7,7 +7,7 @@ export function Bento() {
     <section id="architecture" className="flex flex-col w-full bg-[#0D0D0D] py-16 px-6 md:py-[100px] md:px-[80px] gap-10 md:gap-[48px]">
       <SectionHeader
         label="[05] // KEUNGGULAN SISTEM DI BALIK LAYAR KAMI"
-        title={"ARSITEKTUR ANDAL, AMAN, &\nDIRANCANG UNTUK PERTUMBUHAN BISNIS ANDA."}
+        title={"DIRANCANG UNTUK PERTUMBUHAN\nBISNIS ANDA"}
         subtitle="Sistem modern yang dirancang rapi, cepat, dan transparan untuk mendukung pertumbuhan usaha Anda secara berkelanjutan."
       />
 
@@ -21,7 +21,7 @@ export function Bento() {
               <h3 className="font-grotesk text-[22px] md:text-[24px] font-bold text-[#0A0A0A] tracking-[-0.5px] leading-[1.2] mt-3 mb-3">
                 AKSES SUPER CEPAT & STABIL
               </h3>
-              <p className="font-ibm-mono text-[12px] text-[#1A1A1A] tracking-[0.5px] leading-[1.6]">
+              <p className="font-ibm-mono text-[14px] md:text-[15px] text-[#1A1A1A] tracking-[0.5px] leading-[1.6]">
                 Website dan aplikasi Anda dimuat dalam hitungan detik dari berbagai perangkat, memberikan pengalaman terbaik tanpa hambatan bagi pelanggan yang berkunjung.
               </p>
             </div>
@@ -37,7 +37,7 @@ export function Bento() {
               <h3 className="font-grotesk text-[22px] md:text-[24px] font-bold text-[#F5F5F0] tracking-[-0.5px] leading-[1.2] mt-3 mb-3">
                 KEAMANAN DATA & ANTI-BOCOR
               </h3>
-              <p className="font-ibm-mono text-[12px] text-[#888888] tracking-[0.5px] leading-[1.6]">
+              <p className="font-ibm-mono text-[14px] md:text-[15px] text-[#888888] tracking-[0.5px] leading-[1.6]">
                 Seluruh data rahasia, informasi akun, dan transaksi bisnis Anda dilindungi dengan sistem keamanan bertingkat agar privasi perusahaan terjaga ketat.
               </p>
             </div>
@@ -53,7 +53,7 @@ export function Bento() {
               <h3 className="font-grotesk text-[22px] md:text-[24px] font-bold text-[#F5F5F0] tracking-[-0.5px] leading-[1.2] mt-3 mb-3">
                 TAMPILAN NYAMAN & MUDAH DIGUNAKAN
               </h3>
-              <p className="font-ibm-mono text-[12px] text-[#888888] tracking-[0.5px] leading-[1.6]">
+              <p className="font-ibm-mono text-[14px] md:text-[15px] text-[#888888] tracking-[0.5px] leading-[1.6]">
                 Antarmuka dashboard dan halaman muka dirancang rapi, modern, serta sangat ramah pengguna (user-friendly) tanpa memerlukan pelatihan rumit bagi tim Anda.
               </p>
             </div>
@@ -72,7 +72,7 @@ export function Bento() {
               <h3 className="font-grotesk text-[20px] md:text-[22px] font-bold text-[#F5F5F0] tracking-[-0.5px] leading-[1.2] mt-3 mb-2">
                 PENERBITAN DOKUMEN & LAPORAN OTOMATIS
               </h3>
-              <p className="font-ibm-mono text-[12px] text-[#888888] tracking-[0.5px] leading-[1.6]">
+              <p className="font-ibm-mono text-[14px] md:text-[15px] text-[#888888] tracking-[0.5px] leading-[1.6]">
                 Sistem secara otomatis merapikan data masuk, mencetak rekapitulasi, dan memproses berkas operasional penting secara real-time tanpa repot.
               </p>
             </div>
@@ -86,9 +86,9 @@ export function Bento() {
             <div>
               <span className="font-ibm-mono text-[11px] font-bold text-[#FF6B35] tracking-[2px]">[05/06]</span>
               <h3 className="font-grotesk text-[20px] md:text-[22px] font-bold text-[#F5F5F0] tracking-[-0.5px] leading-[1.2] mt-3 mb-2">
-                LEGALITAS TANDA TANGAN DIGITAL SAH
+                LEGALITAS PERSETUJUAN DIGITAL
               </h3>
-              <p className="font-ibm-mono text-[12px] text-[#888888] tracking-[0.5px] leading-[1.6]">
+              <p className="font-ibm-mono text-[14px] md:text-[15px] text-[#888888] tracking-[0.5px] leading-[1.6]">
                 Dilengkapi fitur validasi kontrak dan persetujuan digital yang sah secara hukum, lengkap dengan jejak audit waktu yang transparan.
               </p>
             </div>
@@ -104,7 +104,7 @@ export function Bento() {
               <h3 className="font-grotesk text-[20px] md:text-[22px] font-bold text-[#F5F5F0] tracking-[-0.5px] leading-[1.2] mt-3 mb-2">
                 INTEGRASI PEMBAYARAN & SINKRONISASI LANGSUNG
               </h3>
-              <p className="font-ibm-mono text-[12px] text-[#888888] tracking-[0.5px] leading-[1.6]">
+              <p className="font-ibm-mono text-[14px] md:text-[15px] text-[#888888] tracking-[0.5px] leading-[1.6]">
                 Mendukung berbagai metode pembayaran instan (QRIS, Transfer Bank, E-Wallet) yang terhubung langsung ke laporan keuangan sistem secara otomatis.
               </p>
             </div>
