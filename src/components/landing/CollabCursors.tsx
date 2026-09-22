@@ -2,7 +2,7 @@
 
 const CURSORS = [
   {
-    name: '@cemoyz',
+    name: '@cto',
     color: '#FFD600',
     textColor: '#0A0A0A',
     animName: 'cursor-cecep',
@@ -18,7 +18,7 @@ const CURSORS = [
     }`,
   },
   {
-    name: '@akew',
+    name: '@cmo',
     color: '#FF6B35',
     textColor: '#FFFFFF',
     animName: 'cursor-rizky',
@@ -34,7 +34,7 @@ const CURSORS = [
     }`,
   },
   {
-    name: '@au',
+    name: '@ceo',
     color: '#4ADE80',
     textColor: '#0A0A0A',
     animName: 'cursor-doni',
