@@ -138,7 +138,7 @@ export const DocumentsWorkflowView: React.FC = () => {
   const [isSigDialogOpen, setIsSigDialogOpen] = useState(false);
   const [sigPartyTarget, setSigPartyTarget] = useState<'Pihak Pertama' | 'Pihak Kedua'>('Pihak Pertama');
 
-  // Load documents for selected project (check LocalStorage first, fallback to Auto-Gen)
+  // Load documents for selected project (check DB & LocalStorage first, fallback to Auto-Gen)
   useEffect(() => {
     const proj = projects.find((p) => p.id === selectedProjectId);
     if (proj) {
@@ -146,17 +146,29 @@ export const DocumentsWorkflowView: React.FC = () => {
       const allCustom = getSavedCustomDocs();
       const projCustom = allCustom[selectedProjectId] || {};
 
-      const activeRsd = projCustom.rsd || autoDocs.rsd;
-      const syncedQa = generateQAFromRSD(activeRsd, proj, projCustom.qa || autoDocs.qa);
+      const applyDocs = (customData: any) => {
+        const activeRsd = customData.rsd || autoDocs.rsd;
+        const syncedQa = generateQAFromRSD(activeRsd, proj, customData.qa || autoDocs.qa);
+        const initialSpk = INITIAL_SPK_DATA.find((s) => s.projectId === selectedProjectId || s.id === `spk-${selectedProjectId}`);
 
-      const initialSpk = INITIAL_SPK_DATA.find((s) => s.projectId === selectedProjectId || s.id === `spk-${selectedProjectId}`);
+        setCifData(customData.cif || autoDocs.cif);
+        setRsdData(activeRsd);
+        setMouData(customData.mou || autoDocs.mou);
+        setSpkData(customData.spk || initialSpk || autoDocs.spk);
+        setBastData(customData.bast || autoDocs.bast);
+        setQaData(syncedQa);
+      };
 
-      setCifData(projCustom.cif || autoDocs.cif);
-      setRsdData(activeRsd);
-      setMouData(projCustom.mou || autoDocs.mou);
-      setSpkData(projCustom.spk || initialSpk || autoDocs.spk);
-      setBastData(projCustom.bast || autoDocs.bast);
-      setQaData(syncedQa);
+      applyDocs(projCustom);
+
+      fetch(`/api/documents?projectId=${selectedProjectId}`)
+        .then((res) => res.json())
+        .then((res) => {
+          if (res.success && res.data) {
+            applyDocs(res.data);
+          }
+        })
+        .catch((e) => console.error('Document DB fetch error:', e));
     }
   }, [selectedProjectId, projects]);
 
@@ -208,7 +220,7 @@ export const DocumentsWorkflowView: React.FC = () => {
         break;
     }
 
-    // 2. Persist to LocalStorage for selectedProjectId
+    // 2. Persist to LocalStorage and Database for selectedProjectId
     try {
       const allCustomDocs = getSavedCustomDocs();
       const projectDocs = allCustomDocs[selectedProjectId] || {};
@@ -223,11 +235,17 @@ export const DocumentsWorkflowView: React.FC = () => {
 
       allCustomDocs[selectedProjectId] = updatedDocs;
       localStorage.setItem(LOCAL_STORAGE_KEY_CUSTOM_DOCS, JSON.stringify(allCustomDocs));
+
+      fetch('/api/documents', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId: selectedProjectId, data: updatedDocs }),
+      }).catch((e) => console.error('Document DB save error:', e));
     } catch (e) {
       console.error(e);
     }
 
-    showNotification(`Dokumen ${type} berhasil diperbarui & disimpan!`, 'success');
+    showNotification(`Dokumen ${type} berhasil diperbarui & disimpan ke database!`, 'success');
   };
 
   const handleSyncQAFromRSD = () => {

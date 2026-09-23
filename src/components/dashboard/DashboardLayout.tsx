@@ -90,7 +90,14 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
 
   useEffect(() => {
     if (!isAuthChecking && !currentUser) {
-      router.push('/login');
+      try {
+        const saved = localStorage.getItem('webdev_sys_user');
+        if (!saved) {
+          router.push('/login');
+        }
+      } catch (e) {
+        router.push('/login');
+      }
     }
   }, [currentUser, isAuthChecking, router]);
 
@@ -162,7 +169,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
 
   const handleLogout = () => {
     logout();
-    router.push('/login');
+    router.push('/');
   };
 
   const rawMenuItems = [
@@ -608,24 +615,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                 <DarkIcon sx={{ color: '#475569', fontSize: 18 }} />
               )}
             </IconButton>
-
-            <Button
-              variant="outlined"
-              color="error"
-              size="small"
-              startIcon={<LogoutIcon sx={{ fontSize: '16px !important' }} />}
-              onClick={handleLogout}
-              sx={{
-                borderRadius: 2,
-                fontWeight: 700,
-                fontSize: '0.78rem',
-                textTransform: 'none',
-                px: 1.8,
-                py: 0.5,
-              }}
-            >
-              Keluar
-            </Button>
           </Box>
         </Toolbar>
       </AppBar>
@@ -674,7 +663,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
         component="main"
         sx={{
           flexGrow: 1,
-          p: { xs: 2.5, md: 4 },
+          p: { xs: 1.5, sm: 2.5, md: 4 },
           width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
           mt: '64px',
           overflowX: 'hidden',

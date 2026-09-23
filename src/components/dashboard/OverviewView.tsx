@@ -285,7 +285,8 @@ export const OverviewView: React.FC = () => {
               </Button>
             </Box>
 
-            <TableContainer>
+            {/* Desktop Table View */}
+            <TableContainer sx={{ width: '100%', overflowX: 'auto', display: { xs: 'none', md: 'block' } }}>
               <Table size="small">
                 <TableHead sx={{ bgcolor: 'action.hover' }}>
                   <TableRow>
@@ -346,6 +347,64 @@ export const OverviewView: React.FC = () => {
                 </TableBody>
               </Table>
             </TableContainer>
+
+            {/* Mobile Card View */}
+            <Stack spacing={2} sx={{ display: { xs: 'flex', md: 'none' } }}>
+              {projects.slice(0, 4).map((proj) => (
+                <Paper
+                  key={proj.id}
+                  variant="outlined"
+                  sx={{
+                    p: 2,
+                    borderRadius: 2.5,
+                    bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)',
+                  }}
+                >
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                    <Box>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+                        {proj.clientName}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        {proj.title}
+                      </Typography>
+                    </Box>
+                    <Chip
+                      icon={<CheckCircleIcon sx={{ fontSize: '12px !important' }} />}
+                      label="5 Dokumen"
+                      size="small"
+                      color="success"
+                      variant="outlined"
+                      sx={{ height: 20, fontSize: '0.65rem', fontWeight: 800 }}
+                    />
+                  </Box>
+
+                  <Box sx={{ my: 1.5 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                        Nilai Kontrak: <strong style={{ color: theme.palette.primary.main }}>{formatRupiah(proj.budget)}</strong>
+                      </Typography>
+                      <Typography variant="caption" sx={{ fontWeight: 800 }}>
+                        {proj.progress}%
+                      </Typography>
+                    </Box>
+                    <LinearProgress variant="determinate" value={proj.progress} sx={{ height: 6, borderRadius: 3 }} />
+                  </Box>
+
+                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', pt: 1, borderTop: `1px solid ${theme.palette.divider}` }}>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      startIcon={<DescriptionIcon sx={{ fontSize: 14 }} />}
+                      onClick={() => setDashboardTab('documents')}
+                      sx={{ fontSize: '0.72rem', py: 0.3 }}
+                    >
+                      Buka Dokumen
+                    </Button>
+                  </Box>
+                </Paper>
+              ))}
+            </Stack>
           </Paper>
 
           {/* User Guide Card for Operations */}

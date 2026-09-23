@@ -29,6 +29,7 @@ import {
   DialogActions,
   IconButton,
   Tooltip,
+  Stack,
 } from '@mui/material';
 import {
   Calculate as CalcIcon,
@@ -85,7 +86,7 @@ export const HPPCalculatorView: React.FC = () => {
   const router = useRouter();
   const { pricingTiers, updatePricingTier, setDashboardTab, showNotification } = useApp();
 
-  // Custom Editable HPP Items state with LocalStorage persistence
+  // Custom Editable HPP Items state with LocalStorage & Database persistence
   const [customHppMatrix, setCustomHppMatrix] = useState<HPPItem[]>(INITIAL_HPP_MATRIX);
 
   useEffect(() => {
@@ -97,6 +98,20 @@ export const HPPCalculatorView: React.FC = () => {
     } catch (e) {
       console.error(e);
     }
+
+    fetch('/api/hpp')
+      .then((res) => res.json())
+      .then((res) => {
+        if (res.success && res.data) {
+          if (Array.isArray(res.data.matrix) && res.data.matrix.length > 0) {
+            setCustomHppMatrix(res.data.matrix);
+          }
+          if (Array.isArray(res.data.allocations) && res.data.allocations.length > 0) {
+            setAllocationPoints(res.data.allocations);
+          }
+        }
+      })
+      .catch((e) => console.error('HPP DB sync fetch error:', e));
   }, []);
 
   // Create dynamic HPP matrix synchronized with live Pricelist & user edits
@@ -170,6 +185,11 @@ export const HPPCalculatorView: React.FC = () => {
     } catch (e) {
       console.error(e);
     }
+    fetch('/api/hpp', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ matrix: customHppMatrix, allocations: updated }),
+    }).catch((e) => console.error('DB save allocations error:', e));
   };
 
   // Active HPP calculation
@@ -344,6 +364,11 @@ export const HPPCalculatorView: React.FC = () => {
     } catch (e) {
       console.error(e);
     }
+    fetch('/api/hpp', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ matrix: updatedMatrix, allocations: allocationPoints }),
+    }).catch((e) => console.error('HPP DB save matrix error:', e));
 
     // Sync Pricelist in AppContext
     const matchingPt = pricingTiers.find((pt) => pt.tierNumber === editingTier.tierNumber);
@@ -456,7 +481,8 @@ export const HPPCalculatorView: React.FC = () => {
           Klik baris klaster untuk memuat ke simulasi. Klik ikon pensil untuk merubah komponen HPP maupun <strong>Harga Jual</strong> (Pricelist otomatis ter-update).
         </Typography>
 
-        <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
+        {/* Desktop Table View */}
+        <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2, display: { xs: 'none', md: 'block' } }}>
           <Table size="small">
             <TableHead sx={{ bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }}>
               <TableRow>
@@ -532,6 +558,91 @@ export const HPPCalculatorView: React.FC = () => {
             </TableBody>
           </Table>
         </TableContainer>
+
+        {/* Mobile Card View */}
+        <Stack spacing={2} sx={{ display: { xs: 'flex', md: 'none' } }}>
+          {activeHppMatrix.map((tier) => {
+            const isSelected = tier.tierNumber === selectedTierNumber && customHppInput === null;
+            return (
+              <Paper
+                key={tier.tierNumber}
+                variant="outlined"
+                onClick={() => {
+                  setSelectedTierNumber(tier.tierNumber);
+                  setCustomHppInput(null);
+                }}
+                sx={{
+                  p: 2.5,
+                  borderRadius: 3,
+                  cursor: 'pointer',
+                  borderColor: isSelected ? theme.palette.primary.main : theme.palette.divider,
+                  bgcolor: isSelected
+                    ? theme.palette.mode === 'dark'
+                      ? 'rgba(59, 130, 246, 0.12)'
+                      : 'rgba(59, 130, 246, 0.06)'
+                    : theme.palette.background.paper,
+                }}
+              >
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
+                  <Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
+                        {tier.tierName}
+                      </Typography>
+                      {isSelected && <Chip label="Aktif di Simulasi" size="small" color="primary" sx={{ height: 18, fontSize: '0.62rem', fontWeight: 800 }} />}
+                    </Box>
+                    <Typography variant="caption" color="text.secondary">
+                      {tier.pageRange} — {tier.workingDays}
+                    </Typography>
+                  </Box>
+                  <Tooltip title="Edit Komponen HPP & Harga Jual Tier Ini">
+                    <IconButton size="small" color="primary" onClick={(e) => handleOpenEditDialog(tier, e)}>
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+
+                <Grid container spacing={1} sx={{ my: 1, p: 1.5, borderRadius: 2, bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)' }}>
+                  <Grid item xs={6}>
+                    <Typography variant="caption" color="text.secondary" display="block">
+                      Upah Dev ({tier.developerRole}):
+                    </Typography>
+                    <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                      Rp {tier.developerFee.toLocaleString('id-ID')}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography variant="caption" color="text.secondary" display="block">
+                      Server / Hosting:
+                    </Typography>
+                    <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                      Rp {tier.domainHostingFee.toLocaleString('id-ID')}
+                    </Typography>
+                  </Grid>
+                </Grid>
+
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pt: 1, borderTop: `1px solid ${theme.palette.divider}` }}>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" display="block">
+                      Total HPP Proyek:
+                    </Typography>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'error.main' }}>
+                      Rp {tier.totalHPP.toLocaleString('id-ID')}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ textAlign: 'right' }}>
+                    <Typography variant="caption" color="text.secondary" display="block">
+                      Harga Jual (Pricelist):
+                    </Typography>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'success.main' }}>
+                      Rp {tier.sellingPrice.toLocaleString('id-ID')}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Paper>
+            );
+          })}
+        </Stack>
 
         <Alert severity="info" icon={<InfoIcon />} sx={{ mt: 2.5, borderRadius: 2 }}>
           <Typography variant="caption" sx={{ fontWeight: 600 }}>

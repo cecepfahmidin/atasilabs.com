@@ -202,10 +202,38 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [companyContact, setCompanyContact] = useState<CompanyContact>(INITIAL_COMPANY_CONTACT);
   const [testimonials, setTestimonials] = useState<Testimonial[]>(INITIAL_TESTIMONIALS);
 
+  // Restore persisted current user on client mount
+  useEffect(() => {
+    try {
+      const savedUser = localStorage.getItem(STORAGE_KEYS.USER);
+      if (savedUser) {
+        const parsed = JSON.parse(savedUser);
+        if (parsed && parsed.email) {
+          setCurrentUser(parsed);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load user from localStorage:', e);
+    }
+  }, []);
+
   // Always fetch fresh data directly from Database APIs on mount
   useEffect(() => {
     refreshDataFromBackend();
   }, []);
+
+  const updateCurrentUserState = (user: User | null) => {
+    setCurrentUser(user);
+    try {
+      if (user) {
+        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+      } else {
+        localStorage.removeItem(STORAGE_KEYS.USER);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   // Synchronize Supabase Auth Session with App Context
   const syncSupabaseUser = (sbUser: any) => {
@@ -224,7 +252,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       createdAt: sbUser.created_at || new Date().toISOString(),
     };
 
-    setCurrentUser(syncedUser);
+    updateCurrentUserState(syncedUser);
   };
 
   useEffect(() => {
@@ -289,7 +317,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         matched.company !== currentUser.company
       ) {
         const updated = { ...currentUser, ...matched };
-        setCurrentUser(updated);
+        updateCurrentUserState(updated);
       }
     }
   }, [users, currentUser?.id, currentUser?.email, currentUser?.role]);
@@ -297,7 +325,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const switchUserRole = (userId: string) => {
     const targetUser = users.find((u) => u.id === userId);
     if (targetUser) {
-      setCurrentUser(targetUser);
+      updateCurrentUserState(targetUser);
       showNotification(`Beralih simulasi ke role: ${targetUser.role} (${targetUser.name})`, 'info');
     }
   };
@@ -313,13 +341,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ...INITIAL_USER,
       email: targetEmail,
     };
-    setCurrentUser(foundUser);
+    updateCurrentUserState(foundUser);
     showNotification(`Berhasil login sebagai ${foundUser.name} [${foundUser.role}]`, 'success');
     return true;
   };
 
   const logout = () => {
-    setCurrentUser(null);
+    updateCurrentUserState(null);
     try {
       supabase.auth.signOut();
     } catch (e) {
@@ -497,8 +525,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const markAllLeadsRead = async () => {
+    const unreadIds = leads.filter((item) => item.status === 'NEW').map((l) => l.id);
     saveLeads((prev) => prev.map((item) => (item.status === 'NEW' ? { ...item, status: 'READ' } : item)));
-    showNotification('Semua pesan baru telah ditandai sebagai dibaca', 'success');
+
+    try {
+      await Promise.all(
+        unreadIds.map((id) =>
+          fetch('/api/leads', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, status: 'READ' }),
+          })
+        )
+      );
+    } catch (e) {
+      console.error('Database markAllLeadsRead sync error:', e);
+    }
+    showNotification('Semua pesan baru telah ditandai sebagai dibaca & tersimpan di Database', 'success');
   };
 
   const unreadLeadsCount = leads.filter((item) => item.status === 'NEW').length;
@@ -642,15 +685,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const updateProject = async (id: string, proj: Partial<ClientProject>) => {
     saveProjects((prev) => prev.map((p) => (p.id === id ? { ...p, ...proj, updatedAt: new Date().toISOString() } : p)));
     try {
-      await fetch('/api/projects', {
+      const res = await fetch('/api/projects', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, ...proj }),
       });
+      const data = await res.json();
+      if (data.success && data.data) {
+        saveProjects((prev) => prev.map((p) => (p.id === id ? { ...p, ...data.data } : p)));
+      }
     } catch (e) {
       console.error(e);
     }
-    showNotification('Data proyek klien berhasil diperbarui', 'success');
+    showNotification('Data proyek klien berhasil diperbarui ke Database!', 'success');
   };
 
   const deleteProject = async (id: string) => {
@@ -723,9 +770,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showNotification('Paket harga & spesifikasi diperbarui!', 'success');
   };
 
-  const resetPricingTiersToDefault = () => {
+  const resetPricingTiersToDefault = async () => {
     savePricingTiers(INITIAL_PRICING_TIERS);
-    showNotification('Pricelist dikembalikan ke spesifikasi default', 'info');
+    try {
+      await Promise.all(
+        INITIAL_PRICING_TIERS.map((tier) =>
+          fetch('/api/pricing', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(tier),
+          })
+        )
+      );
+    } catch (e) {
+      console.error('Database reset pricing tiers error:', e);
+    }
+    showNotification('Pricelist dikembalikan ke spesifikasi default & tersimpan ke Database', 'info');
   };
 
   const updateCompanyContact = async (updatedFields: Partial<CompanyContact>) => {
@@ -746,9 +806,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showNotification('Data kontak perusahaan berhasil diperbarui ke Database!', 'success');
   };
 
-  const resetCompanyContactToDefault = () => {
+  const resetCompanyContactToDefault = async () => {
     saveCompanyContact(INITIAL_COMPANY_CONTACT);
-    showNotification('Data kontak dikembalikan ke konfigurasi default', 'info');
+    try {
+      await fetch('/api/contact', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(INITIAL_COMPANY_CONTACT),
+      });
+    } catch (e) {
+      console.error('Database reset contact error:', e);
+    }
+    showNotification('Data kontak dikembalikan ke konfigurasi default & tersimpan ke Database', 'info');
   };
 
   // Testimonials Management
@@ -803,9 +872,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showNotification('Testimoni berhasil dihapus dari Database!', 'info');
   };
 
-  const resetTestimonialsToDefault = () => {
+  const resetTestimonialsToDefault = async () => {
     setTestimonials(INITIAL_TESTIMONIALS);
-    showNotification('Testimoni dikembalikan ke data default', 'info');
+    try {
+      await Promise.all(
+        INITIAL_TESTIMONIALS.map((testi) =>
+          fetch('/api/testimonials', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(testi),
+          })
+        )
+      );
+    } catch (e) {
+      console.error('Database reset testimonials error:', e);
+    }
+    showNotification('Testimoni dikembalikan ke data default & tersimpan ke Database', 'info');
   };
 
   // Notification Toast
@@ -830,7 +912,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setNotification((prev) => ({ ...prev, open: false }));
   };
 
-  const resetAllDataToDefaults = () => {
+  const resetAllDataToDefaults = async () => {
     saveLeads(INITIAL_LEADS);
     savePortfolios(INITIAL_PORTFOLIOS);
     saveProjects(INITIAL_PROJECTS);
@@ -838,7 +920,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     saveCompanyContact(INITIAL_COMPANY_CONTACT);
     saveUsers(INITIAL_USERS);
     setCurrentUser(INITIAL_USER);
-    showNotification('Basis data & akun pengguna berhasil direset ke data sampel awal', 'info');
+    try {
+      await Promise.all([
+        resetPricingTiersToDefault(),
+        resetCompanyContactToDefault(),
+        resetTestimonialsToDefault(),
+        resetRolePermissionsToDefault(),
+      ]);
+    } catch (e) {
+      console.error('Reset all data error:', e);
+    }
+    showNotification('Basis data & akun pengguna berhasil direset ke data sampel awal di Database', 'info');
   };
 
   return (

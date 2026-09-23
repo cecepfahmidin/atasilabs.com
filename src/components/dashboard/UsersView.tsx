@@ -35,6 +35,7 @@ import {
   useTheme,
   Divider,
   Switch,
+  Stack,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -415,8 +416,9 @@ export const UsersView: React.FC = () => {
           <Divider />
 
           {/* User Table */}
-          <TableContainer>
-            <Table sx={{ minWidth: 700 }}>
+          {/* Desktop Table View */}
+          <TableContainer sx={{ width: '100%', overflowX: 'auto', display: { xs: 'none', md: 'block' } }}>
+            <Table size="small">
               <TableHead sx={{ bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)' }}>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 700 }}>Pengguna & Email</TableCell>
@@ -506,6 +508,92 @@ export const UsersView: React.FC = () => {
               </TableBody>
             </Table>
           </TableContainer>
+
+          {/* Mobile Card View */}
+          <Stack spacing={2} sx={{ p: 2, display: { xs: 'flex', md: 'none' } }}>
+            {filteredUsers.length === 0 ? (
+              <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 4 }}>
+                Tidak ada pengguna yang cocok dengan kriteria pencarian.
+              </Typography>
+            ) : (
+              filteredUsers.map((u) => {
+                const roleCfg = ROLE_CONFIGS[u.role] || ROLE_CONFIGS.ADMIN;
+                const isSelf = currentUser?.id === u.id;
+                return (
+                  <Paper
+                    key={u.id}
+                    variant="outlined"
+                    sx={{
+                      p: 2.5,
+                      borderRadius: 3,
+                      border: `1px solid ${theme.palette.divider}`,
+                      backgroundColor: isSelf
+                        ? theme.palette.mode === 'dark'
+                          ? 'rgba(245, 158, 11, 0.08)'
+                          : 'rgba(254, 243, 199, 0.5)'
+                        : theme.palette.background.paper,
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Avatar src={u.avatarUrl} sx={{ width: 42, height: 42, bgcolor: roleCfg.hexColor }}>
+                          {u.name[0]}
+                        </Avatar>
+                        <Box>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+                            {u.name} {isSelf && <Chip label="Anda" size="small" color="primary" sx={{ height: 16, fontSize: '0.65rem', ml: 0.5 }} />}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary" display="block">
+                            {u.email}
+                          </Typography>
+                        </Box>
+                      </Box>
+                      <Chip
+                        label={roleCfg.label}
+                        size="small"
+                        color={roleCfg.badgeColor as any}
+                        sx={{ fontWeight: 800, fontSize: '0.7rem' }}
+                      />
+                    </Box>
+
+                    <Stack spacing={0.5} sx={{ my: 1.5, p: 1.5, borderRadius: 2, bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)' }}>
+                      <Typography variant="caption" color="text.secondary">
+                        Organisasi: <strong>{u.company || '-'}</strong>
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Telepon/WA: <strong>{u.phone || '-'}</strong>
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Status: <strong style={{ color: u.status === 'ACTIVE' ? '#10b981' : '#64748b' }}>{u.status === 'ACTIVE' ? 'Aktif' : 'Nonaktif'}</strong>
+                      </Typography>
+                    </Stack>
+
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, pt: 1, borderTop: `1px solid ${theme.palette.divider}` }}>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        startIcon={<EditIcon fontSize="small" />}
+                        onClick={() => handleOpenEdit(u)}
+                        sx={{ fontSize: '0.75rem' }}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color="error"
+                        startIcon={<DeleteIcon fontSize="small" />}
+                        onClick={() => handleDelete(u.id)}
+                        sx={{ fontSize: '0.75rem' }}
+                      >
+                        Hapus
+                      </Button>
+                    </Box>
+                  </Paper>
+                );
+              })
+            )}
+          </Stack>
         </Card>
       )}
 

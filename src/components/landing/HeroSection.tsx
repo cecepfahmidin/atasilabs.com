@@ -8,6 +8,7 @@ import { CollabCursors } from './CollabCursors';
 
 export const HeroSection: React.FC = () => {
   const router = useRouter();
+  const { currentUser, setActiveView } = useApp();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -29,24 +30,19 @@ export const HeroSection: React.FC = () => {
         </span>
       </div>
 
-      <div className="h-8 md:h-[32px]" />
+      <div className="h-4 md:h-[16px]" />
 
-      {/* Main Glitch Headlines */}
-      <h1 className="font-grotesk text-[clamp(32px,8vw,90px)] font-bold text-[#F5F5F0] tracking-[-1px] leading-none text-center w-full max-w-[1100px]">
-        <GlitchText text="PENGEN WEBSITE KEREN?" speed={40} delay={100} />
-      </h1>
-      <h1 className="font-grotesk text-[clamp(32px,8vw,90px)] font-bold text-[#FFD600] tracking-[-1px] leading-none text-center w-full max-w-[1100px] mt-2">
-        <GlitchText text="KITA BANGUN BERSAMA!" speed={40} delay={400} />
-      </h1>
+      {/* Main Title with Glitch Animation */}
+      <GlitchText text="ATASILABS STUDIO" />
 
-      <div className="h-8 md:h-[32px]" />
+      <div className="h-6 md:h-[24px]" />
 
-      {/* Subheading */}
-      <p className="font-ibm-mono text-[15px] md:text-[18px] text-[#888888] tracking-[1px] leading-[1.6] text-center w-full max-w-[800px]">
-        Ceritain aja konsep web impianmu, pilih paketnya, dan biarkan tim kami yang handle sisanya dengan transparan dan profesional.
+      {/* Subtitle Description */}
+      <p className="font-ibm-mono text-[13px] md:text-[15px] text-[#A0A0A0] leading-[22px] md:leading-[26px] tracking-[0.5px] max-w-[680px] text-center">
+        Jasa Pembuatan Website Studio Profesional, Aplikasi Next.js Modern &amp; Sistem Management Terpadu Bergaransi Resmi.
       </p>
 
-      <div className="h-10 md:h-[48px]" />
+      <div className="h-8 md:h-[32px]" />
 
       {/* Action CTAs */}
       <div className="flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-[16px] w-full sm:w-auto z-30">
@@ -60,11 +56,18 @@ export const HeroSection: React.FC = () => {
         </button>
 
         <button
-          onClick={() => router.push('/login')}
+          onClick={() => {
+            if (currentUser) {
+              setActiveView('dashboard');
+              router.push('/dashboard');
+            } else {
+              router.push('/login');
+            }
+          }}
           className="flex items-center justify-center w-full max-w-[280px] sm:w-[230px] h-[56px] bg-[#0A0A0A] border-2 border-[#3D3D3D] hover:border-[#FFD600] transition-colors cursor-pointer text-[#F5F5F0] group"
         >
           <span className="font-ibm-mono text-[12px] text-[#888888] group-hover:text-[#FFD600] tracking-[1.5px] transition-colors">
-            LOGIN &gt;
+            {currentUser ? 'DASHBOARD >' : 'LOGIN >'}
           </span>
         </button>
       </div>

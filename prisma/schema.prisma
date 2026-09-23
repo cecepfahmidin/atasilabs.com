@@ -56,17 +56,24 @@ model Portfolio {
 }
 
 model ClientProject {
-  id          String   @id @default(uuid())
-  clientName  String
-  clientEmail String
-  title       String
-  description String
-  deadline    String
-  budget      Float
-  progress    Int      @default(0)
-  status      String   @default("PLANNING")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String   @id @default(uuid())
+  clientName     String
+  clientEmail    String
+  clientPhone    String?
+  clientCompany  String?
+  title          String
+  description    String
+  deadline       String
+  budget         Float
+  progress       Int      @default(0)
+  status         String   @default("PLANNING")
+  ipwStage       String?  @default("STAGE_1_DISCOVERY")
+  tierNumber     Int?     @default(1)
+  freelancerName String?
+  freelancerFee  Float?
+  isArchived     Boolean? @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 model PricingTier {
@@ -149,3 +156,18 @@ model RbacMatrix {
   permissions Json
   updatedAt   DateTime @default(now()) @updatedAt
 }
+
+model HppData {
+  id          String   @id @default("singleton-hpp")
+  matrix      Json
+  allocations Json
+  updatedAt   DateTime @default(now()) @updatedAt
+}
+
+model CustomDocument {
+  id          String   @id @default(uuid())
+  projectId   String   @unique
+  data        Json
+  updatedAt   DateTime @default(now()) @updatedAt
+}
+

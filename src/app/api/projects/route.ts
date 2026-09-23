@@ -6,35 +6,94 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const projects = await prisma.clientProject.findMany({
+    let projects = await (prisma as any).clientProject.findMany({
       orderBy: { createdAt: 'desc' },
     });
     if (!projects || projects.length === 0) {
-      return NextResponse.json({ success: true, data: INITIAL_PROJECTS, fallback: true, isInitialSeed: true });
+      try {
+        await Promise.all(
+          INITIAL_PROJECTS.map((p) =>
+            (prisma as any).clientProject.upsert({
+              where: { id: p.id },
+              update: {},
+              create: {
+                id: p.id,
+                clientName: p.clientName || '',
+                clientEmail: p.clientEmail || '',
+                clientPhone: p.clientPhone || '',
+                clientCompany: p.clientCompany || '',
+                title: p.title || '',
+                description: p.description || '',
+                deadline: p.deadline || '2024-05-30',
+                budget: Number(p.budget) || 15000000,
+                progress: Number(p.progress) || 0,
+                status: p.status || 'PLANNING',
+                ipwStage: p.ipwStage || 'STAGE_1_DISCOVERY',
+                tierNumber: Number(p.tierNumber) || 1,
+                freelancerName: p.freelancerName || '',
+                freelancerFee: p.freelancerFee ? Number(p.freelancerFee) : null,
+                isArchived: Boolean(p.isArchived),
+              },
+            })
+          )
+        );
+        projects = await (prisma as any).clientProject.findMany({
+          orderBy: { createdAt: 'desc' },
+        });
+      } catch (seedErr) {
+        console.error('Projects initial seed error:', seedErr);
+      }
     }
-    return NextResponse.json({ success: true, data: projects, fallback: false, isInitialSeed: false });
+    return NextResponse.json({
+      success: true,
+      data: projects && projects.length > 0 ? projects : INITIAL_PROJECTS,
+      fallback: false,
+    });
   } catch (error) {
-    return NextResponse.json({ success: true, data: INITIAL_PROJECTS, fallback: true, isInitialSeed: true });
+    return NextResponse.json({ success: true, data: INITIAL_PROJECTS, fallback: true });
   }
 }
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { clientName, clientEmail, title, description, deadline, budget, progress, status } = body;
+    const {
+      clientName,
+      clientEmail,
+      clientPhone,
+      clientCompany,
+      title,
+      description,
+      deadline,
+      budget,
+      progress,
+      status,
+      ipwStage,
+      tierNumber,
+      freelancerName,
+      freelancerFee,
+      isArchived,
+    } = body;
 
     let newProj;
     try {
-      newProj = await prisma.clientProject.create({
+      newProj = await (prisma as any).clientProject.create({
         data: {
-          clientName,
-          clientEmail,
-          title,
-          description,
+          clientName: clientName || '',
+          clientEmail: clientEmail || '',
+          clientPhone: clientPhone || '',
+          clientCompany: clientCompany || '',
+          title: title || '',
+          description: description || '',
           deadline: deadline || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
           budget: Number(budget) || 15000000,
           progress: Number(progress) || 0,
           status: status || 'PLANNING',
+          ipwStage: ipwStage || 'STAGE_1_DISCOVERY',
+          tierNumber: Number(tierNumber) || 1,
+          freelancerName: freelancerName || '',
+          freelancerFee: freelancerFee ? Number(freelancerFee) : null,
+          isArchived: Boolean(isArchived),
         },
       });
     } catch (dbErr) {
@@ -42,12 +101,19 @@ export async function POST(request: Request) {
         id: `proj-${Date.now()}`,
         clientName,
         clientEmail,
+        clientPhone,
+        clientCompany,
         title,
         description,
         deadline: deadline || '2024-05-01',
         budget: Number(budget) || 15000000,
         progress: Number(progress) || 0,
         status: status || 'PLANNING',
+        ipwStage: ipwStage || 'STAGE_1_DISCOVERY',
+        tierNumber: Number(tierNumber) || 1,
+        freelancerName: freelancerName || '',
+        freelancerFee: freelancerFee ? Number(freelancerFee) : null,
+        isArchived: Boolean(isArchived),
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -65,7 +131,24 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
   try {
     const body = await request.json();
-    const { id, clientName, clientEmail, title, description, deadline, budget, progress, status } = body;
+    const {
+      id,
+      clientName,
+      clientEmail,
+      clientPhone,
+      clientCompany,
+      title,
+      description,
+      deadline,
+      budget,
+      progress,
+      status,
+      ipwStage,
+      tierNumber,
+      freelancerName,
+      freelancerFee,
+      isArchived,
+    } = body;
 
     if (!id) {
       return NextResponse.json({ success: false, error: 'ID is required' }, { status: 400 });
@@ -74,21 +157,47 @@ export async function PATCH(request: Request) {
     const prismaUpdateData: any = {};
     if (clientName !== undefined) prismaUpdateData.clientName = clientName;
     if (clientEmail !== undefined) prismaUpdateData.clientEmail = clientEmail;
+    if (clientPhone !== undefined) prismaUpdateData.clientPhone = clientPhone;
+    if (clientCompany !== undefined) prismaUpdateData.clientCompany = clientCompany;
     if (title !== undefined) prismaUpdateData.title = title;
     if (description !== undefined) prismaUpdateData.description = description;
     if (deadline !== undefined) prismaUpdateData.deadline = deadline;
     if (budget !== undefined) prismaUpdateData.budget = Number(budget);
     if (progress !== undefined) prismaUpdateData.progress = Number(progress);
     if (status !== undefined) prismaUpdateData.status = status;
+    if (ipwStage !== undefined) prismaUpdateData.ipwStage = ipwStage;
+    if (tierNumber !== undefined) prismaUpdateData.tierNumber = Number(tierNumber);
+    if (freelancerName !== undefined) prismaUpdateData.freelancerName = freelancerName;
+    if (freelancerFee !== undefined) prismaUpdateData.freelancerFee = freelancerFee !== null ? Number(freelancerFee) : null;
+    if (isArchived !== undefined) prismaUpdateData.isArchived = Boolean(isArchived);
 
     let updated;
     try {
-      updated = await prisma.clientProject.update({
+      updated = await (prisma as any).clientProject.upsert({
         where: { id },
-        data: prismaUpdateData,
+        update: prismaUpdateData,
+        create: {
+          id,
+          clientName: clientName || 'Klien Sample',
+          clientEmail: clientEmail || '',
+          clientPhone: clientPhone || '',
+          clientCompany: clientCompany || '',
+          title: title || 'Proyek Sample',
+          description: description || '',
+          deadline: deadline || '2024-05-30',
+          budget: budget ? Number(budget) : 15000000,
+          progress: progress ? Number(progress) : 0,
+          status: status || 'PLANNING',
+          ipwStage: ipwStage || 'STAGE_1_DISCOVERY',
+          tierNumber: tierNumber ? Number(tierNumber) : 1,
+          freelancerName: freelancerName || '',
+          freelancerFee: freelancerFee ? Number(freelancerFee) : null,
+          isArchived: Boolean(isArchived),
+          ...prismaUpdateData,
+        },
       });
-      updated = { ...body, ...updated };
     } catch (dbErr) {
+      console.error('DB Upsert project error:', dbErr);
       updated = { id, ...body, updatedAt: new Date().toISOString() };
     }
 
@@ -111,7 +220,7 @@ export async function DELETE(request: Request) {
     }
 
     try {
-      await prisma.clientProject.delete({ where: { id } });
+      await (prisma as any).clientProject.delete({ where: { id } });
     } catch (dbErr) {
       // safe fallback
     }

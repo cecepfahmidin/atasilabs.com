@@ -103,11 +103,18 @@ export const LandingNavbar: React.FC = () => {
         {/* Action Buttons */}
         <div className="hidden md:flex items-center gap-[12px]">
           <button
-            onClick={() => router.push('/login')}
+            onClick={() => {
+              if (currentUser) {
+                setActiveView('dashboard');
+                router.push('/dashboard');
+              } else {
+                router.push('/login');
+              }
+            }}
             className="flex items-center gap-2 h-[38px] px-5 bg-[#FFD600] hover:bg-[#e6c200] text-[#0A0A0A] font-grotesk text-[11px] font-bold tracking-[1.5px] transition-all cursor-pointer border-none"
           >
             <span className="w-2 h-2 rounded-full bg-[#0A0A0A] animate-pulse" />
-            LOGIN
+            {currentUser ? 'DASHBOARD' : 'LOGIN'}
           </button>
         </div>
 
@@ -140,12 +147,17 @@ export const LandingNavbar: React.FC = () => {
           ))}
           <button
             onClick={() => {
-              router.push('/login');
+              if (currentUser) {
+                setActiveView('dashboard');
+                router.push('/dashboard');
+              } else {
+                router.push('/login');
+              }
               setMenuOpen(false);
             }}
             className="mt-2 h-[44px] bg-[#FFD600] text-[#0A0A0A] font-grotesk text-[12px] font-bold tracking-[2px] border-none cursor-pointer"
           >
-            LOGIN
+            {currentUser ? 'DASHBOARD' : 'LOGIN'}
           </button>
         </div>
       )}

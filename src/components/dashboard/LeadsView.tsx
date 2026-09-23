@@ -22,6 +22,7 @@ import {
   FormControl,
   InputLabel,
   useTheme,
+  useMediaQuery,
   Alert,
 } from '@mui/material';
 import {
@@ -48,6 +49,7 @@ import { computeBudgetFromService } from '../../lib/pricingUtils';
 
 export const LeadsView: React.FC = () => {
   const theme = useTheme();
+  const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
   const {
     leads,
     updateLeadStatus,
@@ -360,19 +362,19 @@ export const LeadsView: React.FC = () => {
         />
       </Paper>
 
-      {/* DataGrid Container */}
-      <Paper
-        elevation={0}
-        sx={{
-          width: '100%',
-          borderRadius: 3.5,
-          border: `1px solid ${theme.palette.divider}`,
-          backgroundColor: theme.palette.background.paper,
-          overflow: 'hidden',
-        }}
-      >
-        <Box sx={{ height: 500, width: '100%' }}>
-          {mounted ? (
+      {/* Desktop DataGrid View */}
+      {mounted && isDesktop && (
+        <Paper
+          elevation={0}
+          sx={{
+            width: '100%',
+            borderRadius: 3.5,
+            border: `1px solid ${theme.palette.divider}`,
+            backgroundColor: theme.palette.background.paper,
+            overflow: 'hidden',
+          }}
+        >
+          <Box sx={{ height: 500, width: '100%' }}>
             <DataGrid
               rows={filteredLeads}
               columns={columns}
@@ -396,9 +398,81 @@ export const LeadsView: React.FC = () => {
                 },
               }}
             />
-          ) : null}
-        </Box>
-      </Paper>
+          </Box>
+        </Paper>
+      )}
+
+      {/* Mobile Card View */}
+      {mounted && !isDesktop && (
+        <Stack spacing={2}>
+        {filteredLeads.map((lead) => (
+          <Paper
+            key={lead.id}
+            variant="outlined"
+            sx={{
+              p: 2.5,
+              borderRadius: 3,
+              backgroundColor: theme.palette.background.paper,
+              border: `1px solid ${theme.palette.divider}`,
+            }}
+          >
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
+              <Box>
+                <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
+                  {lead.name}
+                </Typography>
+                <Typography variant="caption" color="text.secondary" display="block">
+                  {lead.email}
+                </Typography>
+              </Box>
+              {getStatusChip(lead.status)}
+            </Box>
+
+            <Stack spacing={0.8} sx={{ my: 1.5, p: 1.5, borderRadius: 2, bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)' }}>
+              <Typography variant="caption" color="text.secondary">
+                Perusahaan: <strong>{lead.company || 'Pribadi / Perorangan'}</strong>
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Layanan: <strong>{lead.serviceType || 'Konsultasi Umum'}</strong>
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Budget: <strong>{lead.budget || 'Belum Ditentukan'}</strong>
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Pesan: <em style={{ color: theme.palette.text.primary }}>"{lead.message}"</em>
+              </Typography>
+            </Stack>
+
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pt: 1, borderTop: `1px solid ${theme.palette.divider}` }}>
+              <Typography variant="caption" color="text.disabled">
+                {new Date(lead.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <IconButton
+                  size="small"
+                  color="primary"
+                  onClick={() => {
+                    setSelectedLead(lead);
+                    if (lead.status === 'NEW') updateLeadStatus(lead.id, 'READ');
+                  }}
+                  title="Lihat Detail Pesan"
+                >
+                  <VisibilityIcon fontSize="small" />
+                </IconButton>
+                <IconButton
+                  size="small"
+                  color="error"
+                  onClick={() => setLeadToDelete(lead.id)}
+                  title="Hapus Pesan"
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </Box>
+            </Box>
+          </Paper>
+        ))}
+      </Stack>
+      )}
 
       {/* Detail Dialog Modal (as specified in RSD) */}
       <Dialog
