@@ -75,16 +75,16 @@ html, body {
 @media print {
   @page {
     size: A4 portrait;
-    margin-top: 26mm;
-    margin-bottom: 12mm;
-    margin-left: 12mm;
-    margin-right: 12mm;
+    margin-top: 4cm !important;
+    margin-bottom: 1.5cm !important;
+    margin-left: 1.2cm !important;
+    margin-right: 1.2cm !important;
   }
 
   @page :first {
-    margin-top: 0;
-    margin-left: 0;
-    margin-right: 0;
+    margin-top: 4cm !important;
+    margin-left: 1.2cm !important;
+    margin-right: 1.2cm !important;
   }
 
   html, body {
@@ -120,16 +120,30 @@ html, body {
     display: block !important;
   }
 
+  /* Repeat Kop / Header on top of EVERY printed page */
+  .printable-document .repeat-page-header {
+    display: flex !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 3.2cm !important;
+    background-color: #ffffff !important;
+    border-bottom: 2px solid #000000 !important;
+    padding-left: 1.2cm !important;
+    padding-right: 1.2cm !important;
+    padding-top: 0.4cm !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    z-index: 10000 !important;
+  }
+
   .printable-document .doc-content-body {
     padding-left: 12mm !important;
     padding-right: 12mm !important;
     padding-bottom: 12mm !important;
     padding-top: 4mm !important;
     margin-top: 0 !important;
-  }
-
-  .printable-document .doc-header-top {
-    margin-top: -62mm !important;
   }
 
   .printable-document .section-block {

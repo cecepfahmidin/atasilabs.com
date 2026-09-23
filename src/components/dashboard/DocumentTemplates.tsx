@@ -244,42 +244,42 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
           )}
         </Grid>
 
-      {/* Electronic Audit Trail Verification Badge */}
-      {(party1Sig?.auditTrail || party2Sig?.auditTrail) && (
-        <Paper
-          variant="outlined"
-          sx={{
-            mt: 3,
-            p: 1.5,
-            borderRadius: 2,
-            borderColor: '#10b981',
-            bgcolor: 'rgba(16, 185, 129, 0.04)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1.5,
-          }}
-        >
-          <VerifiedIcon sx={{ color: '#10b981', fontSize: 30, flexShrink: 0 }} />
-          <Box sx={{ width: '100%' }}>
-            <Typography variant="caption" sx={{ fontWeight: 800, color: '#047857', display: 'block', textTransform: 'uppercase', letterSpacing: 0.3 }}>
-              VERIFIKASI TANDA TANGAN ELEKTRONIK & AUDIT TRAIL (UU ITE PASAL 11)
-            </Typography>
-            {party1Sig?.auditTrail && (
-              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.68rem', display: 'block' }}>
-                • <strong>{party1Title} ({party1Sig.auditTrail.signedBy}):</strong> Waktu: {party1Sig.auditTrail.signedAt} | IP: {party1Sig.auditTrail.ipAddress} | Ref Hash: {party1Sig.auditTrail.documentHash}
+        {/* Electronic Audit Trail Verification Badge */}
+        {(party1Sig?.auditTrail || party2Sig?.auditTrail) && (
+          <Paper
+            variant="outlined"
+            sx={{
+              mt: 3,
+              p: 1.5,
+              borderRadius: 2,
+              borderColor: '#10b981',
+              bgcolor: 'rgba(16, 185, 129, 0.04)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.5,
+            }}
+          >
+            <VerifiedIcon sx={{ color: '#10b981', fontSize: 30, flexShrink: 0 }} />
+            <Box sx={{ width: '100%' }}>
+              <Typography variant="caption" sx={{ fontWeight: 800, color: '#047857', display: 'block', textTransform: 'uppercase', letterSpacing: 0.3 }}>
+                VERIFIKASI TANDA TANGAN ELEKTRONIK & AUDIT TRAIL (UU ITE PASAL 11)
               </Typography>
-            )}
-            {party2Sig?.auditTrail && (
-              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.68rem', display: 'block' }}>
-                • <strong>{party2Title} ({party2Sig.auditTrail.signedBy}):</strong> Waktu: {party2Sig.auditTrail.signedAt} | IP: {party2Sig.auditTrail.ipAddress} | Ref Hash: {party2Sig.auditTrail.documentHash}
-              </Typography>
-            )}
-          </Box>
-        </Paper>
-      )}
-    </Box>
-  );
-};
+              {party1Sig?.auditTrail && (
+                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.68rem', display: 'block' }}>
+                  • <strong>{party1Title} ({party1Sig.auditTrail.signedBy}):</strong> Waktu: {party1Sig.auditTrail.signedAt} | IP: {party1Sig.auditTrail.ipAddress} | Ref Hash: {party1Sig.auditTrail.documentHash}
+                </Typography>
+              )}
+              {party2Sig?.auditTrail && (
+                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.68rem', display: 'block' }}>
+                  • <strong>{party2Title} ({party2Sig.auditTrail.signedBy}):</strong> Waktu: {party2Sig.auditTrail.signedAt} | IP: {party2Sig.auditTrail.ipAddress} | Ref Hash: {party2Sig.auditTrail.documentHash}
+                </Typography>
+              )}
+            </Box>
+          </Paper>
+        )}
+      </Box>
+    );
+  };
 
   // Header Letterhead Component
   const Letterhead = ({ title }: { title: string }) => (
@@ -335,433 +335,397 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
         elevation={0}
         className="printable-document"
         sx={{
-          p: 0,
+          p: { xs: 2.5, sm: 4 },
           borderRadius: 3,
           border: '1px solid rgba(0,0,0,0.12)',
           bgcolor: '#ffffff',
           color: '#0f172a',
           fontFamily: 'Inter, Arial, sans-serif',
           boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
-          overflow: 'hidden',
           '& .MuiTypography-root': { color: 'inherit' },
           '& .MuiTypography-colorTextSecondary': { color: '#475569 !important' },
           '& .MuiTableCell-root': { color: '#0f172a' },
         }}
       >
-        {/* Full-bleed Header Image (public/header.png) */}
-        <Box sx={{ width: '100%', m: 0, p: 0, lineHeight: 0, position: 'relative', zIndex: 0 }}>
-          <Box
-            component="img"
-            src="/header.png"
-            alt="Header Dokumen CIF Atasilabs"
-            sx={{
-              width: '100%',
-              display: 'block',
-              height: 'auto',
-            }}
-            onError={(e: any) => {
-              if (e.target.parentElement) {
-                e.target.parentElement.style.display = 'none';
-              }
-            }}
-          />
-        </Box>
-
-        {/* Document Content Body overlay */}
-        <Box
-          className="doc-content-body"
-          sx={{
-            position: 'relative',
-            zIndex: 1,
-            p: { xs: 2.5, sm: 4 },
-            pt: 0,
-          }}
-        >
-          {/* Top Header Title & Metadata Table */}
-          <Box
-            className="doc-header-top"
-            sx={{
-              display: 'flex',
-              justify: 'space-between',
-              alignItems: 'flex-start',
-              mb: 2,
-              pb: 1,
-              borderBottom: '1px solid #e2e8f0',
-              mt: { xs: '-175px', sm: '-255px', md: '-295px' },
-            }}
-          >
-            <Box sx={{ pt: 0.5 }}>
-              <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', fontSize: '1.25rem', lineHeight: 1.2 }}>
-                Client Intake Form (CIF)
+        {/* Custom PDF Kop & Top Header Table */}
+        <Box className="repeat-page-header" sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2, pb: 1, borderBottom: '2px solid #000' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box component="img" src="/logo.svg" alt="Atasilabs Logo" sx={{ height: 36, width: 'auto' }} onError={(e: any) => { e.target.style.display = 'none'; }} />
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: 900, lineHeight: 1.1, color: '#0f172a', letterSpacing: '-0.02em' }}>
+                atasilabs
               </Typography>
-              <Typography variant="caption" sx={{ fontWeight: 600, color: '#475569', display: 'block', mt: 0.5 }}>
+              <Typography variant="caption" sx={{ fontWeight: 600, color: '#475569', display: 'block' }}>
                 Standard Operating Procedure (SOP) Internal
               </Typography>
             </Box>
+          </Box>
 
-            <Box sx={{ textAlign: 'right' }}>
-              <TableContainer component={Box} sx={{ border: '1px solid #000', borderRadius: 0, display: 'inline-block' }}>
-                <Table size="small" sx={{ width: 'auto', '& .MuiTableCell-root': { py: 0.3, px: 1, fontSize: '0.75rem', border: '1px solid #000' } }}>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 700, bgcolor: '#f8fafc' }}>Nama Admin</TableCell>
-                      <TableCell sx={{ minWidth: 150 }}>: {cif.adminName || '-'}</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 700, bgcolor: '#f8fafc' }}>Tanggal</TableCell>
-                      <TableCell>: {cif.date || '-'}</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 700, bgcolor: '#f8fafc' }}>Sumber Informasi</TableCell>
-                      <TableCell>: {cif.infoSource || '-'}</TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </TableContainer>
+          <Box sx={{ textAlign: 'right' }}>
+            <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', fontSize: '1.2rem' }}>
+              Client Intake Form (CIF)
+            </Typography>
+            <Box sx={{ mt: 0.5, display: 'inline-block' }}>
+              <Table size="small" sx={{ width: 'auto', borderCollapse: 'collapse', border: '1px solid #000', '& .MuiTableCell-root': { py: 0.3, px: 1, fontSize: '0.75rem', border: '1px solid #000' } }}>
+                <TableBody>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700, bgcolor: '#f8fafc' }}>Nama Admin</TableCell>
+                    <TableCell sx={{ minWidth: 150 }}>: {cif.adminName || '-'}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700, bgcolor: '#f8fafc' }}>Tanggal</TableCell>
+                    <TableCell>: {cif.date || '-'}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700, bgcolor: '#f8fafc' }}>Sumber Informasi</TableCell>
+                    <TableCell>: {cif.infoSource || '-'}</TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </Box>
+          </Box>
+        </Box>
+
+          {/* RINGKASAN EKSEKUTIF */}
+          <Box className="section-block" sx={{ mb: 2.5, mt: 2 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#000', mb: 0.5 }}>
+              RINGKASAN EKSEKUTIF
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#334155', fontSize: '0.85rem', lineHeight: 1.5 }}>
+              Dokumen ini digunakan oleh tim admin (sales) untuk mencatat, mengorganisir dan menyetujui ringkasan kebutuhan proyek pengembangan website, aplikasi maupun produk digital berdasarkan hasil diskusi awal dengan klien.
+            </Typography>
+          </Box>
+
+          {/* 1. INFORMASI UMUM KLIEN DAN PROYEK */}
+          <Box className="section-block" sx={{ mb: 2.5, mt: 2 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 800, textTransform: 'uppercase', color: '#000', mb: 0.5 }}>
+              1. INFORMASI UMUM KLIEN DAN PROYEK
+            </Typography>
+            <Box sx={{ border: 'none', p: 0, m: 0 }}>
+              <Table size="small" sx={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #000', margin: '0 !important', padding: '0 !important', '& .MuiTableCell-root': { pt: 0.6, pb: 0.5, px: 1.5, border: '1px solid #000', fontSize: '0.85rem', lineHeight: 1.35, verticalAlign: 'middle' } }}>
+                <TableBody>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700, width: '32%', bgcolor: '#ffffff' }}>Nama Klien/Perusahaan</TableCell>
+                    <TableCell>{cif.clientName || '-'}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700, bgcolor: '#ffffff' }}>Penanggung Jawab (PIC)*</TableCell>
+                    <TableCell>{cif.picName || '-'}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700, bgcolor: '#ffffff' }}>Kontak (Email/Whatsapp)</TableCell>
+                    <TableCell>{cif.contact || '-'}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700, bgcolor: '#ffffff' }}>Bidang Usaha/Industri</TableCell>
+                    <TableCell>{cif.industry || '-'}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700, bgcolor: '#ffffff' }}>Website (jika ada)</TableCell>
+                    <TableCell>{cif.websiteUrl || '-'}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700, bgcolor: '#ffffff' }}>Lokasi/Tempat Usaha Klien</TableCell>
+                    <TableCell>{cif.businessLocation || '-'}</TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </Box>
+            <Typography variant="caption" sx={{ fontStyle: 'italic', color: '#475569', mt: 0.5, display: 'block' }}>
+              *Jika perusahaan memiliki struktur manajemen yang kompleks
+            </Typography>
+          </Box>
+
+          {/* 2. PROFIL PROYEK & TUJUAN BISNIS */}
+          <Box className="section-block" sx={{ mb: 2.5, mt: 3, pt: 1 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 800, textTransform: 'uppercase', color: '#000', mb: 0.5 }}>
+              2. PROFIL PROYEK & TUJUAN BISNIS
+            </Typography>
+            <Box sx={{ border: 'none', p: 0, m: 0 }}>
+              <Table size="small" sx={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #000', margin: '0 !important', padding: '0 !important', '& .MuiTableCell-root': { border: '1px solid #000', fontSize: '0.85rem', lineHeight: 1.35 } }}>
+                <TableBody>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700, bgcolor: headerGreen, color: '#000', pt: 0.6, pb: 0.5, px: 1.5 }}>
+                      Ringkasan Proyek
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell sx={{ pt: 0.6, pb: 0.5, px: 1.5, verticalAlign: 'middle' }}>
+                      {cif.projectSummary || '-'}
+                    </TableCell>
+                  </TableRow>
+
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700, bgcolor: headerGreen, color: '#000', pt: 0.6, pb: 0.5, px: 1.5 }}>
+                      Tujuan Utama Pembuatan Website (Primary Goals)
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell sx={{ pt: 0.6, pb: 0.5, px: 1.5, verticalAlign: 'middle' }}>
+                      {cif.primaryGoals || '-'}
+                    </TableCell>
+                  </TableRow>
+
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700, bgcolor: headerGreen, color: '#000', pt: 0.6, pb: 0.5, px: 1.5 }}>
+                      Target Audiens / Pengguna Website
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell sx={{ pt: 0.6, pb: 0.5, px: 1.5, verticalAlign: 'middle' }}>
+                      {cif.targetAudience || '-'}
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </Box>
+            <Typography variant="caption" sx={{ fontStyle: 'italic', color: '#475569', mt: 0.5, display: 'block' }}>
+              Note: Demografi (usia, profesi, lokasi) & Perilaku (apa yang di cari saat berkunjung ke website)
+            </Typography>
+          </Box>
+
+          {/* 3. RUANG LINGKUP & FITUR WEBSITE */}
+          <Box className="section-block" sx={{ mb: 2.5, mt: 3, pt: 1 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 800, textTransform: 'uppercase', color: '#000', mb: 0.5 }}>
+              3. RUANG LINGKUP & FITUR WEBSITE
+            </Typography>
+            <Box sx={{ border: 'none', p: 0, m: 0 }}>
+              <Table size="small" sx={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #000', margin: '0 !important', padding: '0 !important', '& .MuiTableCell-root': { pt: 0.6, pb: 0.5, px: 1.5, border: '1px solid #000', fontSize: '0.85rem', lineHeight: 1.35, verticalAlign: 'middle' } }}>
+                <TableHead>
+                  <TableRow sx={{ bgcolor: headerYellow }}>
+                    <TableCell sx={{ fontWeight: 800, width: '32%', color: '#000' }}>Kategori</TableCell>
+                    <TableCell sx={{ fontWeight: 800, color: '#000' }}>Rincian Spesifikasi & Kebutuhan</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700 }}>Tipe Website/Tier</TableCell>
+                    <TableCell>{cif.tier || '-'}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700 }}>Struktur Halaman</TableCell>
+                    <TableCell>{cif.pageStructure || '-'}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700 }}>Fitur Utama</TableCell>
+                    <TableCell>{cif.mainFeatures || '-'}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700 }}>Teknologi & Framework</TableCell>
+                    <TableCell>{cif.techFramework || '-'}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700 }}>Lain – Lain</TableCell>
+                    <TableCell>{cif.scopeOthers || '-'}</TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
             </Box>
           </Box>
 
-        {/* RINGKASAN EKSEKUTIF */}
-        <Box className="section-block" sx={{ mb: 2.5, mt: 2 }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#000', mb: 0.5 }}>
-            RINGKASAN EKSEKUTIF
-          </Typography>
-          <Typography variant="body2" sx={{ color: '#334155', fontSize: '0.85rem', lineHeight: 1.5 }}>
-            Dokumen ini digunakan oleh tim admin (sales) untuk mencatat, mengorganisir dan menyetujui ringkasan kebutuhan proyek pengembangan website, aplikasi maupun produk digital berdasarkan hasil diskusi awal dengan klien.
-          </Typography>
-        </Box>
-
-        {/* 1. INFORMASI UMUM KLIEN DAN PROYEK */}
-        <Box className="section-block" sx={{ mb: 2.5, mt: 2 }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 800, textTransform: 'uppercase', color: '#000', mb: 0.5 }}>
-            1. INFORMASI UMUM KLIEN DAN PROYEK
-          </Typography>
-          <Box sx={{ border: 'none', p: 0, m: 0 }}>
-            <Table size="small" sx={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #000', margin: '0 !important', padding: '0 !important', '& .MuiTableCell-root': { pt: 0.6, pb: 0.5, px: 1.5, border: '1px solid #000', fontSize: '0.85rem', lineHeight: 1.35, verticalAlign: 'middle' } }}>
-              <TableBody>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 700, width: '32%', bgcolor: '#ffffff' }}>Nama Klien/Perusahaan</TableCell>
-                  <TableCell>{cif.clientName || '-'}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 700, bgcolor: '#ffffff' }}>Penanggung Jawab (PIC)*</TableCell>
-                  <TableCell>{cif.picName || '-'}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 700, bgcolor: '#ffffff' }}>Kontak (Email/Whatsapp)</TableCell>
-                  <TableCell>{cif.contact || '-'}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 700, bgcolor: '#ffffff' }}>Bidang Usaha/Industri</TableCell>
-                  <TableCell>{cif.industry || '-'}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 700, bgcolor: '#ffffff' }}>Website (jika ada)</TableCell>
-                  <TableCell>{cif.websiteUrl || '-'}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 700, bgcolor: '#ffffff' }}>Lokasi/Tempat Usaha Klien</TableCell>
-                  <TableCell>{cif.businessLocation || '-'}</TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          </Box>
-          <Typography variant="caption" sx={{ fontStyle: 'italic', color: '#475569', mt: 0.5, display: 'block' }}>
-            *Jika perusahaan memiliki struktur manajemen yang kompleks
-          </Typography>
-        </Box>
-
-        {/* 2. PROFIL PROYEK & TUJUAN BISNIS */}
-        <Box className="section-block" sx={{ mb: 2.5, mt: 3, pt: 1 }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 800, textTransform: 'uppercase', color: '#000', mb: 0.5 }}>
-            2. PROFIL PROYEK & TUJUAN BISNIS
-          </Typography>
-          <Box sx={{ border: 'none', p: 0, m: 0 }}>
-            <Table size="small" sx={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #000', margin: '0 !important', padding: '0 !important', '& .MuiTableCell-root': { border: '1px solid #000', fontSize: '0.85rem', lineHeight: 1.35 } }}>
-              <TableBody>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 700, bgcolor: headerGreen, color: '#000', pt: 0.6, pb: 0.5, px: 1.5 }}>
-                    Ringkasan Proyek
-                  </TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell sx={{ pt: 0.6, pb: 0.5, px: 1.5, verticalAlign: 'middle' }}>
-                    {cif.projectSummary || '-'}
-                  </TableCell>
-                </TableRow>
-
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 700, bgcolor: headerGreen, color: '#000', pt: 0.6, pb: 0.5, px: 1.5 }}>
-                    Tujuan Utama Pembuatan Website (Primary Goals)
-                  </TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell sx={{ pt: 0.6, pb: 0.5, px: 1.5, verticalAlign: 'middle' }}>
-                    {cif.primaryGoals || '-'}
-                  </TableCell>
-                </TableRow>
-
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 700, bgcolor: headerGreen, color: '#000', pt: 0.6, pb: 0.5, px: 1.5 }}>
-                    Target Audiens / Pengguna Website
-                  </TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell sx={{ pt: 0.6, pb: 0.5, px: 1.5, verticalAlign: 'middle' }}>
-                    {cif.targetAudience || '-'}
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          </Box>
-          <Typography variant="caption" sx={{ fontStyle: 'italic', color: '#475569', mt: 0.5, display: 'block' }}>
-            Note: Demografi (usia, profesi, lokasi) & Perilaku (apa yang di cari saat berkunjung ke website)
-          </Typography>
-        </Box>
-
-        {/* 3. RUANG LINGKUP & FITUR WEBSITE */}
-        <Box className="section-block" sx={{ mb: 2.5, mt: 3, pt: 1 }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 800, textTransform: 'uppercase', color: '#000', mb: 0.5 }}>
-            3. RUANG LINGKUP & FITUR WEBSITE
-          </Typography>
-          <Box sx={{ border: 'none', p: 0, m: 0 }}>
-            <Table size="small" sx={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #000', margin: '0 !important', padding: '0 !important', '& .MuiTableCell-root': { pt: 0.6, pb: 0.5, px: 1.5, border: '1px solid #000', fontSize: '0.85rem', lineHeight: 1.35, verticalAlign: 'middle' } }}>
-              <TableHead>
-                <TableRow sx={{ bgcolor: headerYellow }}>
-                  <TableCell sx={{ fontWeight: 800, width: '32%', color: '#000' }}>Kategori</TableCell>
-                  <TableCell sx={{ fontWeight: 800, color: '#000' }}>Rincian Spesifikasi & Kebutuhan</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 700 }}>Tipe Website/Tier</TableCell>
-                  <TableCell>{cif.tier || '-'}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 700 }}>Struktur Halaman</TableCell>
-                  <TableCell>{cif.pageStructure || '-'}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 700 }}>Fitur Utama</TableCell>
-                  <TableCell>{cif.mainFeatures || '-'}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 700 }}>Teknologi & Framework</TableCell>
-                  <TableCell>{cif.techFramework || '-'}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 700 }}>Lain – Lain</TableCell>
-                  <TableCell>{cif.scopeOthers || '-'}</TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          </Box>
-        </Box>
-
-        {/* 4. DESAIN & BRANDING */}
-        <Box className="section-block" sx={{ mb: 2.5, pt: 1 }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 800, textTransform: 'uppercase', color: '#000', mb: 0.5 }}>
-            4. DESAIN & BRANDING
-          </Typography>
-          <Box sx={{ border: 'none', p: 0, m: 0 }}>
-            <Table size="small" sx={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #000', margin: '0 !important', padding: '0 !important', '& .MuiTableCell-root': { pt: 0.6, pb: 0.5, px: 1.5, border: '1px solid #000', fontSize: '0.85rem', lineHeight: 1.35, verticalAlign: 'middle' } }}>
-              <TableHead>
-                <TableRow sx={{ bgcolor: headerYellow }}>
-                  <TableCell sx={{ fontWeight: 800, width: '32%', color: '#000' }}>Kategori</TableCell>
-                  <TableCell sx={{ fontWeight: 800, color: '#000' }}>Rincian Spesifikasi & Kebutuhan</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 700 }}>Aset Branding Klien</TableCell>
-                  <TableCell>
-                    ({cif.brandingAssets?.logo ? ' ✓ ' : '   '}) Logo, ({cif.brandingAssets?.color ? ' ✓ ' : '   '}) Warna, ({cif.brandingAssets?.officialFont ? ' ✓ ' : '   '}) Font Resmi, ({cif.brandingAssets?.others ? ' ✓ ' : '   '}) Lainnya {cif.brandingAssets?.others ? `: ${cif.brandingAssets.others}` : '.....'}
-                  </TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 700 }}>Gaya Visual (Style/Vibe)</TableCell>
-                  <TableCell>
-                    ({vsObj.modern ? ' ✓ ' : '   '}) Modern/Minimalis, ({vsObj.professional ? ' ✓ ' : '   '}) Profesional/Korporasi, ({vsObj.elegant ? ' ✓ ' : '   '}) Elegant/Mewah, ({vsObj.others ? ' ✓ ' : '   '}) Lainnya {vsObj.others ? `: ${vsObj.others}` : '....'}
-                  </TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 700, verticalAlign: 'top', pt: 0.6 }}>Referensi Website (menyukai)</TableCell>
-                  <TableCell>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.3 }}>
-                      <Typography variant="caption" sx={{ fontSize: '0.85rem', lineHeight: 1.3 }}>(1) {cif.referenceWebsites?.[0] || '....................................................................................'}</Typography>
-                      <Typography variant="caption" sx={{ fontSize: '0.85rem', lineHeight: 1.3 }}>(2) {cif.referenceWebsites?.[1] || '....................................................................................'}</Typography>
-                      <Typography variant="caption" sx={{ fontSize: '0.85rem', lineHeight: 1.3 }}>(3) {cif.referenceWebsites?.[2] || '....................................................................................'}</Typography>
-                    </Box>
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          </Box>
-        </Box>
-
-        {/* 5. MATERI & ASET KONTEN */}
-        <Box className="section-block" sx={{ mb: 2.5, mt: 3, pt: 1 }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 800, textTransform: 'uppercase', color: '#000', mb: 0.5 }}>
-            5. MATERI & ASET KONTEN
-          </Typography>
-          <Box sx={{ border: 'none', p: 0, m: 0 }}>
-            <Table size="small" sx={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #000', margin: '0 !important', padding: '0 !important', '& .MuiTableCell-root': { pt: 0.6, pb: 0.5, px: 1.5, border: '1px solid #000', fontSize: '0.85rem', lineHeight: 1.35, verticalAlign: 'middle' } }}>
-              <TableHead>
-                <TableRow sx={{ bgcolor: headerYellow }}>
-                  <TableCell sx={{ fontWeight: 800, width: '32%', color: '#000' }}>Kategori</TableCell>
-                  <TableCell sx={{ fontWeight: 800, color: '#000' }}>Penanggung Jawab / Catatan</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 700 }}>Ketersediaan Konten</TableCell>
-                  <TableCell>
-                    ({cif.contentAvailability?.general === 'Tersedia' ? ' ✓ ' : '   '}) Tersedia, ({cif.contentAvailability?.general === 'Tidak Tersedia' ? ' ✓ ' : '   '}) Tidak Tersedia, ({cif.contentAvailability?.general === 'Disediakan Developer' ? ' ✓ ' : '   '}) Disediakan Developer
-                  </TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 700 }}>Teks/Copywriting</TableCell>
-                  <TableCell>
-                    ({cif.contentAvailability?.copywriting === 'Tersedia' ? ' ✓ ' : '   '}) Tersedia, ({cif.contentAvailability?.copywriting === 'Tidak Tersedia' ? ' ✓ ' : '   '}) Tidak Tersedia, ({cif.contentAvailability?.copywriting === 'Disediakan Developer' ? ' ✓ ' : '   '}) Disediakan Developer
-                  </TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 700 }}>Gambar/Foto/Produk</TableCell>
-                  <TableCell>
-                    ({cif.contentAvailability?.images === 'Tersedia' ? ' ✓ ' : '   '}) Tersedia, ({cif.contentAvailability?.images === 'Tidak Tersedia' ? ' ✓ ' : '   '}) Tidak Tersedia, ({cif.contentAvailability?.images === 'Disediakan Developer' ? ' ✓ ' : '   '}) Disediakan Developer
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          </Box>
-        </Box>
-
-        {/* 6. ESTIMASI WAKTU, ANGGARAN & PERSETUJUAN */}
-        <Box className="section-block" sx={{ mb: 2.5, mt: 3, pt: 1 }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 800, textTransform: 'uppercase', color: '#000', mb: 0.5 }}>
-            6. ESTIMASI WAKTU, ANGGARAN & PERSETUJUAN
-          </Typography>
-          <Box sx={{ border: 'none', p: 0, m: 0 }}>
-            <Table size="small" sx={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #000', margin: '0 !important', padding: '0 !important', '& .MuiTableCell-root': { pt: 0.6, pb: 0.5, px: 1.5, border: '1px solid #000', fontSize: '0.85rem', lineHeight: 1.35, verticalAlign: 'middle' } }}>
-              <TableHead>
-                <TableRow sx={{ bgcolor: headerYellow }}>
-                  <TableCell sx={{ fontWeight: 800, width: '32%', color: '#000' }}>Kategori</TableCell>
-                  <TableCell sx={{ fontWeight: 800, color: '#000' }}>Penanggung Jawab / Catatan</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 700 }}>Estimasi Biaya Proyek</TableCell>
-                  <TableCell>
-                    Tier: {cif.tier || '....'} {cif.additionalCosts ? `/ Biaya Tambahan: Rp ${cif.additionalCosts.toLocaleString('id-ID')}` : '/ Biaya Tambahan: Rp 0'} (Total: Rp {cif.estimatedBudget?.toLocaleString('id-ID') || 0})
-                  </TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 700 }}>Skema Pembayaran</TableCell>
-                  <TableCell>
-                    DP( {cif.paymentScheme?.dpPercent ?? 30}% ), Mid Project ( {cif.paymentScheme?.midPercent ?? 30}% ), Pelunasan( {cif.paymentScheme?.finalPercent ?? 40}% )
-                  </TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 700 }}>Target Selesai (Launch Date)</TableCell>
-                  <TableCell>Tanggal: {cif.targetLaunchDate || '-'}</TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          </Box>
-        </Box>
-
-        {/* 7. CATATAN TAMBAHAN & PERSETUJUAN */}
-        <Box className="section-block" sx={{ mb: 2.5, mt: 3, pt: 1 }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 800, textTransform: 'uppercase', color: '#000', mb: 0.5 }}>
-            7. CATATAN TAMBAHAN & PERSETUJUAN
-          </Typography>
-          <Box sx={{ border: 'none', p: 0, m: 0 }}>
-            <Table size="small" sx={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #000', margin: '0 !important', padding: '0 !important', '& .MuiTableCell-root': { pt: 0.6, pb: 0.5, px: 1.5, border: '1px solid #000', fontSize: '0.85rem', lineHeight: 1.35, verticalAlign: 'middle' } }}>
-              <TableHead>
-                <TableRow sx={{ bgcolor: headerGreen }}>
-                  <TableCell sx={{ fontWeight: 800, width: '32%', color: '#000' }}>Prihal</TableCell>
-                  <TableCell sx={{ fontWeight: 800, color: '#000' }}>Catatan</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {cif.additionalNotesTable && cif.additionalNotesTable.length > 0 ? (
-                  cif.additionalNotesTable.map((row, idx) => (
-                    <TableRow key={idx}>
-                      <TableCell sx={{ fontWeight: 700 }}>{row.prihal || '-'}</TableCell>
-                      <TableCell>{row.catatan || '-'}</TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 700 }}>Catatan Khusus</TableCell>
-                    <TableCell>{cif.additionalNotes || '-'}</TableCell>
+          {/* 4. DESAIN & BRANDING */}
+          <Box className="section-block" sx={{ mb: 2.5, pt: 1 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 800, textTransform: 'uppercase', color: '#000', mb: 0.5 }}>
+              4. DESAIN & BRANDING
+            </Typography>
+            <Box sx={{ border: 'none', p: 0, m: 0 }}>
+              <Table size="small" sx={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #000', margin: '0 !important', padding: '0 !important', '& .MuiTableCell-root': { pt: 0.6, pb: 0.5, px: 1.5, border: '1px solid #000', fontSize: '0.85rem', lineHeight: 1.35, verticalAlign: 'middle' } }}>
+                <TableHead>
+                  <TableRow sx={{ bgcolor: headerYellow }}>
+                    <TableCell sx={{ fontWeight: 800, width: '32%', color: '#000' }}>Kategori</TableCell>
+                    <TableCell sx={{ fontWeight: 800, color: '#000' }}>Rincian Spesifikasi & Kebutuhan</TableCell>
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                </TableHead>
+                <TableBody>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700 }}>Aset Branding Klien</TableCell>
+                    <TableCell>
+                      ({cif.brandingAssets?.logo ? ' ✓ ' : '   '}) Logo, ({cif.brandingAssets?.color ? ' ✓ ' : '   '}) Warna, ({cif.brandingAssets?.officialFont ? ' ✓ ' : '   '}) Font Resmi, ({cif.brandingAssets?.others ? ' ✓ ' : '   '}) Lainnya {cif.brandingAssets?.others ? `: ${cif.brandingAssets.others}` : '.....'}
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700 }}>Gaya Visual (Style/Vibe)</TableCell>
+                    <TableCell>
+                      ({vsObj.modern ? ' ✓ ' : '   '}) Modern/Minimalis, ({vsObj.professional ? ' ✓ ' : '   '}) Profesional/Korporasi, ({vsObj.elegant ? ' ✓ ' : '   '}) Elegant/Mewah, ({vsObj.others ? ' ✓ ' : '   '}) Lainnya {vsObj.others ? `: ${vsObj.others}` : '....'}
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700, verticalAlign: 'top', pt: 0.6 }}>Referensi Website (menyukai)</TableCell>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.3 }}>
+                        <Typography variant="caption" sx={{ fontSize: '0.85rem', lineHeight: 1.3 }}>(1) {cif.referenceWebsites?.[0] || '....................................................................................'}</Typography>
+                        <Typography variant="caption" sx={{ fontSize: '0.85rem', lineHeight: 1.3 }}>(2) {cif.referenceWebsites?.[1] || '....................................................................................'}</Typography>
+                        <Typography variant="caption" sx={{ fontSize: '0.85rem', lineHeight: 1.3 }}>(3) {cif.referenceWebsites?.[2] || '....................................................................................'}</Typography>
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </Box>
           </Box>
-        </Box>
 
-        {/* Signature Footer matching Formal Indonesian Official Document Standards */}
-        <Box sx={{ mt: 5, pt: 2, display: 'flex', justifyContent: 'flex-end', textAlign: 'center' }}>
-          <Box sx={{ minWidth: 260 }}>
-            {/* Tempat & Tanggal Penandatanganan */}
-            <Typography variant="body2" sx={{ color: '#334155', mb: 1.5, fontSize: '0.85rem' }}>
-              Subang, {cif.date || new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+          {/* 5. MATERI & ASET KONTEN */}
+          <Box className="section-block" sx={{ mb: 2.5, mt: 3, pt: 1 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 800, textTransform: 'uppercase', color: '#000', mb: 0.5 }}>
+              5. MATERI & ASET KONTEN
             </Typography>
+            <Box sx={{ border: 'none', p: 0, m: 0 }}>
+              <Table size="small" sx={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #000', margin: '0 !important', padding: '0 !important', '& .MuiTableCell-root': { pt: 0.6, pb: 0.5, px: 1.5, border: '1px solid #000', fontSize: '0.85rem', lineHeight: 1.35, verticalAlign: 'middle' } }}>
+                <TableHead>
+                  <TableRow sx={{ bgcolor: headerYellow }}>
+                    <TableCell sx={{ fontWeight: 800, width: '32%', color: '#000' }}>Kategori</TableCell>
+                    <TableCell sx={{ fontWeight: 800, color: '#000' }}>Penanggung Jawab / Catatan</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700 }}>Ketersediaan Konten</TableCell>
+                    <TableCell>
+                      ({cif.contentAvailability?.general === 'Tersedia' ? ' ✓ ' : '   '}) Tersedia, ({cif.contentAvailability?.general === 'Tidak Tersedia' ? ' ✓ ' : '   '}) Tidak Tersedia, ({cif.contentAvailability?.general === 'Disediakan Developer' ? ' ✓ ' : '   '}) Disediakan Developer
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700 }}>Teks/Copywriting</TableCell>
+                    <TableCell>
+                      ({cif.contentAvailability?.copywriting === 'Tersedia' ? ' ✓ ' : '   '}) Tersedia, ({cif.contentAvailability?.copywriting === 'Tidak Tersedia' ? ' ✓ ' : '   '}) Tidak Tersedia, ({cif.contentAvailability?.copywriting === 'Disediakan Developer' ? ' ✓ ' : '   '}) Disediakan Developer
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700 }}>Gambar/Foto/Produk</TableCell>
+                    <TableCell>
+                      ({cif.contentAvailability?.images === 'Tersedia' ? ' ✓ ' : '   '}) Tersedia, ({cif.contentAvailability?.images === 'Tidak Tersedia' ? ' ✓ ' : '   '}) Tidak Tersedia, ({cif.contentAvailability?.images === 'Disediakan Developer' ? ' ✓ ' : '   '}) Disediakan Developer
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </Box>
+          </Box>
 
-            {/* 1. JABATAN & INSTANSI DI ATAS */}
-            <Typography variant="body2" sx={{ fontWeight: 700, color: '#0f172a', lineHeight: 1.2 }}>
-              Hormat kami,
+          {/* 6. ESTIMASI WAKTU, ANGGARAN & PERSETUJUAN */}
+          <Box className="section-block" sx={{ mb: 2.5, mt: 3, pt: 1 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 800, textTransform: 'uppercase', color: '#000', mb: 0.5 }}>
+              6. ESTIMASI WAKTU, ANGGARAN & PERSETUJUAN
             </Typography>
-            <Typography variant="subtitle2" sx={{ fontWeight: 900, color: '#0f172a', letterSpacing: '0.02em', mb: 1 }}>
-              ATASILABS
-            </Typography>
+            <Box sx={{ border: 'none', p: 0, m: 0 }}>
+              <Table size="small" sx={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #000', margin: '0 !important', padding: '0 !important', '& .MuiTableCell-root': { pt: 0.6, pb: 0.5, px: 1.5, border: '1px solid #000', fontSize: '0.85rem', lineHeight: 1.35, verticalAlign: 'middle' } }}>
+                <TableHead>
+                  <TableRow sx={{ bgcolor: headerYellow }}>
+                    <TableCell sx={{ fontWeight: 800, width: '32%', color: '#000' }}>Kategori</TableCell>
+                    <TableCell sx={{ fontWeight: 800, color: '#000' }}>Penanggung Jawab / Catatan</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700 }}>Estimasi Biaya Proyek</TableCell>
+                    <TableCell>
+                      Tier: {cif.tier || '....'} {cif.additionalCosts ? `/ Biaya Tambahan: Rp ${cif.additionalCosts.toLocaleString('id-ID')}` : '/ Biaya Tambahan: Rp 0'} (Total: Rp {cif.estimatedBudget?.toLocaleString('id-ID') || 0})
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700 }}>Skema Pembayaran</TableCell>
+                    <TableCell>
+                      DP( {cif.paymentScheme?.dpPercent ?? 30}% ), Mid Project ( {cif.paymentScheme?.midPercent ?? 30}% ), Pelunasan( {cif.paymentScheme?.finalPercent ?? 40}% )
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700 }}>Target Selesai (Launch Date)</TableCell>
+                    <TableCell>Tanggal: {cif.targetLaunchDate || '-'}</TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </Box>
+          </Box>
 
-            {/* 2. TANDATANGAN DI TENGAH */}
-            {cif.party1Signature?.signatureBase64 ? (
-              <Box sx={{ my: 1, p: 1, border: '1px dashed #cbd5e1', borderRadius: 1.5, bgcolor: '#f8fafc' }}>
-                <Box
-                  component="img"
-                  src={cif.party1Signature.signatureBase64}
-                  alt="Tanda Tangan Admin"
-                  sx={{ maxHeight: 65, maxWidth: 190, mx: 'auto', display: 'block', objectFit: 'contain' }}
-                />
-                {cif.party1Signature.auditTrail?.signedAt && (
-                  <Typography variant="caption" display="block" color="text.secondary" sx={{ fontSize: '0.68rem', mt: 0.5, fontStyle: 'italic' }}>
-                    Signed: {cif.party1Signature.auditTrail.signedAt}
+          {/* 7. CATATAN TAMBAHAN & PERSETUJUAN */}
+          <Box className="section-block" sx={{ mb: 2.5, mt: 3, pt: 1 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 800, textTransform: 'uppercase', color: '#000', mb: 0.5 }}>
+              7. CATATAN TAMBAHAN & PERSETUJUAN
+            </Typography>
+            <Box sx={{ border: 'none', p: 0, m: 0 }}>
+              <Table size="small" sx={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #000', margin: '0 !important', padding: '0 !important', '& .MuiTableCell-root': { pt: 0.6, pb: 0.5, px: 1.5, border: '1px solid #000', fontSize: '0.85rem', lineHeight: 1.35, verticalAlign: 'middle' } }}>
+                <TableHead>
+                  <TableRow sx={{ bgcolor: headerGreen }}>
+                    <TableCell sx={{ fontWeight: 800, width: '32%', color: '#000' }}>Prihal</TableCell>
+                    <TableCell sx={{ fontWeight: 800, color: '#000' }}>Catatan</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {cif.additionalNotesTable && cif.additionalNotesTable.length > 0 ? (
+                    cif.additionalNotesTable.map((row, idx) => (
+                      <TableRow key={idx}>
+                        <TableCell sx={{ fontWeight: 700 }}>{row.prihal || '-'}</TableCell>
+                        <TableCell>{row.catatan || '-'}</TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 700 }}>Catatan Khusus</TableCell>
+                      <TableCell>{cif.additionalNotes || '-'}</TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </Box>
+          </Box>
+
+          {/* Signature Footer matching Formal Indonesian Official Document Standards */}
+          <Box sx={{ mt: 5, pt: 2, display: 'flex', justifyContent: 'flex-end', textAlign: 'center' }}>
+            <Box sx={{ minWidth: 260 }}>
+              {/* Tempat & Tanggal Penandatanganan */}
+              <Typography variant="body2" sx={{ color: '#334155', mb: 1.5, fontSize: '0.85rem' }}>
+                Subang, {cif.date || new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+              </Typography>
+
+              {/* 1. JABATAN & INSTANSI DI ATAS */}
+              <Typography variant="body2" sx={{ fontWeight: 700, color: '#0f172a', lineHeight: 1.2 }}>
+                Hormat kami,
+              </Typography>
+              <Typography variant="subtitle2" sx={{ fontWeight: 900, color: '#0f172a', letterSpacing: '0.02em', mb: 1 }}>
+                ATASILABS
+              </Typography>
+
+              {/* 2. TANDATANGAN DI TENGAH */}
+              {cif.party1Signature?.signatureBase64 ? (
+                <Box sx={{ my: 1, p: 1, border: '1px dashed #cbd5e1', borderRadius: 1.5, bgcolor: '#f8fafc' }}>
+                  <Box
+                    component="img"
+                    src={cif.party1Signature.signatureBase64}
+                    alt="Tanda Tangan Admin"
+                    sx={{ maxHeight: 65, maxWidth: 190, mx: 'auto', display: 'block', objectFit: 'contain' }}
+                  />
+                  {cif.party1Signature.auditTrail?.signedAt && (
+                    <Typography variant="caption" display="block" color="text.secondary" sx={{ fontSize: '0.68rem', mt: 0.5, fontStyle: 'italic' }}>
+                      Signed: {cif.party1Signature.auditTrail.signedAt}
+                    </Typography>
+                  )}
+                </Box>
+              ) : (
+                <Box sx={{ minHeight: 70, display: 'flex', alignItems: 'center', justifyContent: 'center', my: 1 }}>
+                  <Typography variant="caption" sx={{ color: '#94a3b8', fontStyle: 'italic' }}>
+                    ( Tanda Tangan Digital )
                   </Typography>
-                )}
-              </Box>
-            ) : (
-              <Box sx={{ minHeight: 70, display: 'flex', alignItems: 'center', justifyContent: 'center', my: 1 }}>
-                <Typography variant="caption" sx={{ color: '#94a3b8', fontStyle: 'italic' }}>
-                  ( Tanda Tangan Digital )
-                </Typography>
-              </Box>
-            )}
+                </Box>
+              )}
 
-            {/* 3. NAMA LENGKAP & JABATAN DI BAWAH (KAIDAH RESMI NASKAH DINAS) */}
-            <Typography
-              variant="body1"
-              sx={{
-                fontWeight: 800,
-                color: '#0f172a',
-                mt: 1.5,
-                fontSize: '0.925rem',
-                textDecoration: 'underline',
-                textUnderlineOffset: '3px',
-              }}
-            >
-              {cif.party1Signature?.auditTrail?.signedBy || cif.adminName || 'Irfan Aulia Ulumudin'}
-            </Typography>
-            <Typography variant="caption" display="block" sx={{ fontWeight: 600, color: '#475569', mt: 0.5, fontSize: '0.78rem' }}>
-              {cif.party1Signature?.auditTrail?.signerRole || getDynamicSignerRole(cif.party1Signature?.auditTrail?.signedBy || cif.adminName, 'Founder & CEO Atasilabs')}
-            </Typography>
+              {/* 3. NAMA LENGKAP & JABATAN DI BAWAH (KAIDAH RESMI NASKAH DINAS) */}
+              <Typography
+                variant="body1"
+                sx={{
+                  fontWeight: 800,
+                  color: '#0f172a',
+                  mt: 1.5,
+                  fontSize: '0.925rem',
+                  textDecoration: 'underline',
+                  textUnderlineOffset: '3px',
+                }}
+              >
+                {cif.party1Signature?.auditTrail?.signedBy || cif.adminName || 'Irfan Aulia Ulumudin'}
+              </Typography>
+              <Typography variant="caption" display="block" sx={{ fontWeight: 600, color: '#475569', mt: 0.5, fontSize: '0.78rem' }}>
+                {cif.party1Signature?.auditTrail?.signerRole || getDynamicSignerRole(cif.party1Signature?.auditTrail?.signedBy || cif.adminName, 'Founder & CEO Atasilabs')}
+              </Typography>
+            </Box>
           </Box>
-        </Box>
-        </Box>
       </Paper>
     );
   }
@@ -790,7 +754,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
         }}
       >
         {/* Custom PDF Kop & Top Header Table */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2, pb: 1, borderBottom: '2px solid #000' }}>
+        <Box className="repeat-page-header" sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2, pb: 1, borderBottom: '2px solid #000' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Box component="img" src="/logo.svg" alt="Atasilabs Logo" sx={{ height: 36, width: 'auto' }} onError={(e: any) => { e.target.style.display = 'none'; }} />
             <Box>
@@ -1205,7 +1169,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
         }}
       >
         {/* Header Kop PDF MoU */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2, pb: 1, borderBottom: '2px solid #000' }}>
+        <Box className="repeat-page-header" sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2, pb: 1, borderBottom: '2px solid #000' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Box component="img" src="/logo.svg" alt="Atasilabs Logo" sx={{ height: 36, width: 'auto' }} onError={(e: any) => { e.target.style.display = 'none'; }} />
             <Box>
@@ -1502,7 +1466,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
         }}
       >
         {/* Header Kop PDF SPK */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2, pb: 1, borderBottom: '2px solid #000' }}>
+        <Box className="repeat-page-header" sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2, pb: 1, borderBottom: '2px solid #000' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Box component="img" src="/logo.svg" alt="Atasilabs Logo" sx={{ height: 36, width: 'auto' }} onError={(e: any) => { e.target.style.display = 'none'; }} />
             <Box>
@@ -2141,8 +2105,8 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
                         qa.overallStatus === 'PASSED' || qa.overallStatus === 'APPROVED'
                           ? 'success'
                           : qa.overallStatus === 'FAILED'
-                          ? 'error'
-                          : 'warning'
+                            ? 'error'
+                            : 'warning'
                       }
                       onClick={onUpdateQA && !isClientRole ? toggleOverallStatus : undefined}
                       sx={{ fontWeight: 800, cursor: onUpdateQA && !isClientRole ? 'pointer' : 'default' }}
@@ -2207,8 +2171,8 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
                           item.status === 'PASSED'
                             ? 'success'
                             : item.status === 'FAILED'
-                            ? 'error'
-                            : 'warning'
+                              ? 'error'
+                              : 'warning'
                         }
                         onClick={onUpdateQA && !isClientRole ? () => toggleTestItemStatus(idx) : undefined}
                         sx={{ fontWeight: 800, height: 22, fontSize: '0.68rem', cursor: onUpdateQA && !isClientRole ? 'pointer' : 'default' }}
