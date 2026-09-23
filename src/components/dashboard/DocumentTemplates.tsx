@@ -374,7 +374,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
             position: 'relative',
             zIndex: 1,
             p: { xs: 2.5, sm: 4 },
-            pt: 1.5,
+            pt: 0,
           }}
         >
           {/* Top Header Title & Metadata Table */}
@@ -387,7 +387,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
               mb: 2,
               pb: 1,
               borderBottom: '1px solid #e2e8f0',
-              mt: { xs: '-135px', sm: '-195px', md: '-225px' },
+              mt: { xs: '-175px', sm: '-255px', md: '-295px' },
             }}
           >
             <Box sx={{ pt: 0.5 }}>
