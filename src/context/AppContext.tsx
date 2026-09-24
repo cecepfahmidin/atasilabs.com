@@ -20,8 +20,8 @@ interface AppContextType {
   toggleTheme: () => void;
   activeView: 'landing' | 'dashboard';
   setActiveView: (view: 'landing' | 'dashboard') => void;
-  dashboardTab: 'overview' | 'leads' | 'portfolio' | 'projects' | 'pricing' | 'documents' | 'users' | 'hpp' | 'master-data' | 'contact' | 'testimonials' | 'team';
-  setDashboardTab: (tab: 'overview' | 'leads' | 'portfolio' | 'projects' | 'pricing' | 'documents' | 'users' | 'hpp' | 'master-data' | 'contact' | 'testimonials' | 'team') => void;
+  dashboardTab: 'overview' | 'leads' | 'portfolio' | 'projects' | 'pricing' | 'documents' | 'payments' | 'users' | 'hpp' | 'master-data' | 'contact' | 'testimonials' | 'team';
+  setDashboardTab: (tab: 'overview' | 'leads' | 'portfolio' | 'projects' | 'pricing' | 'documents' | 'payments' | 'users' | 'hpp' | 'master-data' | 'contact' | 'testimonials' | 'team') => void;
   
   // Auth & RBAC
   currentUser: User | null;
@@ -186,7 +186,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // View state
   const [activeView, setActiveView] = useState<'landing' | 'dashboard'>('landing');
-  const [dashboardTab, setDashboardTab] = useState<'overview' | 'pricing' | 'leads' | 'portfolio' | 'projects' | 'documents' | 'users' | 'hpp' | 'master-data' | 'contact' | 'testimonials' | 'team'>('overview');
+  const [dashboardTab, setDashboardTab] = useState<'overview' | 'pricing' | 'leads' | 'portfolio' | 'projects' | 'documents' | 'payments' | 'users' | 'hpp' | 'master-data' | 'contact' | 'testimonials' | 'team'>('overview');
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [selectedServiceForInquiry, setSelectedServiceForInquiry] = useState('');
   const [selectedDocumentProjectId, setSelectedDocumentProjectId] = useState<string>('proj-1');
@@ -202,7 +202,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [companyContact, setCompanyContact] = useState<CompanyContact>(INITIAL_COMPANY_CONTACT);
   const [testimonials, setTestimonials] = useState<Testimonial[]>(INITIAL_TESTIMONIALS);
 
-  // Restore persisted current user on client mount
+  // Restore persisted current user & leads on client mount
   useEffect(() => {
     try {
       const savedUser = localStorage.getItem(STORAGE_KEYS.USER);
@@ -214,6 +214,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     } catch (e) {
       console.error('Failed to load user from localStorage:', e);
+    }
+
+    try {
+      const savedLeads = localStorage.getItem(STORAGE_KEYS.LEADS);
+      if (savedLeads) {
+        const parsed = JSON.parse(savedLeads);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setLeads(parsed);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load leads from localStorage:', e);
     }
   }, []);
 
@@ -275,6 +287,181 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   }, [users]);
 
+  // 3. Instant Real-Time WebSocket Listener for Database Changes & Cross-Tab Broadcast
+  useEffect(() => {
+    const realtimeChannel = supabase
+      .channel('public_realtime_db_changes', {
+        config: {
+          broadcast: { self: false },
+        },
+      })
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'ClientProject' },
+        (payload) => {
+          console.log('⚡ Supabase Realtime ClientProject change payload:', payload);
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            const raw = payload.new as any;
+            if (raw && raw.id) {
+              const formattedProject: ClientProject = {
+                ...raw,
+                payments: Array.isArray(raw.payments)
+                  ? raw.payments
+                  : typeof raw.payments === 'string'
+                  ? JSON.parse(raw.payments)
+                  : [],
+                totalPaid: raw.totalPaid !== null && raw.totalPaid !== undefined ? Number(raw.totalPaid) : 0,
+              };
+
+              saveProjects((prev) => {
+                const index = prev.findIndex((p) => p.id === formattedProject.id);
+                if (index >= 0) {
+                  const copy = [...prev];
+                  copy[index] = { ...copy[index], ...formattedProject };
+                  return copy;
+                }
+                return [formattedProject, ...prev];
+              });
+            }
+          } else if (payload.eventType === 'DELETE') {
+            if (payload.old && payload.old.id) {
+              saveProjects((prev) => prev.filter((p) => p.id !== payload.old.id));
+            }
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'Lead' },
+        (payload) => {
+          console.log('⚡ Supabase Realtime Lead change payload:', payload);
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            const rawLead = payload.new as Lead;
+            if (rawLead && rawLead.id) {
+              saveLeads((prev) => {
+                const index = prev.findIndex((l) => l.id === rawLead.id);
+                if (index >= 0) {
+                  const copy = [...prev];
+                  copy[index] = { ...copy[index], ...rawLead };
+                  return copy;
+                }
+                return [rawLead, ...prev];
+              });
+            }
+          } else if (payload.eventType === 'DELETE') {
+            if (payload.old && payload.old.id) {
+              saveLeads((prev) => prev.filter((l) => l.id !== payload.old.id));
+            }
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'CustomDocument' },
+        (payload) => {
+          console.log('⚡ Supabase Realtime CustomDocument change payload:', payload);
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            const raw = payload.new as any;
+            if (raw && raw.projectId && raw.data) {
+              const dataObj = typeof raw.data === 'string' ? JSON.parse(raw.data) : raw.data;
+              try {
+                const storageKey = 'atasilabs_custom_project_documents';
+                const savedDocs = localStorage.getItem(storageKey);
+                const allCustom = savedDocs ? JSON.parse(savedDocs) : {};
+                allCustom[raw.projectId] = dataObj;
+                localStorage.setItem(storageKey, JSON.stringify(allCustom));
+                window.dispatchEvent(new CustomEvent('atasilabs_document_updated', { detail: { projectId: raw.projectId, data: dataObj } }));
+              } catch (e) {
+                console.error(e);
+              }
+            }
+          }
+        }
+      )
+      .on(
+        'broadcast',
+        { event: 'PROJECT_UPDATE' },
+        ({ payload }) => {
+          console.log('⚡ Broadcast PROJECT_UPDATE received:', payload);
+          if (payload && payload.id) {
+            saveProjects((prev) => {
+              const index = prev.findIndex((p) => p.id === payload.id);
+              if (index >= 0) {
+                const copy = [...prev];
+                copy[index] = { ...copy[index], ...payload };
+                return copy;
+              }
+              return [payload, ...prev];
+            });
+          }
+        }
+      )
+      .on(
+        'broadcast',
+        { event: 'PROJECT_DELETE' },
+        ({ payload }) => {
+          console.log('⚡ Broadcast PROJECT_DELETE received:', payload);
+          if (payload && payload.id) {
+            saveProjects((prev) => prev.filter((p) => p.id !== payload.id));
+          }
+        }
+      )
+      .on(
+        'broadcast',
+        { event: 'DOCUMENT_UPDATE' },
+        ({ payload }) => {
+          console.log('⚡ Broadcast DOCUMENT_UPDATE received:', payload);
+          if (payload && payload.projectId && payload.data) {
+            try {
+              const storageKey = 'atasilabs_custom_project_documents';
+              const savedDocs = localStorage.getItem(storageKey);
+              const allCustom = savedDocs ? JSON.parse(savedDocs) : {};
+              allCustom[payload.projectId] = payload.data;
+              localStorage.setItem(storageKey, JSON.stringify(allCustom));
+              window.dispatchEvent(new CustomEvent('atasilabs_document_updated', { detail: { projectId: payload.projectId, data: payload.data } }));
+            } catch (e) {
+              console.error(e);
+            }
+          }
+        }
+      )
+      .on(
+        'broadcast',
+        { event: 'LEAD_UPDATE' },
+        ({ payload }) => {
+          console.log('⚡ Broadcast LEAD_UPDATE received:', payload);
+          if (payload && payload.id) {
+            saveLeads((prev) => {
+              const index = prev.findIndex((l) => l.id === payload.id);
+              if (index >= 0) {
+                const copy = [...prev];
+                copy[index] = { ...copy[index], ...payload };
+                return copy;
+              }
+              return [payload, ...prev];
+            });
+          }
+        }
+      )
+      .on(
+        'broadcast',
+        { event: 'LEAD_DELETE' },
+        ({ payload }) => {
+          console.log('⚡ Broadcast LEAD_DELETE received:', payload);
+          if (payload && payload.id) {
+            saveLeads((prev) => prev.filter((l) => l.id !== payload.id));
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log('📡 Supabase Realtime Connection Status:', status);
+      });
+
+    return () => {
+      supabase.removeChannel(realtimeChannel);
+    };
+  }, []);
+
   // Helper State Setters (pure state updates, DB APIs handle persistence)
   const saveUsers = (next: User[] | ((prev: User[]) => User[])) => {
     setUsers((prev) => {
@@ -289,7 +476,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const saveLeads = (next: Lead[] | ((prev: Lead[]) => Lead[])) => {
-    setLeads((prev) => (typeof next === 'function' ? next(prev) : next));
+    setLeads((prev) => {
+      const updated = typeof next === 'function' ? next(prev) : next;
+      try {
+        localStorage.setItem(STORAGE_KEYS.LEADS, JSON.stringify(updated));
+      } catch (e) {
+        console.error('Failed to save leads to localStorage:', e);
+      }
+      return updated;
+    });
   };
 
   const savePortfolios = (next: Portfolio[] | ((prev: Portfolio[]) => Portfolio[])) => {
@@ -297,7 +492,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const saveProjects = (next: ClientProject[] | ((prev: ClientProject[]) => ClientProject[])) => {
-    setProjects((prev) => (typeof next === 'function' ? next(prev) : next));
+    setProjects((prev) => {
+      const updated = typeof next === 'function' ? next(prev) : next;
+      try {
+        localStorage.setItem(STORAGE_KEYS.PROJECTS, JSON.stringify(updated));
+      } catch (e) {
+        console.error('Failed to save projects to localStorage:', e);
+      }
+      return updated;
+    });
   };
 
   const savePricingTiers = (next: PricingTier[] | ((prev: PricingTier[]) => PricingTier[])) => {
@@ -493,6 +696,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     saveLeads((prev) => [tempLead, ...prev]);
 
     try {
+      supabase.channel('public_realtime_db_changes').send({
+        type: 'broadcast',
+        event: 'LEAD_UPDATE',
+        payload: tempLead,
+      });
+    } catch (bErr) {}
+
+    try {
       const res = await fetch('/api/leads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -513,7 +724,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateLeadStatus = async (id: string, status: LeadStatus) => {
-    saveLeads((prev) => prev.map((item) => (item.id === id ? { ...item, status } : item)));
+    saveLeads((prev) =>
+      prev.map((item) => {
+        if (item.id !== id) return item;
+        const updated = { ...item, status };
+        try {
+          supabase.channel('public_realtime_db_changes').send({
+            type: 'broadcast',
+            event: 'LEAD_UPDATE',
+            payload: updated,
+          });
+        } catch (bErr) {}
+        return updated;
+      })
+    );
     try {
       await fetch('/api/leads', {
         method: 'PATCH',
@@ -529,6 +753,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const deleteLead = async (id: string) => {
     saveLeads((prev) => prev.filter((item) => item.id !== id));
     try {
+      supabase.channel('public_realtime_db_changes').send({
+        type: 'broadcast',
+        event: 'LEAD_DELETE',
+        payload: { id },
+      });
+    } catch (bErr) {}
+    try {
       await fetch(`/api/leads?id=${id}`, { method: 'DELETE' });
     } catch (e) {
       console.error(e);
@@ -538,7 +769,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const markAllLeadsRead = async () => {
     const unreadIds = leads.filter((item) => item.status === 'NEW').map((l) => l.id);
-    saveLeads((prev) => prev.map((item) => (item.status === 'NEW' ? { ...item, status: 'READ' } : item)));
+    saveLeads((prev) =>
+      prev.map((item) => {
+        if (item.status !== 'NEW') return item;
+        const updated = { ...item, status: 'READ' as const };
+        try {
+          supabase.channel('public_realtime_db_changes').send({
+            type: 'broadcast',
+            event: 'LEAD_UPDATE',
+            payload: updated,
+          });
+        } catch (bErr) {}
+        return updated;
+      })
+    );
 
     try {
       await Promise.all(
@@ -695,12 +939,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateProject = async (id: string, proj: Partial<ClientProject>) => {
-    saveProjects((prev) => prev.map((p) => (p.id === id ? { ...p, ...proj, updatedAt: new Date().toISOString() } : p)));
+    const updatedAt = new Date().toISOString();
+    const updatedFields = { ...proj, updatedAt };
+
+    saveProjects((prev) =>
+      prev.map((p) => {
+        if (p.id !== id) return p;
+        const merged = { ...p, ...updatedFields };
+        try {
+          supabase.channel('public_realtime_db_changes').send({
+            type: 'broadcast',
+            event: 'PROJECT_UPDATE',
+            payload: merged,
+          });
+        } catch (bErr) {
+          console.error('Realtime broadcast error:', bErr);
+        }
+        return merged;
+      })
+    );
+
     try {
       const res = await fetch('/api/projects', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, ...proj }),
+        body: JSON.stringify({ id, ...updatedFields }),
       });
       const data = await res.json();
       if (data.success && data.data) {
@@ -715,6 +978,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const deleteProject = async (id: string) => {
     saveProjects((prev) => prev.filter((p) => p.id !== id));
     try {
+      supabase.channel('public_realtime_db_changes').send({
+        type: 'broadcast',
+        event: 'PROJECT_DELETE',
+        payload: { id },
+      });
+    } catch (bErr) {}
+
+    try {
       await fetch(`/api/projects?id=${id}`, { method: 'DELETE' });
     } catch (e) {
       console.error(e);
@@ -726,17 +997,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const clampedProgress = Math.max(0, Math.min(100, progress));
     const stageCfg = getStageFromProgress(clampedProgress);
     let calculatedStatus: ProjectStatus = status || stageCfg.defaultStatus;
+    const updatedAt = new Date().toISOString();
 
     saveProjects((prev) =>
       prev.map((p) => {
         if (p.id !== id) return p;
-        return {
+        const updated = {
           ...p,
           progress: clampedProgress,
           ipwStage: stageCfg.stage,
           status: calculatedStatus,
-          updatedAt: new Date().toISOString(),
+          updatedAt,
         };
+        try {
+          supabase.channel('public_realtime_db_changes').send({
+            type: 'broadcast',
+            event: 'PROJECT_UPDATE',
+            payload: updated,
+          });
+        } catch (bErr) {}
+        return updated;
       })
     );
 

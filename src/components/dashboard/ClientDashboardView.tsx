@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Paper,
@@ -29,6 +29,9 @@ import {
   MenuItem,
   TextField,
   Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import {
@@ -52,9 +55,18 @@ import {
   AutoAwesome as AutoIcon,
   TaskAlt as TaskAltIcon,
   HelpOutline as HelpIcon,
+  Payments as PaymentsIcon,
+  Add as AddIcon,
+  Delete as DeleteIcon,
+  Close as CloseIcon,
+  Cancel as CancelIcon,
+  CloudUpload as UploadIcon,
+  Receipt as ReceiptIcon,
+  HourglassTop as PendingIcon,
 } from '@mui/icons-material';
 import { useApp } from '../../context/AppContext';
-import { ClientProject, DigitalSignatureData, DocumentType } from '../../types';
+import { supabase } from '../../lib/supabase';
+import { ClientProject, DigitalSignatureData, DocumentType, ProjectPaymentRecord } from '../../types';
 import { IPW_STAGES_LIST, IPW_STAGES_CONFIG, getStageFromProgress } from '../../lib/ipwStages';
 import { generateAutoDocumentsForProject } from '../../lib/documentGenerator';
 import { SignatureDialog } from './SignatureDialog';
@@ -97,6 +109,14 @@ export const ClientDashboardView: React.FC = () => {
     availableProjects[0]?.id || ''
   );
 
+  React.useEffect(() => {
+    if (availableProjects.length > 0) {
+      if (!selectedProjectId || !availableProjects.some((p) => p.id === selectedProjectId)) {
+        setSelectedProjectId(availableProjects[0].id);
+      }
+    }
+  }, [availableProjects, selectedProjectId]);
+
   const selectedProject: ClientProject | undefined =
     availableProjects.find((p) => p.id === selectedProjectId) || availableProjects[0];
 
@@ -110,6 +130,193 @@ export const ClientDashboardView: React.FC = () => {
     docType: 'MOU',
     docTitle: 'Memorandum of Understanding (MoU)',
   });
+
+  // Payment Dialog & Records State
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [paymentFormData, setPaymentFormData] = useState({
+    date: new Date().toISOString().split('T')[0],
+    amount: 0,
+    stage: 'DP Tahap 1 (30%)',
+    notes: '',
+    status: isClientRole ? ('PENDING' as const) : ('VERIFIED' as const),
+    proofUrl: '',
+  });
+
+  // Proof Modal State for viewing proof image
+  const [proofPreviewModal, setProofPreviewModal] = useState<{
+    open: boolean;
+    payment?: ProjectPaymentRecord;
+  }>({
+    open: false,
+  });
+
+  const totalBudget = selectedProject?.budget || 0;
+  const paymentsList = selectedProject?.payments || [];
+
+  const verifiedPaymentsSum = useMemo(() => {
+    return paymentsList
+      .filter((p) => p.status === 'VERIFIED')
+      .reduce((sum, p) => sum + p.amount, 0);
+  }, [paymentsList]);
+
+  const totalPaidAmount = paymentsList.length > 0 ? verifiedPaymentsSum : (selectedProject?.totalPaid || 0);
+  const remainingBalance = Math.max(0, totalBudget - totalPaidAmount);
+  const paymentProgressPct = totalBudget > 0 ? Math.min(100, Math.round((totalPaidAmount / totalBudget) * 100)) : 0;
+
+  const handleOpenPaymentDialog = () => {
+    let defaultStage = 'DP Tahap 1 (30%)';
+    let defaultAmount = Math.round(totalBudget * 0.3);
+
+    if (totalPaidAmount > 0 && remainingBalance > 0) {
+      if (totalPaidAmount >= Math.round(totalBudget * 0.5)) {
+        defaultStage = 'Pelunasan Tahap 3 (40%)';
+        defaultAmount = remainingBalance;
+      } else {
+        defaultStage = 'Termin Progress Tahap 2 (30%)';
+        defaultAmount = Math.min(remainingBalance, Math.round(totalBudget * 0.3));
+      }
+    }
+
+    const initialStatus = isClientRole ? 'PENDING' : 'VERIFIED';
+    setPaymentFormData({
+      date: new Date().toISOString().split('T')[0],
+      amount: defaultAmount,
+      stage: defaultStage,
+      notes: 'Transfer Bank BRI a.n. PT AULIA INDOLAND GRUP',
+      status: initialStatus,
+      proofUrl: '',
+    });
+    setPaymentDialogOpen(true);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        showNotification('Ukuran file resi bukti transfer tidak boleh melebihi 5MB', 'warning');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (uploadEvent) => {
+        const base64Str = uploadEvent.target?.result as string;
+        setPaymentFormData((prev) => ({
+          ...prev,
+          proofUrl: base64Str,
+        }));
+        showNotification('Foto resi bukti transfer berhasil diunggah!', 'success');
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSavePaymentRecord = () => {
+    if (!selectedProject) return;
+    if (!paymentFormData.amount || paymentFormData.amount <= 0) {
+      showNotification('Harap masukkan nominal pembayaran yang valid (lebih dari 0)', 'warning');
+      return;
+    }
+
+    const initialStatus = isClientRole ? 'PENDING' : paymentFormData.status;
+    const newRecord: ProjectPaymentRecord = {
+      id: `pay-${Date.now()}`,
+      date: paymentFormData.date,
+      amount: Number(paymentFormData.amount),
+      stage: paymentFormData.stage,
+      notes: paymentFormData.notes,
+      status: initialStatus,
+      proofUrl: paymentFormData.proofUrl || undefined,
+      approvedBy: initialStatus === 'VERIFIED' ? (currentUser?.name || 'Admin') : undefined,
+      approvedAt: initialStatus === 'VERIFIED' ? new Date().toLocaleString('id-ID') : undefined,
+      createdAt: new Date().toISOString(),
+    };
+
+    const updatedPayments = [newRecord, ...paymentsList];
+    const newTotalPaid = updatedPayments
+      .filter((p) => p.status === 'VERIFIED')
+      .reduce((sum, p) => sum + p.amount, 0);
+
+    updateProject(selectedProject.id, {
+      payments: updatedPayments,
+      totalPaid: newTotalPaid,
+    });
+
+    setPaymentDialogOpen(false);
+    if (initialStatus === 'PENDING') {
+      showNotification(`Bukti pembayaran ${formatRupiah(paymentFormData.amount)} dikirim. Menunggu approval Admin!`, 'info');
+    } else {
+      showNotification(`Catatan pembayaran ${formatRupiah(paymentFormData.amount)} berhasil disimpan!`, 'success');
+    }
+  };
+
+  const handleApprovePayment = (payId: string) => {
+    if (!selectedProject) return;
+    const adminName = currentUser?.name || 'Admin Atasilabs';
+    const nowStr = new Date().toLocaleString('id-ID');
+
+    const updatedPayments = paymentsList.map((p) => {
+      if (p.id === payId) {
+        return {
+          ...p,
+          status: 'VERIFIED' as const,
+          approvedBy: adminName,
+          approvedAt: nowStr,
+        };
+      }
+      return p;
+    });
+
+    const newTotalPaid = updatedPayments
+      .filter((p) => p.status === 'VERIFIED')
+      .reduce((sum, p) => sum + p.amount, 0);
+
+    updateProject(selectedProject.id, {
+      payments: updatedPayments,
+      totalPaid: newTotalPaid,
+    });
+
+    showNotification('Status Pembayaran BERHASIL DI-APPROVE & disetujui oleh Admin!', 'success');
+  };
+
+  const handleRejectPayment = (payId: string) => {
+    if (!selectedProject) return;
+
+    const updatedPayments = paymentsList.map((p) => {
+      if (p.id === payId) {
+        return {
+          ...p,
+          status: 'FAILED' as const,
+        };
+      }
+      return p;
+    });
+
+    const newTotalPaid = updatedPayments
+      .filter((p) => p.status === 'VERIFIED')
+      .reduce((sum, p) => sum + p.amount, 0);
+
+    updateProject(selectedProject.id, {
+      payments: updatedPayments,
+      totalPaid: newTotalPaid,
+    });
+
+    showNotification('Status Pembayaran DITOLAK / INVALID.', 'warning');
+  };
+
+  const handleDeletePaymentRecord = (payId: string) => {
+    if (!selectedProject) return;
+    const updatedPayments = paymentsList.filter((p) => p.id !== payId);
+    const newTotalPaid = updatedPayments
+      .filter((p) => p.status === 'VERIFIED')
+      .reduce((sum, p) => sum + p.amount, 0);
+
+    updateProject(selectedProject.id, {
+      payments: updatedPayments,
+      totalPaid: newTotalPaid,
+    });
+
+    showNotification('Catatan pembayaran berhasil dihapus', 'info');
+  };
 
   const formatRupiah = (num: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -233,6 +440,20 @@ export const ClientDashboardView: React.FC = () => {
     });
   };
 
+  // Realtime Document Update Listener
+  useEffect(() => {
+    const handleDocUpdateEvent = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail && customEvent.detail.projectId === selectedProject?.id) {
+        setRefreshTrigger((prev) => prev + 1);
+      }
+    };
+    window.addEventListener('atasilabs_document_updated', handleDocUpdateEvent);
+    return () => {
+      window.removeEventListener('atasilabs_document_updated', handleDocUpdateEvent);
+    };
+  }, [selectedProject?.id]);
+
   const handleSaveSignature = (sigData: DigitalSignatureData) => {
     const storageKey = 'atasilabs_custom_project_documents';
     try {
@@ -255,12 +476,30 @@ export const ClientDashboardView: React.FC = () => {
         updatedAt: new Date().toISOString(),
       };
 
-      allCustom[selectedProject.id] = {
+      const updatedProjectDocs = {
         ...projCustom,
         [docTypeKey]: updatedDoc,
       };
 
+      allCustom[selectedProject.id] = updatedProjectDocs;
+
       localStorage.setItem(storageKey, JSON.stringify(allCustom));
+
+      // ⚡ Dual Sync to Database API & Supabase Realtime Broadcast
+      fetch('/api/documents', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId: selectedProject.id, data: updatedProjectDocs }),
+      }).catch((e) => console.error('Document DB save error:', e));
+
+      try {
+        supabase.channel('public_realtime_db_changes').send({
+          type: 'broadcast',
+          event: 'DOCUMENT_UPDATE',
+          payload: { projectId: selectedProject.id, data: updatedProjectDocs },
+        });
+      } catch (bErr) {}
+
       showNotification(`Tanda tangan digital ${signatureModal.docTitle} berhasil tersimpan & diverifikasi!`, 'success');
       setSignatureModal((prev) => ({ ...prev, open: false }));
       setRefreshTrigger((prev) => prev + 1);
@@ -486,17 +725,20 @@ export const ClientDashboardView: React.FC = () => {
           >
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
               <Typography variant="subtitle2" color="text.secondary" sx={{ fontWeight: 700, fontSize: '0.8rem' }}>
-                Nilai Investasi Kontrak (MoU)
+                Nilai Investasi & Pembayaran
               </Typography>
               <Box sx={{ p: 1, borderRadius: 2, bgcolor: 'rgba(245, 158, 11, 0.15)' }}>
                 <AssignmentIcon sx={{ color: theme.palette.primary.main }} />
               </Box>
             </Box>
             <Typography variant="h5" sx={{ fontWeight: 800, mb: 0.5, color: theme.palette.primary.main }}>
-              {formatRupiah(selectedProject.budget)}
+              {formatRupiah(totalBudget)}
             </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, display: 'block', mt: 1 }}>
-              Kategori: Tier {selectedProject.tierNumber || 3}
+            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, display: 'block', mt: 0.5 }}>
+              <strong>Terbayar:</strong> {formatRupiah(totalPaidAmount)} ({paymentProgressPct}%)
+            </Typography>
+            <Typography variant="caption" sx={{ fontWeight: 700, display: 'block', mt: 0.2, color: remainingBalance > 0 ? 'warning.main' : 'success.main' }}>
+              <strong>Sisa:</strong> {remainingBalance > 0 ? formatRupiah(remainingBalance) : 'LUNAS ✅'}
             </Typography>
           </Paper>
         </Grid>
@@ -832,6 +1074,197 @@ export const ClientDashboardView: React.FC = () => {
               </Table>
             </TableContainer>
           </Paper>
+
+          {/* Rincian & Input Pembayaran Proyek */}
+          <Paper
+            elevation={0}
+            sx={{
+              p: 3,
+              borderRadius: 3.5,
+              border: `1px solid ${theme.palette.divider}`,
+              backgroundColor: theme.palette.background.paper,
+              mb: 3.5,
+            }}
+          >
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1.5, mb: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <PaymentsIcon color="primary" />
+                <Typography variant="h6" sx={{ fontWeight: 800, fontSize: '1.1rem' }}>
+                  Rincian & Catatan Transaksi Pembayaran
+                </Typography>
+              </Box>
+
+              <Button
+                variant="contained"
+                color="primary"
+                size="small"
+                startIcon={<AddIcon />}
+                onClick={handleOpenPaymentDialog}
+                sx={{ fontWeight: 700, borderRadius: 2.5 }}
+              >
+                + Catat Pembayaran Baru
+              </Button>
+            </Box>
+
+            {/* Financial Overview Chips Bar */}
+            <Grid container spacing={2} sx={{ mb: 2.5 }}>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <Paper variant="outlined" sx={{ p: 1.5, borderRadius: 2.5, bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : '#f8fafc' }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, display: 'block' }}>
+                    TOTAL NILAI KONTRAK
+                  </Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 800, color: 'text.primary' }}>
+                    {formatRupiah(totalBudget)}
+                  </Typography>
+                </Paper>
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <Paper variant="outlined" sx={{ p: 1.5, borderRadius: 2.5, bgcolor: 'rgba(16, 185, 129, 0.08)', borderColor: 'rgba(16, 185, 129, 0.3)' }}>
+                  <Typography variant="caption" sx={{ fontWeight: 700, display: 'block', color: '#10b981' }}>
+                    TOTAL TERBAYAR ({paymentProgressPct}%)
+                  </Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 800, color: '#10b981' }}>
+                    {formatRupiah(totalPaidAmount)}
+                  </Typography>
+                </Paper>
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <Paper variant="outlined" sx={{ p: 1.5, borderRadius: 2.5, bgcolor: remainingBalance > 0 ? 'rgba(245, 158, 11, 0.08)' : 'rgba(16, 185, 129, 0.08)', borderColor: remainingBalance > 0 ? 'rgba(245, 158, 11, 0.3)' : 'rgba(16, 185, 129, 0.3)' }}>
+                  <Typography variant="caption" sx={{ fontWeight: 700, display: 'block', color: remainingBalance > 0 ? '#f59e0b' : '#10b981' }}>
+                    SISA PELUNASAN KONTRAK
+                  </Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 800, color: remainingBalance > 0 ? '#f59e0b' : '#10b981' }}>
+                    {remainingBalance > 0 ? formatRupiah(remainingBalance) : 'LUNAS 100% ✅'}
+                  </Typography>
+                </Paper>
+              </Grid>
+            </Grid>
+
+            {/* Payment Transactions Table */}
+            <TableContainer component={Box} sx={{ border: `1px solid ${theme.palette.divider}`, borderRadius: 2.5 }}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow sx={{ bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : '#f8fafc' }}>
+                    <TableCell sx={{ fontWeight: 800 }}>Tanggal</TableCell>
+                    <TableCell sx={{ fontWeight: 800 }}>Tahap / Termin Pembayaran</TableCell>
+                    <TableCell sx={{ fontWeight: 800 }}>Nominal (IDR)</TableCell>
+                    <TableCell sx={{ fontWeight: 800 }}>Bukti Resi</TableCell>
+                    <TableCell sx={{ fontWeight: 800 }}>Catatan & Ref Transfer</TableCell>
+                    <TableCell sx={{ fontWeight: 800 }}>Status Approval</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 800 }}>Aksi / Verifikasi</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {paymentsList.length > 0 ? (
+                    paymentsList.map((pay) => (
+                      <TableRow key={pay.id} hover>
+                        <TableCell sx={{ fontWeight: 700 }}>{pay.date}</TableCell>
+                        <TableCell>
+                          <Chip label={pay.stage} size="small" variant="outlined" color="primary" sx={{ fontWeight: 700, fontSize: '0.7rem' }} />
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 800, color: '#10b981' }}>
+                          {formatRupiah(pay.amount)}
+                        </TableCell>
+                        <TableCell>
+                          {pay.proofUrl ? (
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              color="info"
+                              startIcon={<VisibilityIcon sx={{ fontSize: 13 }} />}
+                              onClick={() => setProofPreviewModal({ open: true, payment: pay })}
+                              sx={{ fontSize: '0.7rem', py: 0.2, fontWeight: 700 }}
+                            >
+                              Lihat Resi
+                            </Button>
+                          ) : (
+                            <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                              Tanpa Resi
+                            </Typography>
+                          )}
+                        </TableCell>
+                        <TableCell sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
+                          {pay.notes || '-'}
+                        </TableCell>
+                        <TableCell>
+                          {pay.status === 'VERIFIED' && (
+                            <Tooltip title={pay.approvedBy ? `Disetujui oleh ${pay.approvedBy} (${pay.approvedAt || pay.date})` : 'Disetujui Admin'}>
+                              <Chip
+                                icon={<CheckCircleIcon sx={{ fontSize: '13px !important' }} />}
+                                label="DISUJUJU ✅"
+                                size="small"
+                                color="success"
+                                sx={{ fontWeight: 800, fontSize: '0.68rem', height: 22 }}
+                              />
+                            </Tooltip>
+                          )}
+                          {pay.status === 'PENDING' && (
+                            <Tooltip title="Menunggu persetujuan (approval) Admin">
+                              <Chip
+                                icon={<PendingIcon sx={{ fontSize: '13px !important' }} />}
+                                label="PENDING ⏳"
+                                size="small"
+                                color="warning"
+                                sx={{ fontWeight: 800, fontSize: '0.68rem', height: 22 }}
+                              />
+                            </Tooltip>
+                          )}
+                          {pay.status === 'FAILED' && (
+                            <Chip
+                              icon={<CancelIcon sx={{ fontSize: '13px !important' }} />}
+                              label="DITOLAK ❌"
+                              size="small"
+                              color="error"
+                              sx={{ fontWeight: 800, fontSize: '0.68rem', height: 22 }}
+                            />
+                          )}
+                        </TableCell>
+                        <TableCell align="right">
+                          <Stack direction="row" spacing={0.5} justifyContent="flex-end" alignItems="center">
+                            {!isClientRole && pay.status === 'PENDING' && (
+                              <>
+                                <Button
+                                  size="small"
+                                  variant="contained"
+                                  color="success"
+                                  startIcon={<CheckCircleIcon sx={{ fontSize: 12 }} />}
+                                  onClick={() => handleApprovePayment(pay.id)}
+                                  sx={{ fontSize: '0.68rem', py: 0.2, px: 1, fontWeight: 800 }}
+                                >
+                                  Approve
+                                </Button>
+                                <Button
+                                  size="small"
+                                  variant="outlined"
+                                  color="error"
+                                  startIcon={<CancelIcon sx={{ fontSize: 12 }} />}
+                                  onClick={() => handleRejectPayment(pay.id)}
+                                  sx={{ fontSize: '0.68rem', py: 0.2, px: 0.8, fontWeight: 700 }}
+                                >
+                                  Tolak
+                                </Button>
+                              </>
+                            )}
+                            <IconButton size="small" color="error" onClick={() => handleDeletePaymentRecord(pay.id)} title="Hapus">
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Stack>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={7} align="center" sx={{ py: 3, color: 'text.secondary' }}>
+                        Belum ada riwayat transaksi pembayaran yang dicatat. Klik "+ Catat Pembayaran Baru" di atas.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Paper>
         </Grid>
 
         {/* Right Column: Access Control Info, Deliverable Links, Support */}
@@ -943,6 +1376,190 @@ export const ClientDashboardView: React.FC = () => {
           </Paper>
         </Grid>
       </Grid>
+
+      {/* Form Dialog Input Pembayaran */}
+      <Dialog open={paymentDialogOpen} onClose={() => setPaymentDialogOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <PaymentsIcon color="primary" />
+            <Typography variant="h6" sx={{ fontWeight: 800 }}>
+              Form Input Pembayaran Proyek
+            </Typography>
+          </Box>
+          <IconButton onClick={() => setPaymentDialogOpen(false)} size="small">
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent dividers>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <Alert severity="info" sx={{ borderRadius: 2, fontSize: '0.82rem' }}>
+              Masukkan rincian pembayaran untuk proyek <strong>{selectedProject.title}</strong> ({selectedProject.clientName}). Total Kontrak: <strong>{formatRupiah(totalBudget)}</strong>.
+            </Alert>
+
+            <TextField
+              fullWidth
+              size="small"
+              type="date"
+              label="Tanggal Pembayaran / Transfer"
+              InputLabelProps={{ shrink: true }}
+              value={paymentFormData.date}
+              onChange={(e) => setPaymentFormData((prev) => ({ ...prev, date: e.target.value }))}
+              required
+            />
+
+            <TextField
+              fullWidth
+              size="small"
+              type="number"
+              label="Nominal Pembayaran (IDR)"
+              value={paymentFormData.amount || ''}
+              onChange={(e) => setPaymentFormData((prev) => ({ ...prev, amount: Number(e.target.value) }))}
+              helperText={`Terbilang: Rp ${(paymentFormData.amount || 0).toLocaleString('id-ID')}`}
+              required
+            />
+
+            <TextField
+              select
+              fullWidth
+              size="small"
+              label="Tahap / Termin Pembayaran"
+              value={paymentFormData.stage}
+              onChange={(e) => setPaymentFormData((prev) => ({ ...prev, stage: e.target.value }))}
+            >
+              <MenuItem value="DP Tahap 1 (30%)">DP Tahap 1 (30%) - Penandatanganan MoU</MenuItem>
+              <MenuItem value="Termin Progress Tahap 2 (30%)">Termin Progress Tahap 2 (30%) - Desain / Mid Dev</MenuItem>
+              <MenuItem value="Pelunasan Tahap 3 (40%)">Pelunasan Tahap 3 (40%) - Sebelum Live Deployment</MenuItem>
+              <MenuItem value="DP Tahap 1 (50%)">DP Tahap 1 (50%) - Tier 1-2</MenuItem>
+              <MenuItem value="Pelunasan Tahap 2 (50%)">Pelunasan Tahap 2 (50%) - Tier 1-2</MenuItem>
+              <MenuItem value="Pembayaran Tambahan / Add-on">Pembayaran Tambahan / Add-on</MenuItem>
+            </TextField>
+
+            {/* Upload Bukti Pembayaran / Resi Input */}
+            <Box sx={{ border: `1px dashed ${theme.palette.divider}`, borderRadius: 2.5, p: 2, textAlign: 'center', bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : '#f8fafc' }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 0.5 }}>
+                📷 Unggah Bukti Transfer / Resi Pembayaran
+              </Typography>
+              <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1.5 }}>
+                Format file PNG/JPG (Maks 5MB). Diperlukan untuk verifikasi admin.
+              </Typography>
+
+              <Button
+                variant="outlined"
+                component="label"
+                startIcon={<UploadIcon />}
+                size="small"
+                sx={{ fontWeight: 700, borderRadius: 2 }}
+              >
+                Pilih Foto Resi Bukti Transfer
+                <input type="file" accept="image/*" hidden onChange={handleFileUpload} />
+              </Button>
+
+              {paymentFormData.proofUrl && (
+                <Box sx={{ mt: 1.5, textAlign: 'center' }}>
+                  <Typography variant="caption" sx={{ fontWeight: 700, color: '#10b981', display: 'block', mb: 0.5 }}>
+                    ✓ Pratinjau Resi Terunggah:
+                  </Typography>
+                  <Box
+                    component="img"
+                    src={paymentFormData.proofUrl}
+                    alt="Pratinjau Bukti Pembayaran"
+                    sx={{ height: 100, maxWidth: '100%', objectFit: 'contain', borderRadius: 2, border: '1px solid #cbd5e1', mx: 'auto' }}
+                  />
+                </Box>
+              )}
+            </Box>
+
+            {!isClientRole && (
+              <TextField
+                select
+                fullWidth
+                size="small"
+                label="Status Verifikasi / Approval Admin"
+                value={paymentFormData.status}
+                onChange={(e) => setPaymentFormData((prev: any) => ({ ...prev, status: e.target.value }))}
+              >
+                <MenuItem value="VERIFIED">TERVERIFIKASI / DISUJUJU (LUNAS)</MenuItem>
+                <MenuItem value="PENDING">PENDING (Menunggu Verification Admin)</MenuItem>
+                <MenuItem value="FAILED">GAGAL / DITOLAK</MenuItem>
+              </TextField>
+            )}
+
+            <TextField
+              fullWidth
+              multiline
+              minRows={2}
+              size="small"
+              label="Catatan & Referensi Bank (No. Rekening / Ref Transfer)"
+              placeholder="Contoh: Transfer Bank BRI Ref #88219 a.n. PT AULIA INDOLAND GRUP"
+              value={paymentFormData.notes}
+              onChange={(e) => setPaymentFormData((prev) => ({ ...prev, notes: e.target.value }))}
+            />
+          </Stack>
+        </DialogContent>
+
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setPaymentDialogOpen(false)} color="inherit">
+            Batal
+          </Button>
+          <Button variant="contained" color="primary" onClick={handleSavePaymentRecord} sx={{ fontWeight: 700, borderRadius: 2 }}>
+            {isClientRole ? 'Kirim Bukti Pembayaran' : 'Simpan Pembayaran'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Modal Pratinjau Resi Bukti Transfer */}
+      <Dialog
+        open={proofPreviewModal.open}
+        onClose={() => setProofPreviewModal({ open: false })}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 3.5 } }}
+      >
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <ReceiptIcon color="primary" />
+            <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
+              Bukti Transfer & Resi Pembayaran
+            </Typography>
+          </Box>
+          <IconButton onClick={() => setProofPreviewModal({ open: false })} size="small">
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers sx={{ textAlign: 'center', py: 3 }}>
+          {proofPreviewModal.payment?.proofUrl ? (
+            <Box
+              component="img"
+              src={proofPreviewModal.payment.proofUrl}
+              alt="Resi Bukti Pembayaran"
+              sx={{ maxWidth: '100%', maxHeight: 400, objectFit: 'contain', borderRadius: 2.5, boxShadow: '0 4px 20px rgba(0,0,0,0.15)' }}
+            />
+          ) : (
+            <Typography color="text.secondary">Bukti resi gambar tidak tersedia.</Typography>
+          )}
+
+          <Box sx={{ mt: 2, textAlign: 'left', p: 2, bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : '#f8fafc', borderRadius: 2.5 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 0.5 }}>
+              Detail Transaksi:
+            </Typography>
+            <Typography variant="body2"><strong>Tanggal:</strong> {proofPreviewModal.payment?.date}</Typography>
+            <Typography variant="body2"><strong>Tahap:</strong> {proofPreviewModal.payment?.stage}</Typography>
+            <Typography variant="body2"><strong>Nominal:</strong> {formatRupiah(proofPreviewModal.payment?.amount || 0)}</Typography>
+            <Typography variant="body2"><strong>Catatan/Ref:</strong> {proofPreviewModal.payment?.notes || '-'}</Typography>
+            {proofPreviewModal.payment?.approvedBy && (
+              <Typography variant="body2" sx={{ color: '#10b981', mt: 0.5, fontWeight: 700 }}>
+                ✓ Disetujui oleh {proofPreviewModal.payment.approvedBy} pada {proofPreviewModal.payment.approvedAt}
+              </Typography>
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setProofPreviewModal({ open: false })} variant="contained">
+            Tutup
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Signature Dialog Modal */}
       <SignatureDialog

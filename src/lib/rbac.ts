@@ -11,6 +11,7 @@ export interface RoleConfig {
     leads: boolean;
     projects: boolean;
     documents: boolean;
+    payments?: boolean;
     portfolio: boolean;
     pricing: boolean;
     contact: boolean;
@@ -240,6 +241,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, Record<string, boolean>>
 };
 
 export const hasPermission = (role: UserRole, key: string, customMap?: Record<UserRole, Record<string, boolean>>): boolean => {
+  if (key === 'payments') return true;
   const normKey = key === 'master-data' ? 'masterData' : key;
   if (customMap && customMap[role]) {
     if (customMap[role][normKey] !== undefined) {

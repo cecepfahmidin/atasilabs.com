@@ -39,6 +39,19 @@ export type IPWStage =
 
 export type DocumentType = 'CIF' | 'RSD' | 'MOU' | 'SPK' | 'BAST' | 'HPP' | 'QA';
 
+export interface ProjectPaymentRecord {
+  id: string;
+  date: string;
+  amount: number;
+  stage: string; // e.g. 'DP Tahap 1 (30%)', 'Termin Progress Tahap 2 (30%)', 'Pelunasan Tahap 3 (40%)', 'Pembayaran Tambahan'
+  notes?: string;
+  status: 'VERIFIED' | 'PENDING' | 'FAILED';
+  proofUrl?: string;
+  approvedBy?: string;
+  approvedAt?: string;
+  createdAt?: string;
+}
+
 export interface ClientProject {
   id: string;
   clientName: string;
@@ -56,6 +69,8 @@ export interface ClientProject {
   freelancerName?: string;
   freelancerFee?: number;
   isArchived?: boolean;
+  payments?: ProjectPaymentRecord[];
+  totalPaid?: number;
   createdAt: string;
   updatedAt: string;
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
@@ -49,6 +50,16 @@ export async function PUT(request: Request) {
       updated = { projectId, data, updatedAt: new Date().toISOString() };
     }
 
+    // Dual sync to Supabase REST API
+    try {
+      await supabase.from('CustomDocument').upsert(
+        { projectId, data },
+        { onConflict: 'projectId' }
+      );
+    } catch (sbErr) {
+      console.error('Supabase direct PUT CustomDocument upsert error:', sbErr);
+    }
+
     return NextResponse.json({ success: true, data: updated });
   } catch (error) {
     return NextResponse.json(
@@ -57,3 +68,4 @@ export async function PUT(request: Request) {
     );
   }
 }
+

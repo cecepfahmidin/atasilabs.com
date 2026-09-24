@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Drawer,
@@ -43,6 +43,7 @@ import {
   Phone as PhoneIcon,
   RateReview as RateReviewIcon,
   SupervisorAccount as CLevelIcon,
+  Payments as PaymentsIcon,
   ExpandLess,
   ExpandMore,
 } from '@mui/icons-material';
@@ -75,9 +76,20 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
     logout,
     unreadLeadsCount,
     users,
+    projects,
     switchUserRole,
     hasRolePermission,
   } = useApp();
+
+  const pendingPaymentsCount = useMemo(() => {
+    let count = 0;
+    (projects || []).forEach((proj) => {
+      (proj.payments || []).forEach((pay) => {
+        if (pay.status === 'PENDING') count++;
+      });
+    });
+    return count;
+  }, [projects]);
 
   const [isAuthChecking, setIsAuthChecking] = useState(true);
 
@@ -195,6 +207,13 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
       badge: 0,
     },
     {
+      id: 'payments',
+      label: 'Input Pembayaran',
+      href: '/dashboard/payments',
+      icon: <PaymentsIcon />,
+      badge: pendingPaymentsCount,
+    },
+    {
       id: 'hpp',
       label: 'HPP Matriks',
       href: '/dashboard/hpp',
@@ -290,6 +309,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
   else if (dashboardTab === 'team') activeTitle = 'Master Data - Tim Manajemen & Leadership';
   else if (dashboardTab === 'users') activeTitle = 'Master Data - Manajemen User & RBAC';
   else if (dashboardTab === 'master-data') activeTitle = 'Pusat Master Data';
+  else if (dashboardTab === 'payments') activeTitle = 'Rincian & Input Pembayaran Proyek';
   else {
     const flat = rawMenuItems.flatMap((m) => (m.children ? [m, ...m.children] : [m]));
     const found = flat.find((m) => m.id === dashboardTab);

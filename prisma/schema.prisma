@@ -72,6 +72,8 @@ model ClientProject {
   freelancerName String?
   freelancerFee  Float?
   isArchived     Boolean? @default(false)
+  payments       Json?
+  totalPaid      Float?   @default(0)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }

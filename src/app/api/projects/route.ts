@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 import { INITIAL_PROJECTS } from '@/data/initialData';
 
 export const dynamic = 'force-dynamic';
@@ -33,6 +34,8 @@ export async function GET() {
                 freelancerName: p.freelancerName || '',
                 freelancerFee: p.freelancerFee ? Number(p.freelancerFee) : null,
                 isArchived: Boolean(p.isArchived),
+                payments: p.payments || [],
+                totalPaid: p.totalPaid ? Number(p.totalPaid) : 0,
               },
             })
           )
@@ -44,9 +47,19 @@ export async function GET() {
         console.error('Projects initial seed error:', seedErr);
       }
     }
+    const formatted = (projects && projects.length > 0 ? projects : INITIAL_PROJECTS).map((p: any) => ({
+      ...p,
+      payments: Array.isArray(p.payments)
+        ? p.payments
+        : typeof p.payments === 'string'
+        ? JSON.parse(p.payments)
+        : [],
+      totalPaid: p.totalPaid !== null && p.totalPaid !== undefined ? Number(p.totalPaid) : 0,
+    }));
+
     return NextResponse.json({
       success: true,
-      data: projects && projects.length > 0 ? projects : INITIAL_PROJECTS,
+      data: formatted,
       fallback: false,
     });
   } catch (error) {
@@ -73,6 +86,8 @@ export async function POST(request: Request) {
       freelancerName,
       freelancerFee,
       isArchived,
+      payments,
+      totalPaid,
     } = body;
 
     let newProj;
@@ -94,6 +109,8 @@ export async function POST(request: Request) {
           freelancerName: freelancerName || '',
           freelancerFee: freelancerFee ? Number(freelancerFee) : null,
           isArchived: Boolean(isArchived),
+          payments: payments || [],
+          totalPaid: totalPaid ? Number(totalPaid) : 0,
         },
       });
     } catch (dbErr) {
@@ -114,9 +131,39 @@ export async function POST(request: Request) {
         freelancerName: freelancerName || '',
         freelancerFee: freelancerFee ? Number(freelancerFee) : null,
         isArchived: Boolean(isArchived),
+        payments: payments || [],
+        totalPaid: totalPaid ? Number(totalPaid) : 0,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
+    }
+
+    // Dual sync to Supabase REST API
+    try {
+      if (newProj && newProj.id) {
+        await supabase.from('ClientProject').upsert({
+          id: newProj.id,
+          clientName: newProj.clientName,
+          clientEmail: newProj.clientEmail,
+          clientPhone: newProj.clientPhone,
+          clientCompany: newProj.clientCompany,
+          title: newProj.title,
+          description: newProj.description,
+          deadline: newProj.deadline,
+          budget: newProj.budget,
+          progress: newProj.progress,
+          status: newProj.status,
+          ipwStage: newProj.ipwStage,
+          tierNumber: newProj.tierNumber,
+          freelancerName: newProj.freelancerName,
+          freelancerFee: newProj.freelancerFee,
+          isArchived: newProj.isArchived,
+          payments: newProj.payments || [],
+          totalPaid: newProj.totalPaid || 0,
+        });
+      }
+    } catch (sbErr) {
+      console.error('Supabase direct POST upsert error:', sbErr);
     }
 
     return NextResponse.json({ success: true, data: newProj });
@@ -148,6 +195,8 @@ export async function PATCH(request: Request) {
       freelancerName,
       freelancerFee,
       isArchived,
+      payments,
+      totalPaid,
     } = body;
 
     if (!id) {
@@ -170,6 +219,8 @@ export async function PATCH(request: Request) {
     if (freelancerName !== undefined) prismaUpdateData.freelancerName = freelancerName;
     if (freelancerFee !== undefined) prismaUpdateData.freelancerFee = freelancerFee !== null ? Number(freelancerFee) : null;
     if (isArchived !== undefined) prismaUpdateData.isArchived = Boolean(isArchived);
+    if (payments !== undefined) prismaUpdateData.payments = payments;
+    if (totalPaid !== undefined) prismaUpdateData.totalPaid = Number(totalPaid);
 
     let updated;
     try {
@@ -193,12 +244,24 @@ export async function PATCH(request: Request) {
           freelancerName: freelancerName || '',
           freelancerFee: freelancerFee ? Number(freelancerFee) : null,
           isArchived: Boolean(isArchived),
+          payments: payments || [],
+          totalPaid: totalPaid ? Number(totalPaid) : 0,
           ...prismaUpdateData,
         },
       });
     } catch (dbErr) {
       console.error('DB Upsert project error:', dbErr);
       updated = { id, ...body, updatedAt: new Date().toISOString() };
+    }
+
+    // Dual sync to Supabase REST API
+    try {
+      await supabase.from('ClientProject').upsert({
+        id,
+        ...prismaUpdateData,
+      });
+    } catch (sbErr) {
+      console.error('Supabase direct PATCH upsert error:', sbErr);
     }
 
     return NextResponse.json({ success: true, data: updated });

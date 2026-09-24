@@ -37,6 +37,7 @@ import { DocumentFormDialog } from './DocumentFormDialog';
 import { SignatureDialog } from './SignatureDialog';
 import { CIFData, RSDData, MoUData, SPKData, BASTData, DigitalSignatureData, QAData } from '../../types';
 import { useApp } from '../../context/AppContext';
+import { supabase } from '../../lib/supabase';
 import { generateAutoDocumentsForProject, generateQAFromRSD } from '../../lib/documentGenerator';
 
 import { useSearchParams } from 'next/navigation';
@@ -169,6 +170,19 @@ export const DocumentsWorkflowView: React.FC = () => {
           }
         })
         .catch((e) => console.error('Document DB fetch error:', e));
+
+      // ⚡ Realtime event listener for cross-client document updates
+      const handleDocUpdateEvent = (e: Event) => {
+        const customEvent = e as CustomEvent;
+        if (customEvent.detail && customEvent.detail.projectId === selectedProjectId && customEvent.detail.data) {
+          applyDocs(customEvent.detail.data);
+        }
+      };
+
+      window.addEventListener('atasilabs_document_updated', handleDocUpdateEvent);
+      return () => {
+        window.removeEventListener('atasilabs_document_updated', handleDocUpdateEvent);
+      };
     }
   }, [selectedProjectId, projects]);
 
@@ -241,6 +255,14 @@ export const DocumentsWorkflowView: React.FC = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ projectId: selectedProjectId, data: updatedDocs }),
       }).catch((e) => console.error('Document DB save error:', e));
+
+      try {
+        supabase.channel('public_realtime_db_changes').send({
+          type: 'broadcast',
+          event: 'DOCUMENT_UPDATE',
+          payload: { projectId: selectedProjectId, data: updatedDocs },
+        });
+      } catch (bErr) {}
     } catch (e) {
       console.error(e);
     }
@@ -486,7 +508,7 @@ export const DocumentsWorkflowView: React.FC = () => {
                     onClick={handleSyncQAFromRSD}
                     sx={{ fontWeight: 700 }}
                   >
-                    Sync dari RSD
+                    Sync RSD
                   </Button>
                 )}
                 {!isClientRole && (
