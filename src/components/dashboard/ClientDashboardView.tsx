@@ -890,6 +890,7 @@ export const ClientDashboardView: React.FC = () => {
         defaultSignerName={currentUser?.name || selectedProject.clientName}
         defaultSignerRole={currentUser?.company || 'Klien / Pihak Kedua'}
         partyType="Pihak Kedua"
+        isSignerNameLocked={true}
       />
     </Box>
   );

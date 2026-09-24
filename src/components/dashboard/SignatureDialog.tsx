@@ -16,6 +16,7 @@ import {
   Paper,
   Divider,
   Alert,
+  InputAdornment,
 } from '@mui/material';
 import {
   Gesture as DrawIcon,
@@ -29,6 +30,7 @@ import {
   AutoFixHigh as PresetIcon,
   CloudUpload as UploadIcon,
   PhotoCamera as CameraIcon,
+  Lock as LockIcon,
 } from '@mui/icons-material';
 import { DigitalSignatureData, SignatureAuditTrail } from '../../types';
 import { useApp } from '../../context/AppContext';
@@ -41,6 +43,7 @@ interface SignatureDialogProps {
   defaultSignerName?: string;
   defaultSignerRole?: string;
   partyType?: 'Pihak Pertama' | 'Pihak Kedua';
+  isSignerNameLocked?: boolean;
 }
 
 export const SignatureDialog: React.FC<SignatureDialogProps> = ({
@@ -51,6 +54,7 @@ export const SignatureDialog: React.FC<SignatureDialogProps> = ({
   defaultSignerName = '',
   defaultSignerRole = '',
   partyType = 'Pihak Pertama',
+  isSignerNameLocked = false,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -68,7 +72,9 @@ export const SignatureDialog: React.FC<SignatureDialogProps> = ({
   const [userAgent, setUserAgent] = useState<string>('');
   const [timestamp, setTimestamp] = useState<string>('');
 
-  const { users } = useApp();
+  const { users, currentUser } = useApp();
+  const isClientRole = currentUser?.role === 'CLIENT';
+  const shouldLockName = isSignerNameLocked || isClientRole;
 
   // Dynamic user options for Signer Name
   const signerOptionsMap = new Map<string, { name: string; role: string; email?: string; label: string }>();
@@ -329,20 +335,38 @@ export const SignatureDialog: React.FC<SignatureDialogProps> = ({
         {/* Signer Info Form */}
         <Grid container spacing={2} sx={{ mb: 2 }}>
           <Grid item xs={12} sm={6}>
-            <TextField
-              select
-              label="Nama Penandatangan"
-              fullWidth
-              size="small"
-              value={signerName}
-              onChange={(e) => handleSignerNameSelect(e.target.value)}
-            >
-              {signerOptions.map((opt) => (
-                <MenuItem key={opt.name} value={opt.name}>
-                  {opt.label}
-                </MenuItem>
-              ))}
-            </TextField>
+            {shouldLockName ? (
+              <TextField
+                label="Nama Penandatangan"
+                fullWidth
+                size="small"
+                value={signerName}
+                disabled
+                helperText={`🔒 Nama penandatangan dikunci khusus untuk akun terotentikasi`}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <LockIcon fontSize="small" color="action" />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            ) : (
+              <TextField
+                select
+                label="Nama Penandatangan"
+                fullWidth
+                size="small"
+                value={signerName}
+                onChange={(e) => handleSignerNameSelect(e.target.value)}
+              >
+                {signerOptions.map((opt) => (
+                  <MenuItem key={opt.name} value={opt.name}>
+                    {opt.label}
+                  </MenuItem>
+                ))}
+              </TextField>
+            )}
           </Grid>
           <Grid item xs={12} sm={6}>
             <TextField
