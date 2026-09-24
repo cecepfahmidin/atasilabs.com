@@ -666,7 +666,7 @@ export const ClientDashboardView: React.FC = () => {
               </Box>
 
               <Grid container spacing={2} sx={{ mb: 1.5 }}>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, display: 'block' }}>
                     Dokumen Berkas SOP Terkait:
                   </Typography>
@@ -674,7 +674,7 @@ export const ClientDashboardView: React.FC = () => {
                     {displayedRealStatus.docName}
                   </Typography>
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, display: 'block' }}>
                     Target Milestone Stage:
                   </Typography>
