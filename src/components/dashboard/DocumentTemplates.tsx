@@ -2565,32 +2565,32 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
                   </Box>
 
                   {/* Summary Info */}
-                  <TableContainer component={Paper} variant="outlined" sx={{ mb: 3 }}>
+                  <TableContainer component={Box} sx={{ border: '1px solid #000000', mb: 3, bgcolor: '#ffffff' }}>
                     <Table size="small">
                       <TableBody>
-                        <TableRow>
-                          <TableCell sx={{ fontWeight: 700, width: '30%', bgcolor: 'action.hover' }}>Nama Proyek</TableCell>
-                          <TableCell sx={{ fontWeight: 800 }}>{qa.projectTitle}</TableCell>
+                        <TableRow sx={{ bgcolor: '#ffffff' }}>
+                          <TableCell sx={{ fontWeight: 700, width: '30%', bgcolor: '#f1f5f9', color: '#0f172a' }}>Nama Proyek</TableCell>
+                          <TableCell sx={{ fontWeight: 800, color: '#0f172a', bgcolor: '#ffffff' }}>{qa.projectTitle}</TableCell>
                         </TableRow>
-                        <TableRow>
-                          <TableCell sx={{ fontWeight: 700, bgcolor: 'action.hover' }}>Klien / Instansi</TableCell>
-                          <TableCell>{qa.clientName}</TableCell>
+                        <TableRow sx={{ bgcolor: '#ffffff' }}>
+                          <TableCell sx={{ fontWeight: 700, bgcolor: '#f1f5f9', color: '#0f172a' }}>Klien / Instansi</TableCell>
+                          <TableCell sx={{ color: '#0f172a', bgcolor: '#ffffff' }}>{qa.clientName}</TableCell>
                         </TableRow>
-                        <TableRow>
-                          <TableCell sx={{ fontWeight: 700, bgcolor: 'action.hover' }}>QA Lead & Tester</TableCell>
-                          <TableCell>{qa.qaLeadName} / {qa.testerName}</TableCell>
+                        <TableRow sx={{ bgcolor: '#ffffff' }}>
+                          <TableCell sx={{ fontWeight: 700, bgcolor: '#f1f5f9', color: '#0f172a' }}>QA Lead & Tester</TableCell>
+                          <TableCell sx={{ color: '#0f172a', bgcolor: '#ffffff' }}>{qa.qaLeadName} / {qa.testerName}</TableCell>
                         </TableRow>
-                        <TableRow>
-                          <TableCell sx={{ fontWeight: 700, bgcolor: 'action.hover' }}>PIC UAT Klien</TableCell>
-                          <TableCell>{qa.clientPic}</TableCell>
+                        <TableRow sx={{ bgcolor: '#ffffff' }}>
+                          <TableCell sx={{ fontWeight: 700, bgcolor: '#f1f5f9', color: '#0f172a' }}>PIC UAT Klien</TableCell>
+                          <TableCell sx={{ color: '#0f172a', bgcolor: '#ffffff' }}>{qa.clientPic}</TableCell>
                         </TableRow>
-                        <TableRow>
-                          <TableCell sx={{ fontWeight: 700, bgcolor: 'action.hover' }}>URL Staging Test</TableCell>
-                          <TableCell sx={{ color: 'primary.main', fontWeight: 600 }}>{qa.stagingUrl}</TableCell>
+                        <TableRow sx={{ bgcolor: '#ffffff' }}>
+                          <TableCell sx={{ fontWeight: 700, bgcolor: '#f1f5f9', color: '#0f172a' }}>URL Staging Test</TableCell>
+                          <TableCell sx={{ color: '#2563eb', fontWeight: 600, bgcolor: '#ffffff' }}>{qa.stagingUrl}</TableCell>
                         </TableRow>
-                        <TableRow>
-                          <TableCell sx={{ fontWeight: 700, bgcolor: 'action.hover' }}>Status Pengujian Akhir</TableCell>
-                          <TableCell>
+                        <TableRow sx={{ bgcolor: '#ffffff' }}>
+                          <TableCell sx={{ fontWeight: 700, bgcolor: '#f1f5f9', color: '#0f172a' }}>Status Pengujian Akhir</TableCell>
+                          <TableCell sx={{ bgcolor: '#ffffff' }}>
                             <Tooltip title={onUpdateQA ? 'Klik untuk toggle status pengujian akhir' : ''}>
                               <Chip
                                 label={`STATUS AKHIR: ${qa.overallStatus}`}
@@ -2621,32 +2621,32 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
                   <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#d97706', mt: 3, mb: 1 }}>
                     RINGKASAN SKENARIO PENGUJIAN & PATOKAN SPESIFIKASI RSD
                   </Typography>
-                  <Paper variant="outlined" sx={{ p: 2, mb: 3, bgcolor: 'rgba(0,0,0,0.01)' }}>
-                    <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.82rem' }}>
+                  <Box sx={{ p: 2, mb: 3, border: '1px solid #000000', bgcolor: '#f8fafc', borderRadius: 1 }}>
+                    <Typography variant="body2" sx={{ color: '#334155', fontSize: '0.82rem' }}>
                       {qa.summary}
                     </Typography>
-                  </Paper>
+                  </Box>
 
                   {/* Test Items Table */}
                   <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#d97706', mb: 1.5 }}>
                     DAFTAR CHECKLIST TESTING & VALIDASI FITUR ACUAN RSD
                   </Typography>
-                  <TableContainer component={Paper} variant="outlined" sx={{ mb: 3 }}>
+                  <TableContainer component={Box} sx={{ border: '1px solid #000000', mb: 3, bgcolor: '#ffffff' }}>
                     <Table size="small">
-                      <TableHead sx={{ bgcolor: 'action.hover' }}>
-                        <TableRow>
-                          <TableCell sx={{ fontWeight: 800, width: '5%' }}>No</TableCell>
-                          <TableCell sx={{ fontWeight: 800, width: '25%' }}>Kategori & Ref RSD</TableCell>
-                          <TableCell sx={{ fontWeight: 800, width: '30%' }}>Test Case & Skenario</TableCell>
-                          <TableCell sx={{ fontWeight: 800, width: '25%' }}>Hasil Diharapkan</TableCell>
-                          <TableCell sx={{ fontWeight: 800, width: '15%' }}>Status</TableCell>
+                      <TableHead sx={{ bgcolor: '#f1f5f9' }}>
+                        <TableRow sx={{ bgcolor: '#f1f5f9' }}>
+                          <TableCell sx={{ fontWeight: 800, width: '5%', color: '#0f172a', bgcolor: '#f1f5f9' }}>No</TableCell>
+                          <TableCell sx={{ fontWeight: 800, width: '25%', color: '#0f172a', bgcolor: '#f1f5f9' }}>Kategori & Ref RSD</TableCell>
+                          <TableCell sx={{ fontWeight: 800, width: '30%', color: '#0f172a', bgcolor: '#f1f5f9' }}>Test Case & Skenario</TableCell>
+                          <TableCell sx={{ fontWeight: 800, width: '25%', color: '#0f172a', bgcolor: '#f1f5f9' }}>Hasil Diharapkan</TableCell>
+                          <TableCell sx={{ fontWeight: 800, width: '15%', color: '#0f172a', bgcolor: '#f1f5f9' }}>Status</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
                         {(qa.testItems || []).map((item, idx) => (
-                          <TableRow key={item.id || idx}>
-                            <TableCell>{idx + 1}</TableCell>
-                            <TableCell sx={{ fontWeight: 700 }}>
+                          <TableRow key={item.id || idx} sx={{ bgcolor: '#ffffff' }}>
+                            <TableCell sx={{ color: '#0f172a' }}>{idx + 1}</TableCell>
+                            <TableCell sx={{ fontWeight: 700, color: '#0f172a' }}>
                               {item.category}
                               {item.notes && (
                                 <Typography variant="caption" display="block" color="text.secondary" sx={{ fontSize: '0.65rem' }}>
@@ -2654,8 +2654,8 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
                                 </Typography>
                               )}
                             </TableCell>
-                            <TableCell>{item.testCase}</TableCell>
-                            <TableCell>{item.expectedResult}</TableCell>
+                            <TableCell sx={{ color: '#0f172a' }}>{item.testCase}</TableCell>
+                            <TableCell sx={{ color: '#0f172a' }}>{item.expectedResult}</TableCell>
                             <TableCell>
                               <Tooltip title={onUpdateQA && !isClientRole ? 'Klik untuk toggle status (PASSED -> FAILED -> PENDING)' : ''}>
                                 <Chip

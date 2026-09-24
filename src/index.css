@@ -34,6 +34,22 @@ html, body {
  * ------------------------------------------------------------- */
 
 /* Shared Table & Document Styles (Screen Preview & Print Output) */
+.printable-document {
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+
+.printable-document,
+.printable-document .MuiPaper-root,
+.printable-document .MuiTableContainer-root,
+.printable-document .MuiTable-root,
+.printable-document .MuiTableBody-root {
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+
 .printable-document table {
   width: 100% !important;
   border-collapse: collapse !important;
@@ -46,6 +62,21 @@ html, body {
 .printable-document tr {
   margin: 0 !important;
   padding: 0 !important;
+  background-color: #ffffff !important;
+}
+
+.printable-document table:not(.print-layout-table) tbody tr,
+.printable-document table:not(.print-layout-table) tbody td,
+.printable-document table:not(.print-layout-table) tbody th {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
+.printable-document table:not(.print-layout-table) thead tr,
+.printable-document table:not(.print-layout-table) thead td,
+.printable-document table:not(.print-layout-table) thead th {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
 }
 
 .printable-document table:not(.print-layout-table) th,
