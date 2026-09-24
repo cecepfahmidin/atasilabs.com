@@ -316,6 +316,9 @@ export const ClientDashboardView: React.FC = () => {
     },
   ];
 
+  const signatureRequiredDocs = documentList.filter((d) => d.requiresSignature);
+  const signedDocs = signatureRequiredDocs.filter((d) => d.party2Signed);
+  const pendingDocs = signatureRequiredDocs.filter((d) => !d.party2Signed);
   const pendingSignatureDoc = documentList.find((d) => d.requiresSignature && !d.party2Signed);
 
   return (
@@ -510,17 +513,46 @@ export const ClientDashboardView: React.FC = () => {
           >
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
               <Typography variant="subtitle2" color="text.secondary" sx={{ fontWeight: 700, fontSize: '0.8rem' }}>
-                Kelengkapan Dokumen Legal
+                Status Tanda Tangan Dokumen
               </Typography>
-              <Box sx={{ p: 1, borderRadius: 2, bgcolor: 'rgba(59, 130, 246, 0.15)' }}>
-                <DescriptionIcon sx={{ color: '#3b82f6' }} />
+              <Box
+                sx={{
+                  p: 1,
+                  borderRadius: 2,
+                  bgcolor: signedDocs.length === signatureRequiredDocs.length ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                }}
+              >
+                <DescriptionIcon
+                  sx={{
+                    color: signedDocs.length === signatureRequiredDocs.length ? '#10b981' : '#f59e0b',
+                  }}
+                />
               </Box>
             </Box>
-            <Typography variant="h4" sx={{ fontWeight: 800, mb: 0.5, color: '#3b82f6' }}>
-              5 / 5
+            <Typography
+              variant="h4"
+              sx={{
+                fontWeight: 800,
+                mb: 0.5,
+                color: signedDocs.length === signatureRequiredDocs.length ? '#10b981' : '#f59e0b',
+              }}
+            >
+              {signedDocs.length} / {signatureRequiredDocs.length}
             </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, display: 'block', mt: 1 }}>
-              CIF, RSD, MoU, QA Report, BAST Ready
+            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, display: 'block', mt: 0.5, lineHeight: 1.3 }}>
+              <strong>Sudah TTD:</strong> {signedDocs.map((d) => d.code).join(', ') || 'Belum ada'}
+            </Typography>
+            <Typography
+              variant="caption"
+              sx={{
+                fontWeight: 700,
+                display: 'block',
+                mt: 0.3,
+                lineHeight: 1.3,
+                color: pendingDocs.length > 0 ? '#f59e0b' : '#10b981',
+              }}
+            >
+              <strong>Wajib TTD:</strong> {pendingDocs.map((d) => d.code).join(', ') || 'Lengkap ✅'}
             </Typography>
           </Paper>
         </Grid>
