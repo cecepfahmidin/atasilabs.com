@@ -23,7 +23,8 @@ export async function GET() {
               company: u.company || '',
               phone: u.phone || '',
               status: u.status || 'ACTIVE',
-            },
+              titleBadge: u.titleBadge || '',
+            } as any,
             create: {
               id: u.id,
               email: u.email,
@@ -33,7 +34,8 @@ export async function GET() {
               company: u.company || '',
               phone: u.phone || '',
               status: u.status || 'ACTIVE',
-            },
+              titleBadge: u.titleBadge || '',
+            } as any,
           });
         }
         const seeded = await prisma.user.findMany({ orderBy: { createdAt: 'asc' } });
@@ -52,7 +54,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, name, role, avatarUrl, company, phone, status, password } = body;
+    const { email, name, role, avatarUrl, company, phone, status, password, bio, tagline, titleBadge } = body;
 
     if (!email || !name) {
       return NextResponse.json({ success: false, error: 'Email and name are required' }, { status: 400 });
@@ -70,7 +72,10 @@ export async function POST(request: Request) {
           phone: phone || '',
           status: status || 'ACTIVE',
           password: password || '',
-        },
+          bio: bio || '',
+          tagline: tagline || '',
+          titleBadge: titleBadge || '',
+        } as any,
       });
     } catch (dbErr) {
       created = {
@@ -83,6 +88,9 @@ export async function POST(request: Request) {
         phone: phone || '',
         status: status || 'ACTIVE',
         password: password || '',
+        bio: bio || '',
+        tagline: tagline || '',
+        titleBadge: titleBadge || '',
         createdAt: new Date().toISOString(),
       };
     }

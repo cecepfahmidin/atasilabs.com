@@ -277,7 +277,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Helper State Setters (pure state updates, DB APIs handle persistence)
   const saveUsers = (next: User[] | ((prev: User[]) => User[])) => {
-    setUsers((prev) => (typeof next === 'function' ? next(prev) : next));
+    setUsers((prev) => {
+      const updated = typeof next === 'function' ? next(prev) : next;
+      try {
+        localStorage.setItem(STORAGE_KEYS.USERS_LIST, JSON.stringify(updated));
+      } catch (e) {
+        console.error('Failed to save users list to localStorage:', e);
+      }
+      return updated;
+    });
   };
 
   const saveLeads = (next: Lead[] | ((prev: Lead[]) => Lead[])) => {
@@ -471,8 +479,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Leads CRUD
   const addLead = async (leadData: Omit<Lead, 'id' | 'createdAt' | 'status'>): Promise<Lead> => {
+    const emailMatch = leadData.email ? leadData.email.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/) : null;
+    const cleanEmail = emailMatch ? emailMatch[0] : (leadData.email || '').trim();
+    const cleanLeadData = { ...leadData, email: cleanEmail };
+
     const tempLead: Lead = {
-      ...leadData,
+      ...cleanLeadData,
       id: `lead-${Date.now()}`,
       status: 'NEW',
       createdAt: new Date().toISOString(),

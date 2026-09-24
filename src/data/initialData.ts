@@ -25,6 +25,7 @@ export const INITIAL_USER: User = {
   company: 'PT Aulia Indoland Grup (Atasilabs)',
   status: 'ACTIVE',
   avatarUrl: '/team/ceo.jpg',
+  titleBadge: 'CEO & FOUNDER',
   createdAt: '2024-01-15T08:00:00.000Z',
 };
 
@@ -39,6 +40,7 @@ export const INITIAL_USERS: User[] = [
     company: 'Atasilabs Tech Division',
     status: 'ACTIVE',
     avatarUrl: '/team/cto.jpg',
+    titleBadge: 'CTO & LEAD ARCHITECT',
     createdAt: '2024-01-16T09:00:00.000Z',
   },
   {
@@ -50,6 +52,7 @@ export const INITIAL_USERS: User[] = [
     company: 'Atasilabs Growth & Business Dev',
     status: 'ACTIVE',
     avatarUrl: '/team/cmo.jpg',
+    titleBadge: 'CMO & HEAD OF UI/UX',
     createdAt: '2024-01-17T10:00:00.000Z',
   },
   {

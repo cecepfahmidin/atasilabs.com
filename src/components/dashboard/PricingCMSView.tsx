@@ -4,6 +4,9 @@ import React, { useState } from 'react';
 import {
   Box,
   Paper,
+  Card,
+  CardContent,
+  CardActions,
   Typography,
   Button,
   TextField,
@@ -159,7 +162,7 @@ export const PricingCMSView: React.FC = () => {
   };
 
   return (
-    <Box sx={{ p: { xs: 2, md: 3 } }}>
+    <Box sx={{ pb: 6 }}>
       {/* Top Bar Header */}
       <Box
         sx={{
@@ -168,12 +171,19 @@ export const PricingCMSView: React.FC = () => {
           justifyContent: 'space-between',
           alignItems: { xs: 'flex-start', sm: 'center' },
           gap: 2,
-          mb: 3,
+          mb: 4,
         }}
       >
         <Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography variant="h5" component="h1" sx={{ fontWeight: 800 }}>
+            <Typography
+              variant="h5"
+              component="h1"
+              sx={{
+                fontWeight: 800,
+                color: theme.palette.mode === 'dark' ? '#ffffff' : '#000000',
+              }}
+            >
               Manajemen Pricelist & Spesifikasi Paket
             </Typography>
             <Chip
@@ -222,57 +232,159 @@ export const PricingCMSView: React.FC = () => {
       </Alert>
 
       {/* Grid of 5 Tiers */}
-      <Grid container spacing={2.5}>
+      <Grid container spacing={3}>
         {pricingTiers.map((tier) => (
           <Grid key={tier.id} size={{ xs: 12, md: 6, xl: 4 }}>
-            <Paper
+            <Card
               elevation={0}
               sx={{
-                p: 3,
                 height: '100%',
                 display: 'flex',
                 flexDirection: 'column',
-                borderRadius: 3,
+                borderRadius: 3.5,
                 border: tier.popular
-                  ? `2px solid ${theme.palette.primary.main}`
+                  ? '2px solid #f59e0b'
                   : `1px solid ${theme.palette.divider}`,
-                backgroundColor:
-                  tier.popular && theme.palette.mode === 'light'
-                    ? 'rgba(255, 251, 235, 0.6)'
-                    : theme.palette.background.paper,
-                position: 'relative',
+                backgroundColor: theme.palette.background.paper,
+                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow:
+                    theme.palette.mode === 'dark'
+                      ? '0 12px 24px rgba(0,0,0,0.5)'
+                      : '0 12px 24px rgba(0,0,0,0.06)',
+                  borderColor: '#f59e0b',
+                },
               }}
             >
-              {/* Header */}
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
-                <Box>
-                  <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 0.5 }}>
-                    <Chip
-                      label={`TIER ${tier.tierNumber}`}
-                      size="small"
-                      sx={{
-                        fontWeight: 900,
-                        fontSize: '0.65rem',
-                        height: 20,
-                        backgroundColor:
-                          theme.palette.mode === 'dark' ? 'rgba(245, 158, 11, 0.2)' : 'rgba(217, 119, 6, 0.12)',
-                        color: theme.palette.primary.main,
-                      }}
-                    />
-                    {tier.popular && (
+              <CardContent sx={{ flexGrow: 1, p: 3, display: 'flex', flexDirection: 'column' }}>
+                {/* Header */}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
+                  <Box>
+                    <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 0.8, flexWrap: 'wrap', gap: 0.5 }}>
                       <Chip
-                        label="REKOMENDASI (POPULAR)"
+                        label={`TIER ${tier.tierNumber}`}
                         size="small"
-                        color="primary"
-                        sx={{ fontWeight: 800, fontSize: '0.65rem', height: 20 }}
+                        sx={{
+                          fontWeight: 900,
+                          fontSize: '0.68rem',
+                          height: 22,
+                          backgroundColor:
+                            theme.palette.mode === 'dark' ? 'rgba(245, 158, 11, 0.2)' : 'rgba(217, 119, 6, 0.12)',
+                          color: '#f59e0b',
+                          border: '1px solid rgba(245, 158, 11, 0.3)',
+                        }}
                       />
-                    )}
-                  </Stack>
-                  <Typography variant="h5" sx={{ fontWeight: 800 }}>
-                    {tier.name}
+                      {tier.popular && (
+                        <Chip
+                          label="REKOMENDASI (POPULAR)"
+                          size="small"
+                          sx={{
+                            fontWeight: 800,
+                            fontSize: '0.65rem',
+                            height: 22,
+                            backgroundColor: '#f59e0b',
+                            color: '#181512',
+                          }}
+                        />
+                      )}
+                    </Stack>
+                    <Typography variant="h5" sx={{ fontWeight: 800, color: theme.palette.text.primary }}>
+                      {tier.name}
+                    </Typography>
+                  </Box>
+
+                  {tier.highlightBadge && (
+                    <Chip
+                      label={tier.highlightBadge}
+                      size="small"
+                      variant="outlined"
+                      sx={{ fontWeight: 700, fontSize: '0.72rem', borderColor: theme.palette.divider }}
+                    />
+                  )}
+                </Box>
+
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2, minHeight: 38, fontSize: '0.85rem', lineHeight: 1.5 }}>
+                  {tier.tagline}
+                </Typography>
+
+                {/* Price Pill */}
+                <Box
+                  sx={{
+                    p: 2,
+                    borderRadius: 2.5,
+                    backgroundColor:
+                      theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.25)' : 'rgba(248, 250, 252, 1)',
+                    border: `1px solid ${theme.palette.divider}`,
+                    mb: 2.5,
+                  }}
+                >
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '0.72rem', fontWeight: 600 }}>
+                    Harga Paket Saat Ini:
+                  </Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 900, color: '#f59e0b' }}>
+                    {formatRupiah(tier.price)}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                    {tier.priceBilling} &bull; {tier.deliveryTime} &bull; {tier.revisionCount}
                   </Typography>
                 </Box>
 
+                {/* Features List Preview */}
+                <Typography variant="caption" sx={{ fontWeight: 800, color: theme.palette.text.secondary, textTransform: 'uppercase', mb: 1, display: 'block', letterSpacing: 0.5 }}>
+                  Fitur Utama ({tier.features.length}):
+                </Typography>
+                <Stack spacing={0.6} sx={{ mb: 2.5 }}>
+                  {tier.features.slice(0, 4).map((f, i) => (
+                    <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <CheckIcon sx={{ fontSize: 15, color: '#f59e0b' }} />
+                      <Typography variant="caption" sx={{ fontSize: '0.8rem', color: theme.palette.text.primary }}>
+                        {f}
+                      </Typography>
+                    </Box>
+                  ))}
+                  {tier.features.length > 4 && (
+                    <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic', pl: 3 }}>
+                      + {tier.features.length - 4} fitur lainnya...
+                    </Typography>
+                  )}
+                </Stack>
+
+                <Divider sx={{ my: 1 }} />
+
+                {/* Specs Preview */}
+                <Typography variant="caption" sx={{ fontWeight: 800, color: theme.palette.text.secondary, textTransform: 'uppercase', mt: 1, mb: 1, display: 'block', letterSpacing: 0.5 }}>
+                  Spesifikasi Teknis ({tier.specs.length}):
+                </Typography>
+                <Grid container spacing={1} sx={{ mt: 'auto' }}>
+                  {tier.specs.slice(0, 4).map((spec, i) => (
+                    <Grid key={i} size={{ xs: 12, sm: 6 }}>
+                      <Box
+                        sx={{
+                          p: 1,
+                          borderRadius: 1.5,
+                          backgroundColor:
+                            theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+                          border: `1px solid ${theme.palette.divider}`,
+                        }}
+                      >
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '0.68rem' }} noWrap>
+                          {spec.label}
+                        </Typography>
+                        <Typography variant="caption" sx={{ fontWeight: 700, fontSize: '0.75rem', color: theme.palette.text.primary }} noWrap display="block">
+                          {spec.value}
+                        </Typography>
+                      </Box>
+                    </Grid>
+                  ))}
+                </Grid>
+              </CardContent>
+
+              {/* Card Actions Bottom Bar */}
+              <CardActions sx={{ p: 2, pt: 1.5, justifyContent: 'space-between', borderTop: `1px solid ${theme.palette.divider}` }}>
+                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                  Terakhir Diperbarui
+                </Typography>
                 <Button
                   size="small"
                   variant="contained"
@@ -281,109 +393,22 @@ export const PricingCMSView: React.FC = () => {
                   onClick={() => handleOpenEdit(tier)}
                   sx={{
                     borderRadius: 2,
-                    fontWeight: 700,
+                    fontWeight: 800,
                     fontSize: '0.78rem',
                     textTransform: 'none',
-                    background:
-                      theme.palette.mode === 'dark'
-                        ? 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)'
-                        : 'linear-gradient(135deg, #F59E0B 0%, #B45309 100%)',
-                    color: theme.palette.mode === 'dark' ? '#181512' : '#ffffff',
+                    px: 2,
+                    background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+                    color: '#ffffff',
+                    boxShadow: '0 2px 8px rgba(245, 158, 11, 0.25)',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #D97706 0%, #B45309 100%)',
+                    },
                   }}
                 >
-                  Edit Tier
+                  Edit Spesifikasi Tier
                 </Button>
-              </Box>
-
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2, minHeight: 40, fontSize: '0.85rem' }}>
-                {tier.tagline}
-              </Typography>
-
-              {/* Price Pill */}
-              <Box
-                sx={{
-                  p: 2,
-                  borderRadius: 2.5,
-                  backgroundColor:
-                    theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.025)',
-                  border: `1px solid ${theme.palette.divider}`,
-                  mb: 2.5,
-                }}
-              >
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '0.72rem' }}>
-                  Harga Paket Saat Ini:
-                </Typography>
-                <Typography variant="h5" sx={{ fontWeight: 900, color: theme.palette.primary.main }}>
-                  {formatRupiah(tier.price)}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {tier.priceBilling} • {tier.deliveryTime} • {tier.revisionCount}
-                </Typography>
-              </Box>
-
-              {/* Highlight Badge */}
-              {tier.highlightBadge && (
-                <Box sx={{ mb: 2 }}>
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5, fontSize: '0.7rem' }}>
-                    Label Badge Promosi:
-                  </Typography>
-                  <Chip
-                    label={tier.highlightBadge}
-                    size="small"
-                    sx={{ fontWeight: 700, fontSize: '0.75rem' }}
-                  />
-                </Box>
-              )}
-
-              {/* Features List Preview */}
-              <Typography variant="caption" sx={{ fontWeight: 700, color: theme.palette.text.secondary, textTransform: 'uppercase', mb: 1, display: 'block' }}>
-                Fitur ({tier.features.length}):
-              </Typography>
-              <Stack spacing={0.6} sx={{ mb: 2.5 }}>
-                {tier.features.slice(0, 4).map((f, i) => (
-                  <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <CheckIcon sx={{ fontSize: 15, color: theme.palette.primary.main }} />
-                    <Typography variant="caption" sx={{ fontSize: '0.8rem' }}>
-                      {f}
-                    </Typography>
-                  </Box>
-                ))}
-                {tier.features.length > 4 && (
-                  <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic', pl: 3 }}>
-                    + {tier.features.length - 4} fitur lainnya...
-                  </Typography>
-                )}
-              </Stack>
-
-              <Divider sx={{ my: 1 }} />
-
-              {/* Specs Preview */}
-              <Typography variant="caption" sx={{ fontWeight: 700, color: theme.palette.text.secondary, textTransform: 'uppercase', mt: 1, mb: 1, display: 'block' }}>
-                Spesifikasi Teknis ({tier.specs.length}):
-              </Typography>
-              <Grid container spacing={1} sx={{ mt: 'auto' }}>
-                {tier.specs.slice(0, 4).map((spec, i) => (
-                  <Grid key={i} size={{ xs: 12, sm: 6 }}>
-                    <Box
-                      sx={{
-                        p: 1,
-                        borderRadius: 1.5,
-                        backgroundColor:
-                          theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
-                        border: `1px solid ${theme.palette.divider}`,
-                      }}
-                    >
-                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '0.68rem' }}>
-                        {spec.label}
-                      </Typography>
-                      <Typography variant="caption" sx={{ fontWeight: 700, fontSize: '0.75rem' }}>
-                        {spec.value}
-                      </Typography>
-                    </Box>
-                  </Grid>
-                ))}
-              </Grid>
-            </Paper>
+              </CardActions>
+            </Card>
           </Grid>
         ))}
       </Grid>

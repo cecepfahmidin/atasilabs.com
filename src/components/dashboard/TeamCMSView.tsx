@@ -21,6 +21,7 @@ import {
   Tooltip,
   useTheme,
   Divider,
+  Stack,
   FormControl,
   InputLabel,
   Select,
@@ -71,6 +72,8 @@ export const TeamCMSView: React.FC = () => {
     avatarUrl: string;
     bio: string;
     tagline: string;
+    titleBadge: string;
+    roleTitle: string;
   }>({
     name: '',
     email: '',
@@ -81,6 +84,8 @@ export const TeamCMSView: React.FC = () => {
     avatarUrl: '',
     bio: '',
     tagline: '',
+    titleBadge: 'CEO & FOUNDER',
+    roleTitle: 'CHIEF EXECUTIVE OFFICER',
   });
 
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -155,6 +160,8 @@ export const TeamCMSView: React.FC = () => {
       avatarUrl: '/team/ceo.jpg',
       bio: 'Memastikan seluruh operasional studio, standar layanan, dan komitmen garansi kepuasan berjalan dengan presisi tinggi.',
       tagline: 'Visi Strategis & Layanan Klien',
+      titleBadge: 'CEO & FOUNDER',
+      roleTitle: 'CHIEF EXECUTIVE OFFICER',
     });
     setOpenDialog(true);
   };
@@ -163,6 +170,8 @@ export const TeamCMSView: React.FC = () => {
     setEditingUser(u);
     let defaultBio = u.bio || '';
     let defaultTagline = u.tagline || '';
+    let defaultBadge = u.titleBadge || '';
+    let defaultRoleTitle = u.roleTitle || '';
 
     if (!defaultBio) {
       if (u.role === 'CEO') defaultBio = 'Memastikan seluruh operasional studio, standar layanan, dan komitmen garansi kepuasan berjalan dengan presisi dan transparansi tinggi.';
@@ -178,6 +187,20 @@ export const TeamCMSView: React.FC = () => {
       else defaultTagline = 'Tim Profesional Atasilabs';
     }
 
+    if (!defaultBadge) {
+      if (u.role === 'CEO') defaultBadge = 'CEO & FOUNDER';
+      else if (u.role === 'CTO') defaultBadge = 'CTO & LEAD ARCHITECT';
+      else if (u.role === 'CMO') defaultBadge = 'CMO & HEAD OF UI/UX';
+      else defaultBadge = `${u.role} EXECUTIVE`;
+    }
+
+    if (!defaultRoleTitle) {
+      if (u.role === 'CEO') defaultRoleTitle = 'CHIEF EXECUTIVE OFFICER';
+      else if (u.role === 'CTO') defaultRoleTitle = 'CHIEF TECHNOLOGY OFFICER';
+      else if (u.role === 'CMO') defaultRoleTitle = 'CHIEF MARKETING OFFICER';
+      else defaultRoleTitle = `${u.role} EXECUTIVE`;
+    }
+
     setFormData({
       name: u.name,
       email: u.email,
@@ -188,6 +211,8 @@ export const TeamCMSView: React.FC = () => {
       avatarUrl: u.avatarUrl || '',
       bio: defaultBio,
       tagline: defaultTagline,
+      titleBadge: defaultBadge,
+      roleTitle: defaultRoleTitle,
     });
     setOpenDialog(true);
   };
@@ -231,76 +256,70 @@ export const TeamCMSView: React.FC = () => {
   });
 
   return (
-    <Box sx={{ maxWidth: 1200, mx: 'auto', pb: 6 }}>
-      {/* Header Banner */}
-      <Paper
-        elevation={0}
+    <Box sx={{ pb: 6 }}>
+      {/* Header */}
+      <Box
         sx={{
-          p: { xs: 3, sm: 4 },
-          borderRadius: 3.5,
-          background:
-            theme.palette.mode === 'dark'
-              ? 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)'
-              : 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
-          border: `1px solid ${theme.palette.divider}`,
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          justifyContent: 'space-between',
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          gap: 2,
           mb: 4,
         }}
       >
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: { xs: 'column', sm: 'row' },
-            justifyContent: 'space-between',
-            alignItems: { sm: 'center' },
-            gap: 2,
-          }}
-        >
-          <Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
-              <Chip
-                icon={<CLevelIcon sx={{ fontSize: 16 }} />}
-                label="MASTER DATA // TIM MANAJEMEN & LEADERSHIP"
-                color="primary"
-                size="small"
-                sx={{ fontWeight: 800, fontSize: '0.75rem' }}
-              />
-            </Box>
-            <Typography variant="h4" sx={{ fontWeight: 800, mb: 0.5, fontSize: { xs: '1.5rem', sm: '1.85rem' } }}>
-              Manajemen Tim & Leadership Executive
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 720, lineHeight: 1.6 }}>
-              Pusat kendali profil eksekutif C-Level (CEO Irfan Aulia, CTO Cecep Fahmidin, CMO Dian Hidayat). Kelola foto profil avatar (Cloudflare R2), biografi eksekutif, dan status yang tampil di landing page.
-            </Typography>
-          </Box>
-
-          <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-            <Button
-              variant="outlined"
-              color="primary"
-              startIcon={<LaunchIcon />}
-              onClick={() => router.push('/#team')}
-              sx={{ fontWeight: 700, borderRadius: 2 }}
-            >
-              Pratinjau Landing
-            </Button>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<AddIcon />}
-              onClick={handleOpenAdd}
-              sx={{
-                borderRadius: 2.5,
-                px: 3,
-                fontWeight: 800,
-                background: 'linear-gradient(135deg, #f59e0b 0%, #b45309 100%)',
-                boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)',
-              }}
-            >
-              Tambah Eksekutif Baru
-            </Button>
-          </Box>
+        <Box sx={{ flex: 1, minWidth: 260 }}>
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 800,
+              mb: 0.5,
+              color: theme.palette.mode === 'dark' ? '#ffffff' : '#000000',
+            }}
+          >
+            Manajemen Tim & Leadership Executive
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Pusat kendali profil eksekutif C-Level (CEO, CTO, CMO). Kelola foto profil avatar (Cloudflare R2), biografi eksekutif, badge judul jabatan, dan status.
+          </Typography>
         </Box>
-      </Paper>
+
+        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', flexShrink: 0, flexWrap: 'wrap' }}>
+          <Button
+            variant="outlined"
+            startIcon={<LaunchIcon />}
+            onClick={() => router.push('/#team')}
+            sx={{
+              fontWeight: 700,
+              borderRadius: 2.5,
+              whiteSpace: 'nowrap',
+              color: theme.palette.text.primary,
+              borderColor: theme.palette.divider,
+              '&:hover': {
+                borderColor: theme.palette.primary.main,
+              },
+            }}
+          >
+            Pratinjau Landing
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={handleOpenAdd}
+            sx={{
+              borderRadius: 2.5,
+              fontWeight: 700,
+              whiteSpace: 'nowrap',
+              background: theme.palette.mode === 'dark'
+                ? 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)'
+                : 'linear-gradient(135deg, #F59E0B 0%, #B45309 100%)',
+              color: theme.palette.mode === 'dark' ? '#181512' : '#ffffff',
+            }}
+          >
+            Tambah Eksekutif Baru
+          </Button>
+        </Stack>
+      </Box>
 
       {/* Search Bar */}
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -328,6 +347,7 @@ export const TeamCMSView: React.FC = () => {
         {filteredTeam.map((item) => {
           const roleConfig = ROLE_CONFIGS[item.role] || ROLE_CONFIGS.ADMIN;
           const displayAvatar = item.avatarUrl || (item.role === 'CEO' ? '/team/ceo.jpg' : item.role === 'CTO' ? '/team/cto.jpg' : '/team/cmo.jpg');
+          const badgeText = item.titleBadge || (item.role === 'CEO' ? 'CEO & FOUNDER' : item.role === 'CTO' ? 'CTO & LEAD ARCHITECT' : item.role === 'CMO' ? 'CMO & HEAD OF UI/UX' : roleConfig.label);
 
           return (
             <Grid item xs={12} sm={6} md={4} key={item.id}>
@@ -368,7 +388,7 @@ export const TeamCMSView: React.FC = () => {
                     }}
                   />
                   <Chip
-                    label={roleConfig.label}
+                    label={badgeText}
                     size="small"
                     color={roleConfig.badgeColor as any}
                     sx={{
@@ -568,6 +588,15 @@ export const TeamCMSView: React.FC = () => {
                   </Grid>
                 </Grid>
 
+                <TextField
+                  fullWidth
+                  label="Badge Judul Jabatan (Tampil di Foto)"
+                  value={formData.titleBadge}
+                  onChange={(e) => setFormData({ ...formData, titleBadge: e.target.value })}
+                  placeholder="Contoh: CMO & HEAD OF UI/UX, CEO & FOUNDER, CTO & LEAD ARCHITECT"
+                  helperText="Badge judul ini akan tampil di bagian atas foto eksekutif pada landing page"
+                />
+
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={6}>
                     <TextField
@@ -662,7 +691,7 @@ export const TeamCMSView: React.FC = () => {
                       style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }}
                     />
                     <Chip
-                      label={ROLE_CONFIGS[formData.role]?.label || formData.role}
+                      label={formData.titleBadge || ROLE_CONFIGS[formData.role]?.label || formData.role}
                       size="small"
                       color={ROLE_CONFIGS[formData.role]?.badgeColor as any}
                       sx={{ position: 'absolute', top: 12, left: 12, fontWeight: 800, fontSize: '0.68rem' }}
@@ -713,3 +742,4 @@ export const TeamCMSView: React.FC = () => {
 };
 
 export default TeamCMSView;
+

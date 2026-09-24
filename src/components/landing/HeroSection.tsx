@@ -79,7 +79,7 @@ export const HeroSection: React.FC = () => {
 
       <div className="h-6 md:h-[24px]" />
 
-      <p className="font-ibm-mono text-[11px] text-[#555555] tracking-[2px] text-center">
+      <p className="font-ibm-mono text-[11px] text-[#FFFFFF] font-semibold tracking-[2px] text-center">
         BUILD YOUR DIGITAL FUTURE WITH ATASILABS TEAM
       </p>
 

@@ -255,8 +255,14 @@ export const ProjectsView: React.FC = () => {
         <Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
             <LayersIcon color="primary" />
-            <Typography variant="h5" sx={{ fontWeight: 800, color: theme.palette.text.primary }}>
-              Klien & Proyek Aktif (Alur SOP 6-Tahap IPW)
+            <Typography
+              variant="h5"
+              sx={{
+                fontWeight: 800,
+                color: theme.palette.mode === 'dark' ? '#ffffff' : '#000000',
+              }}
+            >
+              Klien & Proyek
             </Typography>
           </Box>
           <Typography variant="body2" color="text.secondary">
@@ -341,8 +347,8 @@ export const ProjectsView: React.FC = () => {
             {filterStatus === 'ARCHIVED'
               ? 'Belum ada proyek yang diarsipkan.'
               : filterStatus === 'COMPLETED'
-              ? 'Belum ada proyek yang telah menyelesaikan tahap 6 (100% Closure).'
-              : 'Belum ada proyek terdaftar.'}
+                ? 'Belum ada proyek yang telah menyelesaikan tahap 6 (100% Closure).'
+                : 'Belum ada proyek terdaftar.'}
           </Typography>
         </Paper>
       )}
@@ -485,10 +491,10 @@ export const ProjectsView: React.FC = () => {
                                 backgroundColor: isCurrent
                                   ? stg.hexColor
                                   : isCompleted
-                                  ? `${stg.hexColor}80`
-                                  : theme.palette.mode === 'dark'
-                                  ? 'rgba(255,255,255,0.1)'
-                                  : 'rgba(0,0,0,0.1)',
+                                    ? `${stg.hexColor}80`
+                                    : theme.palette.mode === 'dark'
+                                      ? 'rgba(255,255,255,0.1)'
+                                      : 'rgba(0,0,0,0.1)',
                                 border: isCurrent ? `2px solid ${theme.palette.common.white}` : 'none',
                                 boxShadow: isCurrent ? `0 0 8px ${stg.hexColor}` : 'none',
                               }}
@@ -631,7 +637,7 @@ export const ProjectsView: React.FC = () => {
                             );
                           })}
                         {Boolean(proj.freelancerName) &&
-                        !users.some((u) => `${u.name} (${u.role})` === proj.freelancerName || u.name === proj.freelancerName) ? (
+                          !users.some((u) => `${u.name} (${u.role})` === proj.freelancerName || u.name === proj.freelancerName) ? (
                           <MenuItem value={proj.freelancerName}>
                             <Typography variant="body2" sx={{ fontWeight: 700, fontSize: '0.85rem' }}>
                               {proj.freelancerName}
@@ -952,7 +958,7 @@ export const ProjectsView: React.FC = () => {
                       );
                     })}
                   {Boolean(formData.freelancerName) &&
-                  !users.some((u) => `${u.name} (${u.role})` === formData.freelancerName || u.name === formData.freelancerName) ? (
+                    !users.some((u) => `${u.name} (${u.role})` === formData.freelancerName || u.name === formData.freelancerName) ? (
                     <MenuItem value={formData.freelancerName}>
                       {formData.freelancerName}
                     </MenuItem>

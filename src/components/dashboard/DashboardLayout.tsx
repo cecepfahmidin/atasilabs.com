@@ -663,7 +663,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
         component="main"
         sx={{
           flexGrow: 1,
-          p: { xs: 1.5, sm: 2.5, md: 4 },
+          p: { xs: 2.5, sm: 3.5, md: 5 },
           width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
           mt: '64px',
           overflowX: 'hidden',

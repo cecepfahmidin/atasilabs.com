@@ -166,7 +166,7 @@ export const PortfolioCMSView: React.FC = () => {
   };
 
   return (
-    <Box>
+    <Box sx={{ pb: 6 }}>
       {/* Header */}
       <Box
         sx={{
@@ -179,7 +179,14 @@ export const PortfolioCMSView: React.FC = () => {
         }}
       >
         <Box>
-          <Typography variant="h5" sx={{ fontWeight: 800, mb: 0.5 }}>
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 800,
+              mb: 0.5,
+              color: theme.palette.mode === 'dark' ? '#ffffff' : '#000000',
+            }}
+          >
             Manajemen Portofolio & Studi Kasus (CMS)
           </Typography>
           <Typography variant="body2" color="text.secondary">
@@ -234,7 +241,7 @@ export const PortfolioCMSView: React.FC = () => {
                 sx={{ backgroundColor: '#18181b' }}
               />
 
-              <CardContent sx={{ flexGrow: 1, p: 2.5 }}>
+              <CardContent sx={{ flexGrow: 1, p: 3, display: 'flex', flexDirection: 'column' }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
                   <Chip
                     label={item.category}
@@ -278,7 +285,7 @@ export const PortfolioCMSView: React.FC = () => {
                 </Box>
               </CardContent>
 
-              <CardActions sx={{ p: 2, pt: 0, justifyContent: 'space-between', borderTop: `1px solid ${theme.palette.divider}` }}>
+              <CardActions sx={{ px: 3, pb: 3, pt: 0, justifyContent: 'space-between', borderTop: `1px solid ${theme.palette.divider}` }}>
                 <Box sx={{ display: 'flex', gap: 0.5 }}>
                   <Button
                     size="small"

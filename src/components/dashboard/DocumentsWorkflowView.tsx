@@ -498,7 +498,7 @@ export const DocumentsWorkflowView: React.FC = () => {
                     onClick={() => handleOpenSignatureDialog('Pihak Pertama')}
                     sx={{ fontWeight: 700 }}
                   >
-                    {activeDocType === 'CIF' ? 'Tanda Tangan Admin / Sales' : 'Tanda Tangan Pihak 1 (Atasilabs)'}
+                    {activeDocType === 'CIF' ? 'TTD Admin' : 'TTD 1 (Atasilabs)'}
                   </Button>
                 )}
                 {activeDocType !== 'CIF' && (
@@ -510,7 +510,7 @@ export const DocumentsWorkflowView: React.FC = () => {
                     onClick={() => handleOpenSignatureDialog('Pihak Kedua')}
                     sx={{ fontWeight: 700 }}
                   >
-                    {isClientRole ? `Tanda Tangan Klien (${activeDocType})` : `Tanda Tangan Pihak 2 (Klien)`}
+                    {isClientRole ? `Tanda Tangan Klien (${activeDocType})` : `TTD 2 (Klien)`}
                   </Button>
                 )}
                 <Button
@@ -521,7 +521,7 @@ export const DocumentsWorkflowView: React.FC = () => {
                   onClick={handlePrintDocument}
                   sx={{ fontWeight: 700 }}
                 >
-                  Cetak / Simpan PDF (A4)
+                  Cetak (A4)
                 </Button>
                 {!isClientRole && (
                   <Button

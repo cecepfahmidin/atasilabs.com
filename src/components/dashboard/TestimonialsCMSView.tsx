@@ -22,6 +22,7 @@ import {
   Alert,
   useTheme,
   Divider,
+  Stack,
   Switch,
   FormControlLabel,
   MenuItem,
@@ -221,88 +222,70 @@ export const TestimonialsCMSView: React.FC = () => {
   });
 
   return (
-    <Box sx={{ maxWidth: 1200, mx: 'auto', pb: 6 }}>
-      {/* Header Banner */}
-      <Paper
-        elevation={0}
+    <Box sx={{ pb: 6 }}>
+      {/* Header */}
+      <Box
         sx={{
-          p: { xs: 3, sm: 4 },
-          borderRadius: 3.5,
-          background:
-            theme.palette.mode === 'dark'
-              ? 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)'
-              : 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
-          border: `1px solid ${theme.palette.divider}`,
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          justifyContent: 'space-between',
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          gap: 2,
           mb: 4,
         }}
       >
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: { xs: 'column', sm: 'row' },
-            justifyContent: 'space-between',
-            alignItems: { sm: 'center' },
-            gap: 2,
-          }}
-        >
-          <Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
-              <Chip
-                icon={<TestimonialIcon sx={{ fontSize: 16 }} />}
-                label="MASTER DATA // TESTIMONI KLIEN"
-                color="warning"
-                size="small"
-                sx={{ fontWeight: 800, fontSize: '0.75rem' }}
-              />
-            </Box>
-            <Typography variant="h4" sx={{ fontWeight: 800, mb: 0.5, fontSize: { xs: '1.5rem', sm: '1.85rem' } }}>
-              Manajemen Testimoni & Review Klien
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 720, lineHeight: 1.6 }}>
-              Kelola daftar testimonial dari para founder, CTO, CEO, dan stakeholder perusahaan yang telah menggunakan jasa pengembang Atasilabs. Data yang aktif otomatis tampil di Landing Page.
-            </Typography>
-          </Box>
-
-          <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-            <Button
-              variant="outlined"
-              color="inherit"
-              startIcon={<ResetIcon />}
-              onClick={handleReset}
-              sx={{ fontWeight: 700, borderRadius: 2 }}
-            >
-              Reset Default
-            </Button>
-            <Button
-              variant="outlined"
-              color="warning"
-              startIcon={<LaunchIcon />}
-              onClick={() => router.push('/#testimonials')}
-              sx={{ fontWeight: 700, borderRadius: 2 }}
-            >
-              Pratinjau Landing
-            </Button>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<AddIcon />}
-              onClick={handleOpenAdd}
-              sx={{
-                borderRadius: 2.5,
-                px: 3,
-                fontWeight: 800,
-                background: 'linear-gradient(135deg, #FFD600 0%, #d97706 100%)',
-                color: '#000000',
-                '&:hover': {
-                  background: 'linear-gradient(135deg, #ffe033 0%, #b45309 100%)',
-                },
-              }}
-            >
-              Tambah Testimoni
-            </Button>
-          </Box>
+        <Box sx={{ flex: 1, minWidth: 260 }}>
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 800,
+              mb: 0.5,
+              color: theme.palette.mode === 'dark' ? '#ffffff' : '#000000',
+            }}
+          >
+            Manajemen Testimoni & Review Klien
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Kelola apresiasi, kutipan ulasan, rating, dan metadata profil klien yang dipublikasikan pada section testimoni landing page.
+          </Typography>
         </Box>
-      </Paper>
+
+        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', flexShrink: 0, flexWrap: 'wrap' }}>
+          <Button
+            variant="outlined"
+            startIcon={<LaunchIcon />}
+            onClick={() => router.push('/#testimonials')}
+            sx={{
+              fontWeight: 700,
+              borderRadius: 2.5,
+              whiteSpace: 'nowrap',
+              color: theme.palette.text.primary,
+              borderColor: theme.palette.divider,
+              '&:hover': {
+                borderColor: theme.palette.primary.main,
+              },
+            }}
+          >
+            Pratinjau Landing
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={handleOpenAdd}
+            sx={{
+              borderRadius: 2.5,
+              fontWeight: 700,
+              whiteSpace: 'nowrap',
+              background: theme.palette.mode === 'dark'
+                ? 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)'
+                : 'linear-gradient(135deg, #F59E0B 0%, #B45309 100%)',
+              color: theme.palette.mode === 'dark' ? '#181512' : '#ffffff',
+            }}
+          >
+            Tambah Testimoni Baru
+          </Button>
+        </Stack>
+      </Box>
 
       {/* Control Bar: Search */}
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

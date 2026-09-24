@@ -10,6 +10,7 @@ import {
   Button,
   Chip,
   Divider,
+  Stack,
   useTheme,
   InputAdornment,
 } from '@mui/material';
@@ -73,65 +74,91 @@ export const CompanyContactView: React.FC = () => {
   };
 
   return (
-    <Box sx={{ maxWidth: 1200, mx: 'auto', pb: 6 }}>
-      {/* Header Banner */}
-      <Paper
-        elevation={0}
-        sx={{
-          p: { xs: 3, sm: 4 },
-          borderRadius: 3.5,
-          background:
-            theme.palette.mode === 'dark'
-              ? 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)'
-              : 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
-          border: `1px solid ${theme.palette.divider}`,
-          mb: 4,
-        }}
-      >
-        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { sm: 'center' }, gap: 2 }}>
-          <Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
-              <Chip
-                icon={<PhoneIcon sx={{ fontSize: 16 }} />}
-                label="MASTER DATA // KONTAK"
-                color="primary"
-                size="small"
-                sx={{ fontWeight: 800, fontSize: '0.75rem' }}
-              />
-            </Box>
-            <Typography variant="h4" sx={{ fontWeight: 800, mb: 0.5, fontSize: { xs: '1.5rem', sm: '1.85rem' } }}>
+    <Box sx={{ pb: 6 }}>
+      <form onSubmit={handleSave}>
+        {/* Header */}
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            justifyContent: 'space-between',
+            alignItems: { xs: 'flex-start', sm: 'center' },
+            gap: 2,
+            mb: 4,
+          }}
+        >
+          <Box sx={{ flex: 1, minWidth: 260 }}>
+            <Typography
+              variant="h5"
+              sx={{
+                fontWeight: 800,
+                mb: 0.5,
+                color: theme.palette.mode === 'dark' ? '#ffffff' : '#000000',
+              }}
+            >
               Pengaturan Kontak Perusahaan
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 700 }}>
-              Kelola alamat email support, nomor WhatsApp resmi, alamat HQ, jam kerja, dan pranala media sosial yang tampil secara dinamis pada landing page Atasilabs.
+            <Typography variant="body2" color="text.secondary">
+              Kelola alamat email support, nomor WhatsApp resmi, alamat HQ, jam kerja, dan pranala media sosial.
             </Typography>
           </Box>
 
-          <Box sx={{ display: 'flex', gap: 1.5, shrink: 0 }}>
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', flexShrink: 0, flexWrap: 'wrap' }}>
             <Button
               variant="outlined"
-              color="inherit"
               startIcon={<ResetIcon />}
               onClick={handleReset}
-              sx={{ fontWeight: 700, borderRadius: 2 }}
+              type="button"
+              sx={{
+                fontWeight: 700,
+                borderRadius: 2.5,
+                whiteSpace: 'nowrap',
+                color: theme.palette.text.primary,
+                borderColor: theme.palette.divider,
+                '&:hover': {
+                  borderColor: theme.palette.primary.main,
+                },
+              }}
             >
               Reset Default
             </Button>
             <Button
               variant="outlined"
-              color="primary"
               startIcon={<LaunchIcon />}
               onClick={() => router.push('/')}
-              sx={{ fontWeight: 700, borderRadius: 2 }}
+              type="button"
+              sx={{
+                fontWeight: 700,
+                borderRadius: 2.5,
+                whiteSpace: 'nowrap',
+                color: theme.palette.text.primary,
+                borderColor: theme.palette.divider,
+                '&:hover': {
+                  borderColor: theme.palette.primary.main,
+                },
+              }}
             >
               Pratinjau Landing
             </Button>
-          </Box>
+            <Button
+              type="submit"
+              variant="contained"
+              startIcon={<SaveIcon />}
+              disabled={saving}
+              sx={{
+                borderRadius: 2.5,
+                fontWeight: 700,
+                whiteSpace: 'nowrap',
+                background: theme.palette.mode === 'dark'
+                  ? 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)'
+                  : 'linear-gradient(135deg, #F59E0B 0%, #B45309 100%)',
+                color: theme.palette.mode === 'dark' ? '#181512' : '#ffffff',
+              }}
+            >
+              {saving ? 'Menyimpan...' : 'Simpan Perubahan'}
+            </Button>
+          </Stack>
         </Box>
-      </Paper>
-
-      {/* Main Grid */}
-      <form onSubmit={handleSave}>
         <Grid container spacing={3}>
           {/* Form Left Column */}
           <Grid item xs={12} md={7}>

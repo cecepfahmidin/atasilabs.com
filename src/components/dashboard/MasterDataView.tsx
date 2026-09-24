@@ -44,39 +44,34 @@ export const MasterDataView: React.FC = () => {
   const cLevelCount = users?.filter((u) => ['CEO', 'CTO', 'CMO'].includes(u.role)).length || 3;
 
   return (
-    <Box sx={{ maxWidth: 1200, mx: 'auto', pb: 4 }}>
-      {/* Header Banner */}
-      <Paper
-        elevation={0}
+    <Box sx={{ pb: 6 }}>
+      {/* Header */}
+      <Box
         sx={{
-          p: { xs: 3, sm: 4 },
-          borderRadius: 3.5,
-          background:
-            theme.palette.mode === 'dark'
-              ? 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)'
-              : 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
-          border: `1px solid ${theme.palette.divider}`,
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          justifyContent: 'space-between',
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          gap: 2,
           mb: 4,
-          position: 'relative',
-          overflow: 'hidden',
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
-          <Chip
-            icon={<MasterDataIcon sx={{ fontSize: 16 }} />}
-            label="PUSAT MASTER DATA"
-            color="primary"
-            size="small"
-            sx={{ fontWeight: 800, fontSize: '0.75rem' }}
-          />
+        <Box>
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 800,
+              mb: 0.5,
+              color: theme.palette.mode === 'dark' ? '#ffffff' : '#000000',
+            }}
+          >
+            Manajemen Master Data System
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Pusat kendali master data Atasilabs. Kelola profil eksekutif tim manajemen, ulasan testimoni, portofolio, pricelist paket, kontak perusahaan, serta manajemen user & RBAC.
+          </Typography>
         </Box>
-        <Typography variant="h4" sx={{ fontWeight: 800, mb: 1, fontSize: { xs: '1.5rem', sm: '2rem' } }}>
-          Manajemen Master Data System
-        </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 860, lineHeight: 1.6 }}>
-          Pusat kendali master data Atasilabs. Kelola profil eksekutif tim manajemen (Tim Leadership CEO, CTO, CMO), hak akses pengguna (User & RBAC), ulasan klien (Testimoni & Review), katalog portofolio, konfigurasi paket harga (Pricelist & Spesifikasi), serta kontak perusahaan.
-        </Typography>
-      </Paper>
+      </Box>
 
       {/* Grid Cards */}
       <Grid container spacing={3}>
@@ -88,7 +83,7 @@ export const MasterDataView: React.FC = () => {
               height: '100%',
               display: 'flex',
               flexDirection: 'column',
-              borderRadius: 3,
+              borderRadius: 3.5,
               border: `1px solid ${theme.palette.divider}`,
               transition: 'all 0.25s ease-in-out',
               '&:hover': {
@@ -151,17 +146,20 @@ export const MasterDataView: React.FC = () => {
               </Box>
             </CardContent>
 
-            <CardActions sx={{ p: 3, pt: 0 }}>
+            <CardActions sx={{ px: 3, pb: 3, pt: 1.5, borderTop: `1px solid ${theme.palette.divider}` }}>
               <Button
                 fullWidth
                 variant="contained"
                 endIcon={<ArrowForwardIcon />}
                 onClick={() => handleNavigate('team', '/dashboard/team')}
                 sx={{
-                  fontWeight: 800,
-                  borderRadius: 2,
+                  fontWeight: 700,
+                  borderRadius: 2.5,
                   py: 1,
-                  background: 'linear-gradient(135deg, #f59e0b 0%, #b45309 100%)',
+                  background: theme.palette.mode === 'dark'
+                    ? 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)'
+                    : 'linear-gradient(135deg, #F59E0B 0%, #B45309 100%)',
+                  color: theme.palette.mode === 'dark' ? '#181512' : '#ffffff',
                 }}
               >
                 Buka CMS Tim Manajemen
@@ -178,7 +176,7 @@ export const MasterDataView: React.FC = () => {
               height: '100%',
               display: 'flex',
               flexDirection: 'column',
-              borderRadius: 3,
+              borderRadius: 3.5,
               border: `1px solid ${theme.palette.divider}`,
               transition: 'all 0.25s ease-in-out',
               '&:hover': {
@@ -241,14 +239,14 @@ export const MasterDataView: React.FC = () => {
               </Box>
             </CardContent>
 
-            <CardActions sx={{ p: 3, pt: 0 }}>
+            <CardActions sx={{ px: 3, pb: 3, pt: 1.5, borderTop: `1px solid ${theme.palette.divider}` }}>
               <Button
                 fullWidth
                 variant="contained"
                 color="info"
                 endIcon={<ArrowForwardIcon />}
                 onClick={() => handleNavigate('users', '/dashboard/users')}
-                sx={{ fontWeight: 700, borderRadius: 2, py: 1 }}
+                sx={{ fontWeight: 700, borderRadius: 2.5, py: 1 }}
               >
                 Buka CMS User & RBAC
               </Button>
@@ -264,7 +262,7 @@ export const MasterDataView: React.FC = () => {
               height: '100%',
               display: 'flex',
               flexDirection: 'column',
-              borderRadius: 3,
+              borderRadius: 3.5,
               border: `1px solid ${theme.palette.divider}`,
               transition: 'all 0.25s ease-in-out',
               '&:hover': {
@@ -327,7 +325,7 @@ export const MasterDataView: React.FC = () => {
               </Box>
             </CardContent>
 
-            <CardActions sx={{ p: 3, pt: 0 }}>
+            <CardActions sx={{ px: 3, pb: 3, pt: 1.5, borderTop: `1px solid ${theme.palette.divider}` }}>
               <Button
                 fullWidth
                 variant="contained"
@@ -335,7 +333,7 @@ export const MasterDataView: React.FC = () => {
                 onClick={() => handleNavigate('testimonials', '/dashboard/testimonials')}
                 sx={{
                   fontWeight: 800,
-                  borderRadius: 2,
+                  borderRadius: 2.5,
                   py: 1,
                   background: 'linear-gradient(135deg, #FFD600 0%, #d97706 100%)',
                   color: '#000000',
@@ -358,7 +356,7 @@ export const MasterDataView: React.FC = () => {
               height: '100%',
               display: 'flex',
               flexDirection: 'column',
-              borderRadius: 3,
+              borderRadius: 3.5,
               border: `1px solid ${theme.palette.divider}`,
               transition: 'all 0.25s ease-in-out',
               '&:hover': {
@@ -421,14 +419,14 @@ export const MasterDataView: React.FC = () => {
               </Box>
             </CardContent>
 
-            <CardActions sx={{ p: 3, pt: 0 }}>
+            <CardActions sx={{ px: 3, pb: 3, pt: 1.5, borderTop: `1px solid ${theme.palette.divider}` }}>
               <Button
                 fullWidth
                 variant="contained"
                 color="primary"
                 endIcon={<ArrowForwardIcon />}
                 onClick={() => handleNavigate('portfolio', '/dashboard/portfolio')}
-                sx={{ fontWeight: 700, borderRadius: 2, py: 1 }}
+                sx={{ fontWeight: 700, borderRadius: 2.5, py: 1 }}
               >
                 Buka CMS Portofolio
               </Button>
@@ -444,7 +442,7 @@ export const MasterDataView: React.FC = () => {
               height: '100%',
               display: 'flex',
               flexDirection: 'column',
-              borderRadius: 3,
+              borderRadius: 3.5,
               border: `1px solid ${theme.palette.divider}`,
               transition: 'all 0.25s ease-in-out',
               '&:hover': {
@@ -507,14 +505,14 @@ export const MasterDataView: React.FC = () => {
               </Box>
             </CardContent>
 
-            <CardActions sx={{ p: 3, pt: 0 }}>
+            <CardActions sx={{ px: 3, pb: 3, pt: 1.5, borderTop: `1px solid ${theme.palette.divider}` }}>
               <Button
                 fullWidth
                 variant="contained"
                 color="warning"
                 endIcon={<ArrowForwardIcon />}
                 onClick={() => handleNavigate('pricing', '/dashboard/pricing')}
-                sx={{ fontWeight: 700, borderRadius: 2, py: 1 }}
+                sx={{ fontWeight: 700, borderRadius: 2.5, py: 1 }}
               >
                 Buka CMS Pricelist
               </Button>
@@ -530,7 +528,7 @@ export const MasterDataView: React.FC = () => {
               height: '100%',
               display: 'flex',
               flexDirection: 'column',
-              borderRadius: 3,
+              borderRadius: 3.5,
               border: `1px solid ${theme.palette.divider}`,
               transition: 'all 0.25s ease-in-out',
               '&:hover': {
@@ -593,14 +591,14 @@ export const MasterDataView: React.FC = () => {
               </Box>
             </CardContent>
 
-            <CardActions sx={{ p: 3, pt: 0 }}>
+            <CardActions sx={{ px: 3, pb: 3, pt: 1.5, borderTop: `1px solid ${theme.palette.divider}` }}>
               <Button
                 fullWidth
                 variant="contained"
                 color="success"
                 endIcon={<ArrowForwardIcon />}
                 onClick={() => handleNavigate('contact', '/dashboard/contact')}
-                sx={{ fontWeight: 700, borderRadius: 2, py: 1 }}
+                sx={{ fontWeight: 700, borderRadius: 2.5, py: 1 }}
               >
                 Buka CMS Kontak
               </Button>

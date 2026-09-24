@@ -105,19 +105,21 @@ model ServiceItem {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String
-  role      String   @default("ADMIN")
-  password  String?
-  phone     String?
-  company   String?
-  status    String   @default("ACTIVE")
-  avatarUrl String?
-  bio       String?
-  tagline   String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+  id         String   @id @default(uuid())
+  email      String   @unique
+  name       String
+  role       String   @default("ADMIN")
+  password   String?
+  phone      String?
+  company    String?
+  status     String   @default("ACTIVE")
+  avatarUrl  String?
+  bio        String?
+  tagline    String?
+  titleBadge String?
+  roleTitle  String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
 }
 
 model Testimonial {

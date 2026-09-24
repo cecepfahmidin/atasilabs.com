@@ -9,9 +9,9 @@ export const TeamSection: React.FC = () => {
   const { users } = useApp();
 
   // Find leadership users dynamically from database / app state context
-  const ceoUser = users.find((u) => u.role === 'CEO') as User | undefined;
-  const ctoUser = users.find((u) => u.role === 'CTO') as User | undefined;
-  const cmoUser = users.find((u) => u.role === 'CMO') as User | undefined;
+  const ceoUser = users.find((u) => u.role === 'CEO' || u.id === 'usr-ceo') as User | undefined;
+  const ctoUser = users.find((u) => u.role === 'CTO' || u.id === 'usr-cto') as User | undefined;
+  const cmoUser = users.find((u) => u.role === 'CMO' || u.id === 'usr-cmo') as User | undefined;
 
   const teamList = [
     {
@@ -56,11 +56,13 @@ export const TeamSection: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 w-full items-stretch">
         {teamList.map((item) => {
-          const userName = item.user?.name || item.fallbackName;
+          const userName = item.user?.name && item.user.name.trim() !== '' ? item.user.name : item.fallbackName;
           const userAvatar = item.user?.avatarUrl && item.user.avatarUrl.trim() !== '' ? item.user.avatarUrl : null;
           const imageSrc = userAvatar || item.fallbackImage;
-          const userBio = item.user?.bio || item.defaultBio;
-          const userTagline = item.user?.tagline || item.user?.company || item.defaultTagline;
+          const userBio = item.user?.bio && item.user.bio.trim() !== '' ? item.user.bio : item.defaultBio;
+          const userTagline = item.user?.tagline && item.user.tagline.trim() !== '' ? item.user.tagline : (item.user?.company || item.defaultTagline);
+          const userBadge = item.user?.titleBadge && item.user.titleBadge.trim() !== '' ? item.user.titleBadge : item.titleBadge;
+          const userRoleTitle = item.user?.roleTitle && item.user.roleTitle.trim() !== '' ? item.user.roleTitle : item.roleTitle;
           const userStatus = item.user?.status || 'ACTIVE';
 
           return (
@@ -80,7 +82,7 @@ export const TeamSection: React.FC = () => {
                   style={{ borderColor: item.badgeColor }}
                 >
                   <span className="font-ibm-mono text-[10px] font-bold tracking-[1.5px]" style={{ color: item.badgeColor }}>
-                    {item.titleBadge}
+                    {userBadge}
                   </span>
                 </div>
               </div>
@@ -89,7 +91,7 @@ export const TeamSection: React.FC = () => {
               <div className="flex flex-col p-6 md:p-7 gap-4 flex-1 justify-between">
                 <div className="flex flex-col gap-2">
                   <span className="font-ibm-mono text-[11px] text-[#888888] tracking-[1.5px] font-bold uppercase">
-                    [{item.roleTitle}]
+                    [{userRoleTitle}]
                   </span>
                   <h3 className="font-grotesk text-[16px] sm:text-[17px] md:text-[18px] lg:text-[19px] font-bold text-[#F5F5F0] tracking-tight leading-[1.25] group-hover:text-[#FFD600] transition-colors">
                     {userName}

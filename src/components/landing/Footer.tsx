@@ -5,23 +5,21 @@ import { useRouter } from 'next/navigation';
 import { useApp } from '../../context/AppContext';
 import { AtasiLabsLogo } from '../common/AtasiLabsLogo';
 
-const serviceLinks = [
-  "SOFTWARE ARCHITECTURE",
-  "SAAS DASHBOARD UI",
-  "E-COMMERCE SYSTEM",
-  "WORKFLOW AUTOMATION",
+const navLinks = [
+  { label: "LAYANAN UTAMA", sectionId: "services" },
+  { label: "ALUR WORKFLOW SOP", sectionId: "workflow" },
+  { label: "ARSITEKTUR TECH STACK", sectionId: "architecture" },
+  { label: "PORTOFOLIO PROYEK", sectionId: "portfolio" },
+  { label: "PAKET HARGA & SPEK", sectionId: "pricing" },
+  { label: "TANYA JAWAB (FAQ)", sectionId: "faq" },
 ];
-const companyLinks = [
-  "TENTANG ATASILABS",
-  "METODOLOGI IPW",
-  "CASE STUDIES",
-  "INQUIRY PROYEK",
-];
+
 const dashboardLinks = [
-  "CLIENT PORTAL LOGIN",
-  "WORKFLOW DOKUMEN",
-  "DIGITAL E-SIGN",
-  "PROJECT TRACKING",
+  { label: "PORTAL DASHBOARD", tab: "overview", isPrimary: true },
+  { label: "PROYEK AKTIF KLIEN", tab: "projects" },
+  { label: "WORKFLOW DOKUMEN & E-SIGN", tab: "documents" },
+  { label: "DATABASE LEAD MASUK", tab: "leads" },
+  { label: "CMS PRICELIST & SPEK", tab: "pricing" },
 ];
 
 export const Footer: React.FC = () => {
@@ -33,10 +31,25 @@ export const Footer: React.FC = () => {
     router.push('/dashboard');
   };
 
+  const scrollToSection = (id: string) => {
+    if (typeof window !== 'undefined') {
+      if (window.location.pathname !== '/') {
+        router.push(`/#${id}`);
+        return;
+      }
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        router.push(`/#${id}`);
+      }
+    }
+  };
+
   const socialLinks = [
-    { label: "FB", url: companyContact?.facebookUrl || "https://facebook.com" },
+    { label: "FB", url: companyContact?.facebookUrl || "https://facebook.com/atasilabs" },
     { label: "WA", url: `https://wa.me/${companyContact?.whatsappRaw || '628216361428'}` },
-    ...(companyContact?.instagramUrl ? [{ label: "IG", url: companyContact.instagramUrl }] : []),
+    { label: "IG", url: companyContact?.instagramUrl || "https://instagram.com/atasilabs" },
   ];
 
   return (
@@ -59,6 +72,7 @@ export const Footer: React.FC = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center w-[36px] h-[36px] bg-[#111111] border border-[#2D2D2D] hover:border-[#FFD600] transition-colors"
+                title={`Kunjungi ${s.label} AtasiLabs`}
               >
                 <span className="font-grotesk text-[10px] font-bold text-[#AAAAAA] hover:text-[#FFD600]">
                   {s.label}
@@ -69,62 +83,82 @@ export const Footer: React.FC = () => {
         </div>
 
         {/* Link columns */}
-        <div className="grid grid-cols-2 md:grid-cols-3 md:flex-1 gap-8 md:gap-[60px]">
-          {/* Column 1: Services */}
-          <div className="flex flex-col gap-4">
-            <span className="font-grotesk text-[11px] font-bold text-[#F5F5F0] tracking-[2px]">
-              LAYANAN
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 md:flex-1 gap-8 md:gap-[50px]">
+          {/* Column 1: Landing Page Navigation */}
+          <div className="flex flex-col gap-3">
+            <span className="font-grotesk text-[11px] font-bold text-[#F5F5F0] tracking-[2px] mb-1">
+              NAVIGASI LAMAN DEPAN
             </span>
-            {serviceLinks.map((link) => (
-              <a
-                key={link}
-                href="#services"
-                className="font-ibm-mono text-[11px] text-[#888888] tracking-[0.5px] hover:text-[#FFD600] transition-colors"
+            {navLinks.map((item) => (
+              <button
+                key={item.label}
+                onClick={() => scrollToSection(item.sectionId)}
+                className="text-left font-ibm-mono text-[11px] text-[#888888] tracking-[0.5px] hover:text-[#FFD600] transition-colors cursor-pointer bg-transparent border-none p-0"
               >
-                {link}
-              </a>
+                {item.label}
+              </button>
             ))}
           </div>
 
-          {/* Column 2: Perusahaan */}
-          <div className="flex flex-col gap-4">
-            <span className="font-grotesk text-[11px] font-bold text-[#F5F5F0] tracking-[2px]">
-              PERUSAHAAN
+          {/* Column 2: Official Contact Info */}
+          <div className="flex flex-col gap-3">
+            <span className="font-grotesk text-[11px] font-bold text-[#F5F5F0] tracking-[2px] mb-1">
+              KONTAK RESMI STUDIO
             </span>
-            {companyLinks.map((link) => (
-              <a
-                key={link}
-                href="#contact"
-                className="font-ibm-mono text-[11px] text-[#888888] tracking-[0.5px] hover:text-[#FFD600] transition-colors"
-              >
-                {link}
-              </a>
-            ))}
+            <div className="flex flex-col gap-2 font-ibm-mono text-[11px] text-[#888888] tracking-[0.5px]">
+              <div>
+                <span className="text-[#666666] block text-[10px]">EMAIL SUPPORT:</span>
+                <a
+                  href={`mailto:${companyContact?.email || 'atasilabs@gmail.com'}`}
+                  className="text-[#F5F5F0] hover:text-[#FFD600] transition-colors"
+                >
+                  {companyContact?.email || 'atasilabs@gmail.com'}
+                </a>
+              </div>
+              <div>
+                <span className="text-[#666666] block text-[10px]">WHATSAPP HOTLINE:</span>
+                <a
+                  href={`https://wa.me/${companyContact?.whatsappRaw || '628216361428'}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#F5F5F0] hover:text-[#FFD600] transition-colors"
+                >
+                  {companyContact?.whatsapp || '+62 821-6361-428'}
+                </a>
+              </div>
+              <div>
+                <span className="text-[#666666] block text-[10px]">ALAMAT STUDIO:</span>
+                <span className="text-[#CCCCCC] leading-snug block">
+                  {companyContact?.address || 'Jl. Raya Godog, Garut, Jawa Barat, Indonesia'}
+                </span>
+              </div>
+              <div>
+                <span className="text-[#666666] block text-[10px]">JAM OPERASIONAL:</span>
+                <span className="text-[#CCCCCC] block">
+                  {companyContact?.workingHours || 'Senin - Sabtu: 08.00 - 20.00 WIB'}
+                </span>
+              </div>
+            </div>
           </div>
 
-          {/* Column 3: Dashboard */}
-          <div className="flex flex-col gap-4 col-span-2 md:col-span-1">
-            <span className="font-grotesk text-[11px] font-bold text-[#F5F5F0] tracking-[2px]">
-              CLIENT PORTAL
+          {/* Column 3: Portal Management */}
+          <div className="flex flex-col gap-3">
+            <span className="font-grotesk text-[11px] font-bold text-[#F5F5F0] tracking-[2px] mb-1">
+              PORTAL MANAGEMENT
             </span>
-            <button
-              onClick={() => handleDashboardClick('overview')}
-              className="text-left font-ibm-mono text-[11px] text-[#FFD600] tracking-[0.5px] hover:underline"
-            >
-              ➔ DASHBOARD OVERVIEW
-            </button>
-            <button
-              onClick={() => handleDashboardClick('documents')}
-              className="text-left font-ibm-mono text-[11px] text-[#888888] tracking-[0.5px] hover:text-[#FFD600]"
-            >
-              WORKFLOW DOKUMEN & E-SIGN
-            </button>
-            <button
-              onClick={() => handleDashboardClick('projects')}
-              className="text-left font-ibm-mono text-[11px] text-[#888888] tracking-[0.5px] hover:text-[#FFD600]"
-            >
-              PROYEK AKTIF KLIEN
-            </button>
+            {dashboardLinks.map((item) => (
+              <button
+                key={item.label}
+                onClick={() => handleDashboardClick(item.tab)}
+                className={`text-left font-ibm-mono text-[11px] tracking-[0.5px] transition-colors cursor-pointer bg-transparent border-none p-0 ${
+                  item.isPrimary
+                    ? 'text-[#FFD600] font-bold hover:underline'
+                    : 'text-[#888888] hover:text-[#FFD600]'
+                }`}
+              >
+                {item.isPrimary ? `➔ ${item.label}` : item.label}
+              </button>
+            ))}
           </div>
         </div>
       </div>
@@ -148,3 +182,6 @@ export const Footer: React.FC = () => {
 };
 
 export default Footer;
+
+
+

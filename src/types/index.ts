@@ -351,6 +351,8 @@ export interface User {
   avatarUrl?: string;
   bio?: string;
   tagline?: string;
+  titleBadge?: string;
+  roleTitle?: string;
   createdAt: string;
   updatedAt?: string;
 }
