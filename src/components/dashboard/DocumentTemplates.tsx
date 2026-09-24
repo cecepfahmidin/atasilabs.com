@@ -1536,8 +1536,8 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
                       <Typography variant="body2" sx={{ lineHeight: 1.5, mb: 0.5 }}>
                         2. Pembayaran oleh PIHAK KEDUA kepada PIHAK PERTAMA dilaksanakan melalui Rekening PIHAK PERTAMA, sebagai berikut:
                       </Typography>
-                      <Paper variant="outlined" sx={{ p: 1.5, mx: 2, my: 1, bgcolor: '#f8fafc', borderColor: '#cbd5e1' }}>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#0f172a' }}>
+                      <Paper variant="outlined" sx={{ p: 1.5, mx: 2, my: 1, bgcolor: 'transparent', borderColor: '#000000', textAlign: 'center' }}>
+                        <Typography variant="subtitle2" align="center" sx={{ fontWeight: 800, color: '#0f172a', textAlign: 'center' }}>
                           {mou.bankAccount?.bankName || 'Bank BRI'} &nbsp;&nbsp;|&nbsp;&nbsp; No. Rekening: {mou.bankAccount?.accountNumber || '4388-01-0000-25-56-7'} &nbsp;&nbsp;|&nbsp;&nbsp; a.n. {mou.bankAccount?.accountHolder || 'PT AULIA INDOLAND GRUP'}
                         </Typography>
                       </Paper>
