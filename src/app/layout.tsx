@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from 'next';
 import { AppProvider } from '@/context/AppContext';
 import { ThemeWrapper } from '@/components/ThemeWrapper';
+import { Analytics } from '@vercel/analytics/next';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import '@/index.css';
 
 export const viewport: Viewport = {
@@ -57,6 +59,8 @@ export default function RootLayout({
         <AppProvider>
           <ThemeWrapper>{children}</ThemeWrapper>
         </AppProvider>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
