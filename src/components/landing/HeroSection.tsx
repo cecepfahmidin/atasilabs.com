@@ -32,14 +32,19 @@ export const HeroSection: React.FC = () => {
 
       <div className="h-4 md:h-[16px]" />
 
-      {/* Main Title with Glitch Animation */}
-      <GlitchText text="ATASILABS STUDIO" />
+      {/* Main Glitch Headlines */}
+      <h1 className="font-grotesk text-[clamp(32px,8vw,90px)] font-bold text-[#F5F5F0] tracking-[-1px] leading-none text-center w-full max-w-[1100px]">
+        <GlitchText text="PENGEN WEBSITE KEREN?" speed={40} delay={100} />
+      </h1>
+      <h1 className="font-grotesk text-[clamp(32px,8vw,90px)] font-bold text-[#FFD600] tracking-[-1px] leading-none text-center w-full max-w-[1100px] mt-2">
+        <GlitchText text="KITA BANGUN BERSAMA!" speed={40} delay={400} />
+      </h1>
 
       <div className="h-6 md:h-[24px]" />
 
       {/* Subtitle Description */}
-      <p className="font-ibm-mono text-[13px] md:text-[15px] text-[#A0A0A0] leading-[22px] md:leading-[26px] tracking-[0.5px] max-w-[680px] text-center">
-        Jasa Pembuatan Website Studio Profesional, Aplikasi Next.js Modern &amp; Sistem Management Terpadu Bergaransi Resmi.
+      <p className="font-ibm-mono text-[15px] md:text-[18px] text-[#A0A0A0] leading-[22px] md:leading-[28px] tracking-[1px] max-w-[800px] text-center">
+        Ceritain aja konsep web impianmu, pilih paketnya, dan biarkan tim kami yang handle sisanya dengan transparan dan profesional.
       </p>
 
       <div className="h-8 md:h-[32px]" />

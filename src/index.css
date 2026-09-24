@@ -48,8 +48,8 @@ html, body {
   padding: 0 !important;
 }
 
-.printable-document th,
-.printable-document td,
+.printable-document table:not(.print-layout-table) th,
+.printable-document table:not(.print-layout-table) td,
 .printable-document .MuiTableCell-root {
   border: 1px solid #000000 !important;
   color: #0f172a !important;
@@ -63,8 +63,8 @@ html, body {
   margin: 0 !important;
 }
 
-.printable-document td *,
-.printable-document th * {
+.printable-document table:not(.print-layout-table) td *,
+.printable-document table:not(.print-layout-table) th * {
   margin-top: 0 !important;
   margin-bottom: 0 !important;
   padding-top: 0 !important;
@@ -75,16 +75,11 @@ html, body {
 @media print {
   @page {
     size: A4 portrait;
-    margin-top: 4cm !important;
-    margin-bottom: 1.5cm !important;
-    margin-left: 1.2cm !important;
-    margin-right: 1.2cm !important;
+    margin: 0 !important;
   }
 
   @page :first {
-    margin-top: 4cm !important;
-    margin-left: 1.2cm !important;
-    margin-right: 1.2cm !important;
+    margin: 0 !important;
   }
 
   html, body {
@@ -115,40 +110,123 @@ html, body {
     padding: 0 !important;
     box-shadow: none !important;
     border: none !important;
-    background-color: #ffffff !important;
+    background-color: transparent !important;
+    background: transparent !important;
     color: #0f172a !important;
     display: block !important;
   }
 
-  /* Repeat Kop / Header on top of EVERY printed page */
+  /* Reset print layout wrapper table so it adds zero border/background */
+  .printable-document table,
+  .printable-document tr,
+  .printable-document td,
+  .printable-document table.print-layout-table,
+  .printable-document table.print-layout-table > tbody > tr > td,
+  .printable-document table.print-layout-table > thead > tr > th,
+  .printable-document table.print-layout-table > tfoot > tr > td {
+    background-color: transparent !important;
+    background: transparent !important;
+  }
+
+  .printable-document table.print-layout-table,
+  .printable-document table.print-layout-table > tbody > tr > td,
+  .printable-document table.print-layout-table > thead > tr > th,
+  .printable-document table.print-layout-table > tfoot > tr > td {
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Fixed Background Header SVG (Rapat ke paling atas kertas A4, fullsize width 100%, repeat di setiap laman) */
+  .printable-document .repeat-page-header-bg {
+    display: block !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    z-index: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    pointer-events: none !important;
+  }
+
+  .printable-document .repeat-page-header-bg img {
+    width: 100% !important;
+    height: auto !important;
+    display: block !important;
+  }
+
+  /* Fixed Background Footer SVG (Rapat ke paling bawah kertas A4, fullsize width 100%, repeat di setiap laman) */
+  .printable-document .repeat-page-footer-bg {
+    display: block !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    z-index: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    pointer-events: none !important;
+  }
+
+  .printable-document .repeat-page-footer-bg img {
+    width: 100% !important;
+    height: auto !important;
+    position: absolute !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    display: block !important;
+  }
+
+  .header-space {
+    height: 4.0cm !important;
+    display: block !important;
+  }
+
+  .footer-space {
+    height: 2.2cm !important;
+    display: block !important;
+  }
+
+  /* General Kop Header fallback for non-CIF templates (RSD, MOU, SPK, BAST, QA) */
   .printable-document .repeat-page-header {
     display: flex !important;
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
     right: 0 !important;
-    height: 3.2cm !important;
+    width: 100% !important;
+    height: 3.5cm !important;
     background-color: #ffffff !important;
     border-bottom: 2px solid #000000 !important;
-    padding-left: 1.2cm !important;
-    padding-right: 1.2cm !important;
+    padding-left: 1cm !important;
+    padding-right: 1cm !important;
     padding-top: 0.4cm !important;
     align-items: flex-start !important;
     justify-content: space-between !important;
     z-index: 10000 !important;
   }
 
+  /* Body Content Teks: Left & Right margin 1cm */
   .printable-document .doc-content-body {
-    padding-left: 12mm !important;
-    padding-right: 12mm !important;
-    padding-bottom: 12mm !important;
-    padding-top: 4mm !important;
-    margin-top: 0 !important;
+    padding-left: 1cm !important;
+    padding-right: 1cm !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin: 0 !important;
+    display: block !important;
+    position: relative !important;
+    z-index: 1 !important;
   }
 
   .printable-document .section-block {
-    margin-top: 28px !important;
-    padding-top: 14px !important;
+    margin-top: 8px !important;
+    padding-top: 0 !important;
+    margin-bottom: 8px !important;
     break-inside: avoid !important;
     page-break-inside: avoid !important;
   }

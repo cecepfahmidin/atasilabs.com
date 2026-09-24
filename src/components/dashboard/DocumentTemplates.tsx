@@ -335,59 +335,129 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
         elevation={0}
         className="printable-document"
         sx={{
-          p: { xs: 2.5, sm: 4 },
+          p: 0,
           borderRadius: 3,
           border: '1px solid rgba(0,0,0,0.12)',
-          bgcolor: '#ffffff',
+          bgcolor: 'transparent',
           color: '#0f172a',
           fontFamily: 'Inter, Arial, sans-serif',
           boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
+          position: 'relative',
+          overflow: 'hidden',
           '& .MuiTypography-root': { color: 'inherit' },
           '& .MuiTypography-colorTextSecondary': { color: '#475569 !important' },
           '& .MuiTableCell-root': { color: '#0f172a' },
         }}
       >
-        {/* Custom PDF Kop & Top Header Table */}
-        <Box className="repeat-page-header" sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2, pb: 1, borderBottom: '2px solid #000' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Box component="img" src="/logo.svg" alt="Atasilabs Logo" sx={{ height: 36, width: 'auto' }} onError={(e: any) => { e.target.style.display = 'none'; }} />
-            <Box>
-              <Typography variant="h6" sx={{ fontWeight: 900, lineHeight: 1.1, color: '#0f172a', letterSpacing: '-0.02em' }}>
-                atasilabs
-              </Typography>
-              <Typography variant="caption" sx={{ fontWeight: 600, color: '#475569', display: 'block' }}>
-                Standard Operating Procedure (SOP) Internal
-              </Typography>
-            </Box>
-          </Box>
-
-          <Box sx={{ textAlign: 'right' }}>
-            <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', fontSize: '1.2rem' }}>
-              Client Intake Form (CIF)
-            </Typography>
-            <Box sx={{ mt: 0.5, display: 'inline-block' }}>
-              <Table size="small" sx={{ width: 'auto', borderCollapse: 'collapse', border: '1px solid #000', '& .MuiTableCell-root': { py: 0.3, px: 1, fontSize: '0.75rem', border: '1px solid #000' } }}>
-                <TableBody>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 700, bgcolor: '#f8fafc' }}>Nama Admin</TableCell>
-                    <TableCell sx={{ minWidth: 150 }}>: {cif.adminName || '-'}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 700, bgcolor: '#f8fafc' }}>Tanggal</TableCell>
-                    <TableCell>: {cif.date || '-'}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 700, bgcolor: '#f8fafc' }}>Sumber Informasi</TableCell>
-                    <TableCell>: {cif.infoSource || '-'}</TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </Box>
-          </Box>
+        {/* Full-bleed Background Header SVG Banner (public/header.svg) - Rapat Ke Paling Atas (top: 0) */}
+        <Box
+          className="repeat-page-header-bg"
+          sx={{
+            width: '100%',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            zIndex: 0,
+            pointerEvents: 'none',
+          }}
+        >
+          <Box
+            component="img"
+            src="/header.svg"
+            alt="Header Background Atasilabs"
+            sx={{
+              width: '100%',
+              height: 'auto',
+              display: 'block',
+            }}
+          />
         </Box>
 
+        {/* Full-bleed Background Footer SVG Banner (public/footer.svg) - Rapat Ke Paling Bawah (bottom: 0) */}
+        <Box
+          className="repeat-page-footer-bg"
+          sx={{
+            width: '100%',
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            zIndex: 0,
+            pointerEvents: 'none',
+          }}
+        >
+          <Box
+            component="img"
+            src="/footer.svg"
+            alt="Footer Background Atasilabs"
+            sx={{
+              width: '100%',
+              height: 'auto',
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              display: 'block',
+            }}
+          />
+        </Box>
+
+        {/* Multi-Page Print Layout Table Container (Menjamin Header & Footer Spacing Berulang di Setiap Laman Cetak) */}
+        <table className="print-layout-table" style={{ width: '100%', borderCollapse: 'collapse', border: 'none', margin: 0, padding: 0 }}>
+          <thead>
+            <tr>
+              <th style={{ padding: 0, margin: 0, border: 'none', background: 'transparent', height: '4.0cm' }}>
+                <div className="header-space" style={{ height: '4.0cm' }}></div>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style={{ padding: 0, margin: 0, border: 'none', background: 'transparent' }}>
+                {/* Document Content Body */}
+                <Box
+                  className="doc-content-body"
+                  sx={{
+                    position: 'relative',
+                    zIndex: 1,
+                    px: { xs: 2, sm: '1cm' },
+                    pb: 1,
+                  }}
+                >
+          {/* Top Document Header Title & Metadata Table */}
+          <Box sx={{ width: '100%', display: 'block', mb: 2, clear: 'both' }}>
+            {/* 1. Judul Client Intake Form (CIF) Align Center (Baris 1 - Full Width) */}
+            <Box sx={{ width: '100%', display: 'block', textAlign: 'center', mt: 0, mb: 3, clear: 'both' }}>
+              <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', fontSize: '1.35rem', lineHeight: 1.2, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', width: '100%', textAlign: 'center' }}>
+                Client Intake Form (CIF)
+              </Typography>
+            </Box>
+
+            {/* 2. Metadata Table Rata Kanan (Baris 2 - Di Bawah Judul dengan Jarak Jelas) */}
+            <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mt: 2, mb: 2, clear: 'both' }}>
+              <TableContainer component={Box} sx={{ border: '1px solid #000', borderRadius: 0, display: 'inline-block', bgcolor: 'transparent', maxWidth: '300px' }}>
+                <Table size="small" sx={{ width: '100%', '& .MuiTableCell-root': { py: 0.15, px: 0.8, fontSize: '0.68rem', lineHeight: 1.25, border: '1px solid #000', textAlign: 'left' } }}>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 700, bgcolor: 'transparent', width: '40%', py: 0.15, px: 0.8 }}>Nama Admin</TableCell>
+                      <TableCell sx={{ py: 0.15, px: 0.8 }}>: {cif.adminName || '-'}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 700, bgcolor: 'transparent', py: 0.15, px: 0.8 }}>Tanggal</TableCell>
+                      <TableCell sx={{ py: 0.15, px: 0.8 }}>: {cif.date || '-'}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 700, bgcolor: 'transparent', py: 0.15, px: 0.8 }}>Sumber Informasi</TableCell>
+                      <TableCell sx={{ py: 0.15, px: 0.8 }}>: {cif.infoSource || '-'}</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Box>
+          </Box>
+
           {/* RINGKASAN EKSEKUTIF */}
-          <Box className="section-block" sx={{ mb: 2.5, mt: 2 }}>
+          <Box className="section-block" sx={{ mb: 1.5, mt: 1 }}>
             <Typography variant="subtitle2" sx={{ fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#000', mb: 0.5 }}>
               RINGKASAN EKSEKUTIF
             </Typography>
@@ -397,7 +467,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
           </Box>
 
           {/* 1. INFORMASI UMUM KLIEN DAN PROYEK */}
-          <Box className="section-block" sx={{ mb: 2.5, mt: 2 }}>
+          <Box className="section-block" sx={{ mb: 1.5, mt: 1 }}>
             <Typography variant="subtitle2" sx={{ fontWeight: 800, textTransform: 'uppercase', color: '#000', mb: 0.5 }}>
               1. INFORMASI UMUM KLIEN DAN PROYEK
             </Typography>
@@ -405,27 +475,27 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
               <Table size="small" sx={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #000', margin: '0 !important', padding: '0 !important', '& .MuiTableCell-root': { pt: 0.6, pb: 0.5, px: 1.5, border: '1px solid #000', fontSize: '0.85rem', lineHeight: 1.35, verticalAlign: 'middle' } }}>
                 <TableBody>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 700, width: '32%', bgcolor: '#ffffff' }}>Nama Klien/Perusahaan</TableCell>
+                    <TableCell sx={{ fontWeight: 700, width: '32%', bgcolor: 'transparent' }}>Nama Klien/Perusahaan</TableCell>
                     <TableCell>{cif.clientName || '-'}</TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 700, bgcolor: '#ffffff' }}>Penanggung Jawab (PIC)*</TableCell>
+                    <TableCell sx={{ fontWeight: 700, bgcolor: 'transparent' }}>Penanggung Jawab (PIC)*</TableCell>
                     <TableCell>{cif.picName || '-'}</TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 700, bgcolor: '#ffffff' }}>Kontak (Email/Whatsapp)</TableCell>
+                    <TableCell sx={{ fontWeight: 700, bgcolor: 'transparent' }}>Kontak (Email/Whatsapp)</TableCell>
                     <TableCell>{cif.contact || '-'}</TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 700, bgcolor: '#ffffff' }}>Bidang Usaha/Industri</TableCell>
+                    <TableCell sx={{ fontWeight: 700, bgcolor: 'transparent' }}>Bidang Usaha/Industri</TableCell>
                     <TableCell>{cif.industry || '-'}</TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 700, bgcolor: '#ffffff' }}>Website (jika ada)</TableCell>
+                    <TableCell sx={{ fontWeight: 700, bgcolor: 'transparent' }}>Website (jika ada)</TableCell>
                     <TableCell>{cif.websiteUrl || '-'}</TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 700, bgcolor: '#ffffff' }}>Lokasi/Tempat Usaha Klien</TableCell>
+                    <TableCell sx={{ fontWeight: 700, bgcolor: 'transparent' }}>Lokasi/Tempat Usaha Klien</TableCell>
                     <TableCell>{cif.businessLocation || '-'}</TableCell>
                   </TableRow>
                 </TableBody>
@@ -437,7 +507,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
           </Box>
 
           {/* 2. PROFIL PROYEK & TUJUAN BISNIS */}
-          <Box className="section-block" sx={{ mb: 2.5, mt: 3, pt: 1 }}>
+          <Box className="section-block" sx={{ mb: 1.5, mt: 1 }}>
             <Typography variant="subtitle2" sx={{ fontWeight: 800, textTransform: 'uppercase', color: '#000', mb: 0.5 }}>
               2. PROFIL PROYEK & TUJUAN BISNIS
             </Typography>
@@ -485,7 +555,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
           </Box>
 
           {/* 3. RUANG LINGKUP & FITUR WEBSITE */}
-          <Box className="section-block" sx={{ mb: 2.5, mt: 3, pt: 1 }}>
+          <Box className="section-block" sx={{ mb: 1.5, mt: 1 }}>
             <Typography variant="subtitle2" sx={{ fontWeight: 800, textTransform: 'uppercase', color: '#000', mb: 0.5 }}>
               3. RUANG LINGKUP & FITUR WEBSITE
             </Typography>
@@ -524,7 +594,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
           </Box>
 
           {/* 4. DESAIN & BRANDING */}
-          <Box className="section-block" sx={{ mb: 2.5, pt: 1 }}>
+          <Box className="section-block" sx={{ mb: 1.5, mt: 1 }}>
             <Typography variant="subtitle2" sx={{ fontWeight: 800, textTransform: 'uppercase', color: '#000', mb: 0.5 }}>
               4. DESAIN & BRANDING
             </Typography>
@@ -565,7 +635,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
           </Box>
 
           {/* 5. MATERI & ASET KONTEN */}
-          <Box className="section-block" sx={{ mb: 2.5, mt: 3, pt: 1 }}>
+          <Box className="section-block" sx={{ mb: 1.5, mt: 1 }}>
             <Typography variant="subtitle2" sx={{ fontWeight: 800, textTransform: 'uppercase', color: '#000', mb: 0.5 }}>
               5. MATERI & ASET KONTEN
             </Typography>
@@ -602,7 +672,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
           </Box>
 
           {/* 6. ESTIMASI WAKTU, ANGGARAN & PERSETUJUAN */}
-          <Box className="section-block" sx={{ mb: 2.5, mt: 3, pt: 1 }}>
+          <Box className="section-block" sx={{ mb: 1.5, mt: 1 }}>
             <Typography variant="subtitle2" sx={{ fontWeight: 800, textTransform: 'uppercase', color: '#000', mb: 0.5 }}>
               6. ESTIMASI WAKTU, ANGGARAN & PERSETUJUAN
             </Typography>
@@ -637,7 +707,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
           </Box>
 
           {/* 7. CATATAN TAMBAHAN & PERSETUJUAN */}
-          <Box className="section-block" sx={{ mb: 2.5, mt: 3, pt: 1 }}>
+          <Box className="section-block" sx={{ mb: 1.5, mt: 1 }}>
             <Typography variant="subtitle2" sx={{ fontWeight: 800, textTransform: 'uppercase', color: '#000', mb: 0.5 }}>
               7. CATATAN TAMBAHAN & PERSETUJUAN
             </Typography>
@@ -726,6 +796,18 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
               </Typography>
             </Box>
           </Box>
+        </Box>
+      </td>
+    </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td style={{ padding: 0, margin: 0, border: 'none', background: 'transparent', height: '2.2cm' }}>
+                <div className="footer-space" style={{ height: '2.2cm' }}></div>
+              </td>
+            </tr>
+          </tfoot>
+        </table>
       </Paper>
     );
   }
@@ -741,56 +823,126 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
         elevation={0}
         className="printable-document"
         sx={{
-          p: { xs: 2.5, sm: 4 },
-          borderRadius: 3,
-          border: '1px solid rgba(0,0,0,0.12)',
-          bgcolor: '#ffffff',
+          p: 0,
+          borderRadius: 0,
+          border: 'none',
+          bgcolor: 'transparent',
           color: '#0f172a',
           fontFamily: 'Inter, Arial, sans-serif',
-          boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
+          boxShadow: 'none',
+          position: 'relative',
+          overflow: 'hidden',
           '& .MuiTypography-root': { color: 'inherit' },
           '& .MuiTypography-colorTextSecondary': { color: '#475569 !important' },
           '& .MuiTableCell-root': { color: '#0f172a' },
         }}
       >
-        {/* Custom PDF Kop & Top Header Table */}
-        <Box className="repeat-page-header" sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2, pb: 1, borderBottom: '2px solid #000' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Box component="img" src="/logo.svg" alt="Atasilabs Logo" sx={{ height: 36, width: 'auto' }} onError={(e: any) => { e.target.style.display = 'none'; }} />
-            <Box>
-              <Typography variant="h6" sx={{ fontWeight: 900, lineHeight: 1.1, color: '#0f172a', letterSpacing: '-0.02em' }}>
-                atasilabs
-              </Typography>
-              <Typography variant="caption" sx={{ fontWeight: 600, color: '#475569', display: 'block' }}>
-                Standard Operating Procedure (SOP) Internal
-              </Typography>
-            </Box>
-          </Box>
-
-          <Box sx={{ textAlign: 'right' }}>
-            <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', fontSize: '1.2rem' }}>
-              Requirement Specification Document (RSD)
-            </Typography>
-            <Box sx={{ mt: 0.5, display: 'inline-block' }}>
-              <Table size="small" sx={{ width: 'auto', borderCollapse: 'collapse', border: '1px solid #000', '& .MuiTableCell-root': { py: 0.3, px: 1, fontSize: '0.75rem', border: '1px solid #000' } }}>
-                <TableBody>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 700, bgcolor: '#f8fafc' }}>Kode RSD</TableCell>
-                    <TableCell sx={{ minWidth: 150 }}>: {rsd.docCode || '-'}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 700, bgcolor: '#f8fafc' }}>Tanggal Terbit</TableCell>
-                    <TableCell>: {rsd.issueDate || '-'}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 700, bgcolor: '#f8fafc' }}>Disusun Oleh</TableCell>
-                    <TableCell>: {rsd.authorITLead || 'Cecep Fahmidin (IT Lead)'}</TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </Box>
-          </Box>
+        {/* Full-bleed Background Header SVG Banner (public/header.svg) - Rapat Ke Paling Atas (top: 0) */}
+        <Box
+          className="repeat-page-header-bg"
+          sx={{
+            width: '100%',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            zIndex: 0,
+            pointerEvents: 'none',
+          }}
+        >
+          <Box
+            component="img"
+            src="/header.svg"
+            alt="Header Background Atasilabs"
+            sx={{
+              width: '100%',
+              height: 'auto',
+              display: 'block',
+            }}
+          />
         </Box>
+
+        {/* Full-bleed Background Footer SVG Banner (public/footer.svg) - Rapat Ke Paling Bawah (bottom: 0) */}
+        <Box
+          className="repeat-page-footer-bg"
+          sx={{
+            width: '100%',
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            zIndex: 0,
+            pointerEvents: 'none',
+          }}
+        >
+          <Box
+            component="img"
+            src="/footer.svg"
+            alt="Footer Background Atasilabs"
+            sx={{
+              width: '100%',
+              height: 'auto',
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              display: 'block',
+            }}
+          />
+        </Box>
+
+        {/* Multi-Page Print Layout Table Container (Menjamin Header & Footer Spacing Berulang di Setiap Laman Cetak) */}
+        <table className="print-layout-table" style={{ width: '100%', borderCollapse: 'collapse', border: 'none', margin: 0, padding: 0 }}>
+          <thead>
+            <tr>
+              <th style={{ padding: 0, margin: 0, border: 'none', background: 'transparent', height: '4.0cm' }}>
+                <div className="header-space" style={{ height: '4.0cm' }}></div>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style={{ padding: 0, margin: 0, border: 'none', background: 'transparent' }}>
+                {/* Document Content Body */}
+                <Box
+                  className="doc-content-body"
+                  sx={{
+                    position: 'relative',
+                    zIndex: 1,
+                    px: { xs: 2, sm: '1cm' },
+                    pb: 1,
+                  }}
+                >
+          {/* Top Document Header Title & Metadata Table */}
+          <Box sx={{ width: '100%', display: 'block', mb: 2, clear: 'both' }}>
+            {/* 1. Judul Requirement Specification Document (RSD) Align Center (Baris 1 - Full Width) */}
+            <Box sx={{ width: '100%', display: 'block', textAlign: 'center', mt: 0, mb: 3, clear: 'both' }}>
+              <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', fontSize: '1.35rem', lineHeight: 1.2, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', width: '100%', textAlign: 'center' }}>
+                REQUIREMENT SPECIFICATION DOCUMENT (RSD)
+              </Typography>
+            </Box>
+
+            {/* 2. Metadata Table Rata Kanan (Baris 2 - Di Bawah Judul dengan Jarak Jelas) */}
+            <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mt: 2, mb: 2, clear: 'both' }}>
+              <TableContainer component={Box} sx={{ border: '1px solid #000', borderRadius: 0, display: 'inline-block', bgcolor: 'transparent', maxWidth: '320px' }}>
+                <Table size="small" sx={{ width: '100%', '& .MuiTableCell-root': { py: 0.15, px: 0.8, fontSize: '0.68rem', lineHeight: 1.25, border: '1px solid #000', textAlign: 'left' } }}>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 700, bgcolor: 'transparent', width: '40%', py: 0.15, px: 0.8 }}>Kode RSD</TableCell>
+                      <TableCell sx={{ py: 0.15, px: 0.8 }}>: {rsd.docCode || '-'}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 700, bgcolor: 'transparent', py: 0.15, px: 0.8 }}>Tanggal Terbit</TableCell>
+                      <TableCell sx={{ py: 0.15, px: 0.8 }}>: {rsd.issueDate || '-'}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 700, bgcolor: 'transparent', py: 0.15, px: 0.8 }}>Disusun Oleh</TableCell>
+                      <TableCell sx={{ py: 0.15, px: 0.8 }}>: {rsd.authorITLead || 'Cecep Fahmidin (IT Lead)'}</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Box>
+          </Box>
 
         {/* RINGKASAN EKSEKUTIF */}
         <Box sx={{ mb: 2.5 }}>
@@ -1136,9 +1288,21 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
             </Typography>
           </Box>
         </Box>
-      </Paper>
-    );
-  }
+      </Box>
+    </td>
+  </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td style={{ padding: 0, margin: 0, border: 'none', background: 'transparent', height: '2.2cm' }}>
+              <div className="footer-space" style={{ height: '2.2cm' }}></div>
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+    </Paper>
+  );
+}
 
   // Render MoU Contract
   if (type === 'MOU') {
@@ -1156,44 +1320,125 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
         elevation={0}
         className="printable-document"
         sx={{
-          p: { xs: 2.5, sm: 4 },
-          borderRadius: 3,
-          border: '1px solid rgba(0,0,0,0.12)',
-          bgcolor: '#ffffff',
+          p: 0,
+          borderRadius: 0,
+          border: 'none',
+          bgcolor: 'transparent',
           color: '#0f172a',
           fontFamily: 'Inter, Arial, sans-serif',
-          boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
+          boxShadow: 'none',
+          position: 'relative',
+          overflow: 'hidden',
           '& .MuiTypography-root': { color: 'inherit' },
           '& .MuiTypography-colorTextSecondary': { color: '#475569 !important' },
           '& .MuiTableCell-root': { color: '#0f172a' },
         }}
       >
-        {/* Header Kop PDF MoU */}
-        <Box className="repeat-page-header" sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2, pb: 1, borderBottom: '2px solid #000' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Box component="img" src="/logo.svg" alt="Atasilabs Logo" sx={{ height: 36, width: 'auto' }} onError={(e: any) => { e.target.style.display = 'none'; }} />
-            <Box>
-              <Typography variant="h6" sx={{ fontWeight: 900, lineHeight: 1.1, color: '#0f172a', letterSpacing: '-0.02em' }}>
-                atasilabs
+        {/* Full-bleed Background Header SVG Banner */}
+        <Box
+          className="repeat-page-header-bg"
+          sx={{
+            width: '100%',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            zIndex: 0,
+            pointerEvents: 'none',
+          }}
+        >
+          <Box
+            component="img"
+            src="/header.svg"
+            alt="Header Background Atasilabs"
+            sx={{
+              width: '100%',
+              height: 'auto',
+              display: 'block',
+            }}
+          />
+        </Box>
+
+        {/* Full-bleed Background Footer SVG Banner */}
+        <Box
+          className="repeat-page-footer-bg"
+          sx={{
+            width: '100%',
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            zIndex: 0,
+            pointerEvents: 'none',
+          }}
+        >
+          <Box
+            component="img"
+            src="/footer.svg"
+            alt="Footer Background Atasilabs"
+            sx={{
+              width: '100%',
+              height: 'auto',
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              display: 'block',
+            }}
+          />
+        </Box>
+
+        {/* Multi-Page Print Layout Table Container */}
+        <table className="print-layout-table" style={{ width: '100%', borderCollapse: 'collapse', border: 'none', margin: 0, padding: 0 }}>
+          <thead>
+            <tr>
+              <th style={{ padding: 0, margin: 0, border: 'none', background: 'transparent', height: '4.0cm' }}>
+                <div className="header-space" style={{ height: '4.0cm' }}></div>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style={{ padding: 0, margin: 0, border: 'none', background: 'transparent' }}>
+                {/* Document Content Body */}
+                <Box
+                  className="doc-content-body"
+                  sx={{
+                    position: 'relative',
+                    zIndex: 1,
+                    px: { xs: 2, sm: '1cm' },
+                    pb: 1,
+                  }}
+                >
+          {/* Top Document Header Title & Metadata Table */}
+          <Box sx={{ width: '100%', display: 'block', mb: 2, clear: 'both' }}>
+            {/* 1. Judul MoU Align Center */}
+            <Box sx={{ width: '100%', display: 'block', textAlign: 'center', mt: 0, mb: 1, clear: 'both' }}>
+              <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', fontSize: '1.35rem', lineHeight: 1.2, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', width: '100%', textAlign: 'center' }}>
+                MEMORANDUM OF UNDERSTANDING (MoU)
               </Typography>
-              <Typography variant="caption" sx={{ fontWeight: 600, color: '#475569', display: 'block' }}>
-                Standard Operating Procedure (SOP) Internal
+              <Typography variant="caption" sx={{ fontWeight: 700, color: '#334155', display: 'block', mt: 0.5, letterSpacing: '0.02em' }}>
+                KERJASAMA PEMBUATAN WEBSITE DAN PENGEMBANGAN DIGITAL
               </Typography>
             </Box>
-          </Box>
 
-          <Box sx={{ textAlign: 'right' }}>
-            <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', fontSize: '1.2rem' }}>
-              MEMORANDUM OF UNDERSTANDING (MoU)
-            </Typography>
-            <Typography variant="caption" sx={{ fontWeight: 700, color: '#334155', display: 'block' }}>
-              KERJASAMA PEMBUATAN WEBSITE DAN PENGEMBANGAN DIGITAL
-            </Typography>
-            <Typography variant="caption" sx={{ fontWeight: 600, color: '#64748b', display: 'block', mt: 0.3 }}>
-              Nomor: {mou.docNumber || '....../MoU/ATL/....../202....'}
-            </Typography>
+            {/* 2. Metadata Table Rata Kanan */}
+            <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mt: 2, mb: 2, clear: 'both' }}>
+              <TableContainer component={Box} sx={{ border: '1px solid #000', borderRadius: 0, display: 'inline-block', bgcolor: 'transparent', maxWidth: '340px' }}>
+                <Table size="small" sx={{ width: '100%', '& .MuiTableCell-root': { py: 0.15, px: 0.8, fontSize: '0.68rem', lineHeight: 1.25, border: '1px solid #000', textAlign: 'left' } }}>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 700, bgcolor: 'transparent', width: '35%', py: 0.15, px: 0.8 }}>Nomor MoU</TableCell>
+                      <TableCell sx={{ py: 0.15, px: 0.8 }}>: {mou.docNumber || '..../MoU/ATL/..../202...'}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 700, bgcolor: 'transparent', py: 0.15, px: 0.8 }}>Tanggal</TableCell>
+                      <TableCell sx={{ py: 0.15, px: 0.8 }}>: {mou.date || '-'}</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Box>
           </Box>
-        </Box>
 
 
 
@@ -1436,6 +1681,18 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
           party2Sig={mou.party2Signature}
           onSignParty2Cb={onSignParty2}
         />
+        </Box>
+      </td>
+    </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td style={{ padding: 0, margin: 0, border: 'none', background: 'transparent', height: '2.2cm' }}>
+                <div className="footer-space" style={{ height: '2.2cm' }}></div>
+              </td>
+            </tr>
+          </tfoot>
+        </table>
       </Paper>
     );
   }
@@ -1453,41 +1710,125 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
         elevation={0}
         className="printable-document"
         sx={{
-          p: { xs: 2.5, sm: 4 },
-          borderRadius: 3,
-          border: '1px solid rgba(0,0,0,0.12)',
-          bgcolor: '#ffffff',
+          p: 0,
+          borderRadius: 0,
+          border: 'none',
+          bgcolor: 'transparent',
           color: '#0f172a',
           fontFamily: 'Inter, Arial, sans-serif',
-          boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
+          boxShadow: 'none',
+          position: 'relative',
+          overflow: 'hidden',
           '& .MuiTypography-root': { color: 'inherit' },
           '& .MuiTypography-colorTextSecondary': { color: '#475569 !important' },
           '& .MuiTableCell-root': { color: '#0f172a' },
         }}
       >
-        {/* Header Kop PDF SPK */}
-        <Box className="repeat-page-header" sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2, pb: 1, borderBottom: '2px solid #000' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Box component="img" src="/logo.svg" alt="Atasilabs Logo" sx={{ height: 36, width: 'auto' }} onError={(e: any) => { e.target.style.display = 'none'; }} />
-            <Box>
-              <Typography variant="h6" sx={{ fontWeight: 900, lineHeight: 1.1, color: '#0f172a', letterSpacing: '-0.02em' }}>
-                atasilabs
+        {/* Full-bleed Background Header SVG Banner */}
+        <Box
+          className="repeat-page-header-bg"
+          sx={{
+            width: '100%',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            zIndex: 0,
+            pointerEvents: 'none',
+          }}
+        >
+          <Box
+            component="img"
+            src="/header.svg"
+            alt="Header Background Atasilabs"
+            sx={{
+              width: '100%',
+              height: 'auto',
+              display: 'block',
+            }}
+          />
+        </Box>
+
+        {/* Full-bleed Background Footer SVG Banner */}
+        <Box
+          className="repeat-page-footer-bg"
+          sx={{
+            width: '100%',
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            zIndex: 0,
+            pointerEvents: 'none',
+          }}
+        >
+          <Box
+            component="img"
+            src="/footer.svg"
+            alt="Footer Background Atasilabs"
+            sx={{
+              width: '100%',
+              height: 'auto',
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              display: 'block',
+            }}
+          />
+        </Box>
+
+        {/* Multi-Page Print Layout Table Container */}
+        <table className="print-layout-table" style={{ width: '100%', borderCollapse: 'collapse', border: 'none', margin: 0, padding: 0 }}>
+          <thead>
+            <tr>
+              <th style={{ padding: 0, margin: 0, border: 'none', background: 'transparent', height: '4.0cm' }}>
+                <div className="header-space" style={{ height: '4.0cm' }}></div>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style={{ padding: 0, margin: 0, border: 'none', background: 'transparent' }}>
+                {/* Document Content Body */}
+                <Box
+                  className="doc-content-body"
+                  sx={{
+                    position: 'relative',
+                    zIndex: 1,
+                    px: { xs: 2, sm: '1cm' },
+                    pb: 1,
+                  }}
+                >
+          {/* Top Document Header Title & Metadata Table */}
+          <Box sx={{ width: '100%', display: 'block', mb: 2, clear: 'both' }}>
+            {/* 1. Judul SPK Align Center */}
+            <Box sx={{ width: '100%', display: 'block', textAlign: 'center', mt: 0, mb: 1, clear: 'both' }}>
+              <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', fontSize: '1.35rem', lineHeight: 1.2, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', width: '100%', textAlign: 'center' }}>
+                SURAT PERINTAH KERJA (SPK)
               </Typography>
-              <Typography variant="caption" sx={{ fontWeight: 600, color: '#475569', display: 'block' }}>
-                Standard Operating Procedure (SOP) Internal
+              <Typography variant="caption" sx={{ fontWeight: 700, color: '#334155', display: 'block', mt: 0.5, letterSpacing: '0.02em' }}>
+                PENGEMBANGAN WEBSITE DAN PRODUK DIGITAL
               </Typography>
             </Box>
-          </Box>
 
-          <Box sx={{ textAlign: 'right' }}>
-            <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', fontSize: '1.2rem' }}>
-              SURAT PERINTAH KERJA (SPK)
-            </Typography>
-            <Typography variant="caption" sx={{ fontWeight: 600, color: '#64748b', display: 'block', mt: 0.3 }}>
-              No. SPK: {spk.spkNumber || '....../SPK-ATL/....../20...'}
-            </Typography>
+            {/* 2. Metadata Table Rata Kanan */}
+            <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mt: 2, mb: 2, clear: 'both' }}>
+              <TableContainer component={Box} sx={{ border: '1px solid #000', borderRadius: 0, display: 'inline-block', bgcolor: 'transparent', maxWidth: '340px' }}>
+                <Table size="small" sx={{ width: '100%', '& .MuiTableCell-root': { py: 0.15, px: 0.8, fontSize: '0.68rem', lineHeight: 1.25, border: '1px solid #000', textAlign: 'left' } }}>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 700, bgcolor: 'transparent', width: '35%', py: 0.15, px: 0.8 }}>No. SPK</TableCell>
+                      <TableCell sx={{ py: 0.15, px: 0.8 }}>: {spk.spkNumber || '..../SPK-ATL/..../20...'}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 700, bgcolor: 'transparent', py: 0.15, px: 0.8 }}>Tanggal</TableCell>
+                      <TableCell sx={{ py: 0.15, px: 0.8 }}>: {spk.date || '-'}</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Box>
           </Box>
-        </Box>
 
         {/* Pembukaan SPK */}
         <Typography variant="body2" sx={{ color: '#334155', mb: 2, lineHeight: 1.6 }}>
@@ -1784,6 +2125,18 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
           party2Sig={spk.party2Signature}
           onSignParty2Cb={onSignParty2}
         />
+        </Box>
+      </td>
+    </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td style={{ padding: 0, margin: 0, border: 'none', background: 'transparent', height: '2.2cm' }}>
+                <div className="footer-space" style={{ height: '2.2cm' }}></div>
+              </td>
+            </tr>
+          </tfoot>
+        </table>
       </Paper>
     );
   }
@@ -1803,48 +2156,125 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
         elevation={0}
         className="printable-document"
         sx={{
-          p: { xs: 2.5, sm: 4 },
-          borderRadius: 3,
-          border: '1px solid rgba(0,0,0,0.12)',
-          bgcolor: '#ffffff',
+          p: 0,
+          borderRadius: 0,
+          border: 'none',
+          bgcolor: 'transparent',
           color: '#0f172a',
           fontFamily: 'Inter, Arial, sans-serif',
-          boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
+          boxShadow: 'none',
+          position: 'relative',
+          overflow: 'hidden',
           '& .MuiTypography-root': { color: 'inherit' },
           '& .MuiTypography-colorTextSecondary': { color: '#475569 !important' },
           '& .MuiTableCell-root': { color: '#0f172a' },
         }}
       >
-        <Letterhead title="BERITA ACARA SERAH TERIMA (BAST)" />
-
-        <Box className="no-print" sx={{ display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-          {!isClientRole && onSignParty1 && (
-            <Button variant="outlined" color="primary" size="small" startIcon={<DrawIcon />} onClick={onSignParty1} sx={{ fontWeight: 700 }}>
-              Tanda Tangan Pihak 1 (AtasiLabs)
-            </Button>
-          )}
-          {onSignParty2 && (
-            <Button variant="outlined" color="secondary" size="small" startIcon={<DrawIcon />} onClick={onSignParty2} sx={{ fontWeight: 700 }}>
-              Tanda Tangan Pihak 2 (Klien)
-            </Button>
-          )}
-          <Button variant="contained" size="small" startIcon={<PrintIcon />} onClick={handlePrint} sx={{ fontWeight: 700 }}>
-            Cetak / Simpan PDF (A4)
-          </Button>
+        {/* Full-bleed Background Header SVG Banner */}
+        <Box
+          className="repeat-page-header-bg"
+          sx={{
+            width: '100%',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            zIndex: 0,
+            pointerEvents: 'none',
+          }}
+        >
+          <Box
+            component="img"
+            src="/header.svg"
+            alt="Header Background Atasilabs"
+            sx={{
+              width: '100%',
+              height: 'auto',
+              display: 'block',
+            }}
+          />
         </Box>
 
-        {/* Title & Number */}
-        <Box sx={{ textAlign: 'center', mb: 3 }}>
-          <Typography variant="h6" sx={{ fontWeight: 800, textDecoration: 'underline', color: '#000', mb: 0.2 }}>
-            BERITA ACARA SERAH TERIMA (BAST)
-          </Typography>
-          <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#000', textTransform: 'uppercase', mb: 0.5 }}>
-            KERJASAMA PEMBUATAN WEBSITE DAN PENGEMBANGAN DIGITAL
-          </Typography>
-          <Typography variant="body2" sx={{ fontWeight: 700, color: '#333' }}>
-            Nomor: {bast.bastNumber || '....../BAST/ATL/....../202...'}
-          </Typography>
+        {/* Full-bleed Background Footer SVG Banner */}
+        <Box
+          className="repeat-page-footer-bg"
+          sx={{
+            width: '100%',
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            zIndex: 0,
+            pointerEvents: 'none',
+          }}
+        >
+          <Box
+            component="img"
+            src="/footer.svg"
+            alt="Footer Background Atasilabs"
+            sx={{
+              width: '100%',
+              height: 'auto',
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              display: 'block',
+            }}
+          />
         </Box>
+
+        {/* Multi-Page Print Layout Table Container */}
+        <table className="print-layout-table" style={{ width: '100%', borderCollapse: 'collapse', border: 'none', margin: 0, padding: 0 }}>
+          <thead>
+            <tr>
+              <th style={{ padding: 0, margin: 0, border: 'none', background: 'transparent', height: '4.0cm' }}>
+                <div className="header-space" style={{ height: '4.0cm' }}></div>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style={{ padding: 0, margin: 0, border: 'none', background: 'transparent' }}>
+                {/* Document Content Body */}
+                <Box
+                  className="doc-content-body"
+                  sx={{
+                    position: 'relative',
+                    zIndex: 1,
+                    px: { xs: 2, sm: '1cm' },
+                    pb: 1,
+                  }}
+                >
+          {/* Top Document Header Title & Metadata Table */}
+          <Box sx={{ width: '100%', display: 'block', mb: 2, clear: 'both' }}>
+            {/* 1. Judul BAST Align Center */}
+            <Box sx={{ width: '100%', display: 'block', textAlign: 'center', mt: 0, mb: 1, clear: 'both' }}>
+              <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', fontSize: '1.35rem', lineHeight: 1.2, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', width: '100%', textAlign: 'center' }}>
+                BERITA ACARA SERAH TERIMA (BAST)
+              </Typography>
+              <Typography variant="caption" sx={{ fontWeight: 700, color: '#334155', display: 'block', mt: 0.5, letterSpacing: '0.02em' }}>
+                KERJASAMA PEMBUATAN WEBSITE DAN PENGEMBANGAN DIGITAL
+              </Typography>
+            </Box>
+
+            {/* 2. Metadata Table Rata Kanan */}
+            <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mt: 2, mb: 2, clear: 'both' }}>
+              <TableContainer component={Box} sx={{ border: '1px solid #000', borderRadius: 0, display: 'inline-block', bgcolor: 'transparent', maxWidth: '340px' }}>
+                <Table size="small" sx={{ width: '100%', '& .MuiTableCell-root': { py: 0.15, px: 0.8, fontSize: '0.68rem', lineHeight: 1.25, border: '1px solid #000', textAlign: 'left' } }}>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 700, bgcolor: 'transparent', width: '35%', py: 0.15, px: 0.8 }}>Nomor BAST</TableCell>
+                      <TableCell sx={{ py: 0.15, px: 0.8 }}>: {bast.bastNumber || '..../BAST/ATL/..../202...'}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 700, bgcolor: 'transparent', py: 0.15, px: 0.8 }}>Tanggal</TableCell>
+                      <TableCell sx={{ py: 0.15, px: 0.8 }}>: {bast.date || '-'}</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Box>
+          </Box>
 
         {/* Pembukaan */}
         <Typography variant="body2" sx={{ lineHeight: 1.6, mb: 1.5 }}>
@@ -1953,6 +2383,18 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
           party2Sig={bast.party2Signature}
           onSignParty2Cb={onSignParty2}
         />
+        </Box>
+      </td>
+    </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td style={{ padding: 0, margin: 0, border: 'none', background: 'transparent', height: '2.2cm' }}>
+                <div className="footer-space" style={{ height: '2.2cm' }}></div>
+              </td>
+            </tr>
+          </tfoot>
+        </table>
       </Paper>
     );
   }
@@ -2000,75 +2442,127 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
         elevation={0}
         className="printable-document"
         sx={{
-          p: { xs: 3, md: 5 },
-          borderRadius: 3,
-          border: '1px solid rgba(0,0,0,0.12)',
-          bgcolor: '#ffffff',
+          p: 0,
+          borderRadius: 0,
+          border: 'none',
+          bgcolor: 'transparent',
           color: '#0f172a',
           fontFamily: 'Inter, Arial, sans-serif',
-          boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
+          boxShadow: 'none',
+          position: 'relative',
+          overflow: 'hidden',
           '& .MuiTypography-root': { color: 'inherit' },
           '& .MuiTypography-colorTextSecondary': { color: '#475569 !important' },
           '& .MuiTableCell-root': { color: '#0f172a' },
         }}
       >
-        {/* Document Actions Bar (Hidden on Print) */}
+        {/* Full-bleed Background Header SVG Banner */}
         <Box
-          className="no-print"
+          className="repeat-page-header-bg"
           sx={{
-            display: 'flex',
-            justify: 'space-between',
-            alignItems: 'center',
-            mb: 3,
-            pb: 2,
-            borderBottom: '1px solid',
-            borderColor: 'divider',
-            flexWrap: 'wrap',
-            gap: 1,
+            width: '100%',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            zIndex: 0,
+            pointerEvents: 'none',
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Chip label="DOKUMEN RESMI SOP TAHAP 5 — QA & CHECKLIST UAT" color="secondary" sx={{ fontWeight: 800 }} />
-            {onUpdateQA && (
-              <Button
-                variant="outlined"
-                color="success"
-                size="small"
-                startIcon={<CheckIcon />}
-                onClick={setAllTestItemsPassed}
-                sx={{ fontSize: '0.72rem', fontWeight: 700 }}
-              >
-                Set Semua Passed
-              </Button>
-            )}
-          </Box>
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<CopyIcon />}
-              onClick={() => handleCopyText(copySummary)}
-            >
-              Salin Teks QA
-            </Button>
-            <Button
-              variant="contained"
-              size="small"
-              startIcon={<PrintIcon />}
-              onClick={handlePrint}
-              sx={{ fontWeight: 700 }}
-            >
-              Cetak PDF / Print
-            </Button>
-          </Box>
+          <Box
+            component="img"
+            src="/header.svg"
+            alt="Header Background Atasilabs"
+            sx={{
+              width: '100%',
+              height: 'auto',
+              display: 'block',
+            }}
+          />
         </Box>
 
-        {/* Header Letterhead Component Standard Atasilabs */}
-        <Letterhead title="DOKUMEN QUALITY ASSURANCE & CHECKLIST UAT" />
+        {/* Full-bleed Background Footer SVG Banner */}
+        <Box
+          className="repeat-page-footer-bg"
+          sx={{
+            width: '100%',
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            zIndex: 0,
+            pointerEvents: 'none',
+          }}
+        >
+          <Box
+            component="img"
+            src="/footer.svg"
+            alt="Footer Background Atasilabs"
+            sx={{
+              width: '100%',
+              height: 'auto',
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              display: 'block',
+            }}
+          />
+        </Box>
 
-        <Typography variant="caption" display="block" textAlign="center" sx={{ fontWeight: 700, mb: 3, color: 'text.secondary' }}>
-          Nomor: {qa.docNumber} | Tanggal Pengujian: {qa.issueDate}
-        </Typography>
+        {/* Multi-Page Print Layout Table Container */}
+        <table className="print-layout-table" style={{ width: '100%', borderCollapse: 'collapse', border: 'none', margin: 0, padding: 0 }}>
+          <thead>
+            <tr>
+              <th style={{ padding: 0, margin: 0, border: 'none', background: 'transparent', height: '4.0cm' }}>
+                <div className="header-space" style={{ height: '4.0cm' }}></div>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style={{ padding: 0, margin: 0, border: 'none', background: 'transparent' }}>
+                {/* Document Content Body */}
+                <Box
+                  className="doc-content-body"
+                  sx={{
+                    position: 'relative',
+                    zIndex: 1,
+                    px: { xs: 2, sm: '1cm' },
+                    pb: 1,
+                  }}
+                >
+          {/* Top Document Header Title & Metadata Table */}
+
+          {/* Top Document Header Title & Metadata Table */}
+          <Box sx={{ width: '100%', display: 'block', mb: 2, clear: 'both' }}>
+            {/* 1. Judul QA Align Center */}
+            <Box sx={{ width: '100%', display: 'block', textAlign: 'center', mt: 0, mb: 1, clear: 'both' }}>
+              <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', fontSize: '1.35rem', lineHeight: 1.2, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', width: '100%', textAlign: 'center' }}>
+                QUALITY ASSURANCE & ACCEPTANCE TEST (QA)
+              </Typography>
+              <Typography variant="caption" sx={{ fontWeight: 700, color: '#334155', display: 'block', mt: 0.5, letterSpacing: '0.02em' }}>
+                REKAPITULASI PENGUJIAN FITUR & CHECKLIST UAT
+              </Typography>
+            </Box>
+
+            {/* 2. Metadata Table Rata Kanan */}
+            <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mt: 2, mb: 2, clear: 'both' }}>
+              <TableContainer component={Box} sx={{ border: '1px solid #000', borderRadius: 0, display: 'inline-block', bgcolor: 'transparent', maxWidth: '340px' }}>
+                <Table size="small" sx={{ width: '100%', '& .MuiTableCell-root': { py: 0.15, px: 0.8, fontSize: '0.68rem', lineHeight: 1.25, border: '1px solid #000', textAlign: 'left' } }}>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 700, bgcolor: 'transparent', width: '35%', py: 0.15, px: 0.8 }}>Nomor QA</TableCell>
+                      <TableCell sx={{ py: 0.15, px: 0.8 }}>: {qa.docNumber || '-'}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 700, bgcolor: 'transparent', py: 0.15, px: 0.8 }}>Tanggal</TableCell>
+                      <TableCell sx={{ py: 0.15, px: 0.8 }}>: {qa.issueDate || '-'}</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Box>
+          </Box>
 
         {/* Summary Info */}
         <TableContainer component={Paper} variant="outlined" sx={{ mb: 3 }}>
@@ -2202,6 +2696,18 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
           party2Sig={qa.party2Signature}
           onSignParty2Cb={onSignParty2}
         />
+        </Box>
+      </td>
+    </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td style={{ padding: 0, margin: 0, border: 'none', background: 'transparent', height: '2.2cm' }}>
+                <div className="footer-space" style={{ height: '2.2cm' }}></div>
+              </td>
+            </tr>
+          </tfoot>
+        </table>
       </Paper>
     );
   }
