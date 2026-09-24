@@ -156,6 +156,69 @@ export const ClientDashboardView: React.FC = () => {
   const stageCfg = getStageFromProgress(selectedProject.progress, selectedProject.ipwStage);
   const activeStepIndex = IPW_STAGES_LIST.findIndex((s) => s.stage === stageCfg.stage);
 
+  const [selectedStageStep, setSelectedStageStep] = useState<number | null>(null);
+  const currentDisplayedIndex = selectedStageStep !== null ? selectedStageStep : (activeStepIndex >= 0 ? activeStepIndex : 0);
+  const currentDisplayedStageCfg = IPW_STAGES_LIST[currentDisplayedIndex] || stageCfg;
+
+  const getStageRealStatus = (index: number) => {
+    const isPast = index < activeStepIndex;
+    const isCurrent = index === activeStepIndex;
+
+    switch (index) {
+      case 0:
+        return {
+          statusText: docs.cif ? 'SELESAI (CIF Terbit & Terisi)' : 'DALAM PROSES INTAKE',
+          chipColor: 'success' as const,
+          docName: 'CIF (Customer Information Form)',
+          isDone: true,
+        };
+      case 1:
+        return {
+          statusText: selectedProject.progress >= 30 ? 'SELESAI (Spesifikasi Fitur Disetujui)' : isCurrent ? 'SEDANG BERJALAN (Review Technical Specs)' : 'BELUM DIMULAI',
+          chipColor: selectedProject.progress >= 30 ? ('success' as const) : isCurrent ? ('warning' as const) : ('default' as const),
+          docName: 'RSD (Requirement Spec Document)',
+          isDone: selectedProject.progress >= 30,
+        };
+      case 2:
+        return {
+          statusText: docs.mou?.party2Signature ? 'SELESAI (MoU Ditandatangani & DP Verified)' : isCurrent ? 'SEDANG BERJALAN (Menunggu TTD MoU)' : 'BELUM DIMULAI',
+          chipColor: docs.mou?.party2Signature ? ('success' as const) : isCurrent ? ('warning' as const) : ('default' as const),
+          docName: 'MoU (Memorandum of Understanding)',
+          isDone: !!docs.mou?.party2Signature,
+        };
+      case 3:
+        return {
+          statusText: selectedProject.freelancerName || selectedProject.progress >= 60 ? `SELESAI (SPK Released: ${selectedProject.freelancerName || 'Tim Dev Atasilabs'})` : isCurrent ? 'SEDANG BERJALAN (Pendelegasian Tim)' : 'BELUM DIMULAI',
+          chipColor: selectedProject.progress >= 60 ? ('success' as const) : isCurrent ? ('info' as const) : ('default' as const),
+          docName: 'SPK (Surat Perintah Kerja)',
+          isDone: selectedProject.progress >= 60,
+        };
+      case 4:
+        return {
+          statusText: selectedProject.progress >= 85 ? 'SELESAI (Checklist UAT & Staging Validated)' : isCurrent ? 'SEDANG BERJALAN (Sprint Coding & Testing)' : 'BELUM DIMULAI',
+          chipColor: selectedProject.progress >= 85 ? ('success' as const) : isCurrent ? ('secondary' as const) : ('default' as const),
+          docName: 'QA (Quality Assurance & Checklist UAT)',
+          isDone: selectedProject.progress >= 85,
+        };
+      case 5:
+        return {
+          statusText: docs.bast?.party2Signature || selectedProject.progress >= 100 ? 'SELESAI (BAST Signed & Web Published)' : isCurrent ? 'SEDANG BERJALAN (Review Serah Terima BAST)' : 'BELUM DIMULAI',
+          chipColor: docs.bast?.party2Signature || selectedProject.progress >= 100 ? ('success' as const) : isCurrent ? ('warning' as const) : ('default' as const),
+          docName: 'BAST (Berita Acara Serah Terima)',
+          isDone: !!docs.bast?.party2Signature || selectedProject.progress >= 100,
+        };
+      default:
+        return {
+          statusText: isPast ? 'SELESAI' : 'BELUM DIMULAI',
+          chipColor: isPast ? ('success' as const) : ('default' as const),
+          docName: '-',
+          isDone: isPast,
+        };
+    }
+  };
+
+  const displayedRealStatus = getStageRealStatus(currentDisplayedIndex);
+
   const handleOpenDoc = (docType: 'CIF' | 'RSD' | 'MOU' | 'SPK' | 'BAST') => {
     setSelectedDocumentProjectId(selectedProject.id);
     setSelectedDocumentType(docType);
@@ -505,34 +568,46 @@ export const ClientDashboardView: React.FC = () => {
               mb: 3.5,
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyBetween: 'space-between', mb: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1, mb: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <AutoIcon color="primary" />
                 <Typography variant="h6" sx={{ fontWeight: 800, fontSize: '1.1rem' }}>
                   Alur Pengerjaan IPW 6-Stage Framework
                 </Typography>
               </Box>
-              <Chip
-                label={`Tahap Aktif: ${stageCfg.label}`}
-                color="primary"
-                size="small"
-                sx={{ fontWeight: 800, height: 22 }}
-              />
+              <Stack direction="row" spacing={1} alignItems="center">
+                <Chip
+                  label={`Tahap Aktif Proyek: ${stageCfg.shortName}`}
+                  color="primary"
+                  size="small"
+                  sx={{ fontWeight: 800, height: 24 }}
+                />
+                <Chip
+                  label={`${selectedProject.progress}% Selesai`}
+                  color={selectedProject.progress >= 100 ? 'success' : 'info'}
+                  size="small"
+                  sx={{ fontWeight: 800, height: 24 }}
+                />
+              </Stack>
             </Box>
+
             <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              Sistem otomatisasi alur kerja studio dari asesmen awal hingga penyerahan aset digital bergaransi.
+              Sistem otomatisasi alur kerja real untuk proyek <strong>{selectedProject.title}</strong> dari asesmen awal hingga penyerahan BAST. Klik pada tiap tahap untuk melihat rincian real.
             </Typography>
 
             <Stepper activeStep={activeStepIndex} alternativeLabel sx={{ pt: 1, pb: 2 }}>
               {IPW_STAGES_LIST.map((stepItem, index) => {
                 const isCompleted = index < activeStepIndex;
                 const isCurrent = index === activeStepIndex;
+                const isSelected = index === (selectedStageStep !== null ? selectedStageStep : activeStepIndex);
+                const stepRealStatus = getStageRealStatus(index);
+
                 return (
-                  <Step key={stepItem.stage} completed={isCompleted}>
+                  <Step key={stepItem.stage} completed={isCompleted} onClick={() => setSelectedStageStep(index)} style={{ cursor: 'pointer' }}>
                     <StepLabel
                       StepIconProps={{
                         sx: {
-                          fontSize: isCurrent ? 28 : 24,
+                          fontSize: isSelected ? 30 : isCurrent ? 28 : 24,
                           color: isCurrent
                             ? theme.palette.primary.main
                             : isCompleted
@@ -544,9 +619,9 @@ export const ClientDashboardView: React.FC = () => {
                       <Typography
                         variant="caption"
                         sx={{
-                          fontWeight: isCurrent ? 800 : isCompleted ? 700 : 500,
+                          fontWeight: isCurrent || isSelected ? 800 : isCompleted ? 700 : 500,
                           fontSize: '0.72rem',
-                          color: isCurrent ? 'text.primary' : 'text.secondary',
+                          color: isSelected ? theme.palette.primary.main : isCurrent ? 'text.primary' : 'text.secondary',
                           display: 'block',
                         }}
                       >
@@ -555,9 +630,9 @@ export const ClientDashboardView: React.FC = () => {
                       <Typography
                         variant="caption"
                         sx={{
-                          fontWeight: isCurrent ? 700 : 500,
+                          fontWeight: isCurrent || isSelected ? 700 : 500,
                           fontSize: '0.68rem',
-                          color: isCurrent ? theme.palette.primary.main : 'text.secondary',
+                          color: stepRealStatus.isDone ? '#10b981' : isCurrent ? theme.palette.primary.main : 'text.secondary',
                         }}
                       >
                         {stepItem.shortName}
@@ -568,20 +643,51 @@ export const ClientDashboardView: React.FC = () => {
               })}
             </Stepper>
 
+            {/* Real Active Stage Details Card */}
             <Box
               sx={{
-                p: 2,
+                p: 2.5,
                 borderRadius: 2.5,
                 backgroundColor:
                   theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)',
-                border: `1px dashed ${theme.palette.divider}`,
+                border: `1px solid ${theme.palette.divider}`,
               }}
             >
-              <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'primary.main', mb: 0.5 }}>
-                📋 Rincian Tahap Aktif saat ini: {stageCfg.label}
-              </Typography>
-              <Typography variant="body2" sx={{ fontSize: '0.82rem', lineHeight: 1.6 }}>
-                {stageCfg.description}
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1, mb: 1.5 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'primary.main', fontSize: '0.92rem' }}>
+                  📋 Rincian Real Stage {currentDisplayedIndex + 1}: {currentDisplayedStageCfg.label}
+                </Typography>
+                <Chip
+                  label={`Status: ${displayedRealStatus.statusText}`}
+                  color={displayedRealStatus.chipColor}
+                  size="small"
+                  sx={{ fontWeight: 800 }}
+                />
+              </Box>
+
+              <Grid container spacing={2} sx={{ mb: 1.5 }}>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, display: 'block' }}>
+                    Dokumen Berkas SOP Terkait:
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                    {displayedRealStatus.docName}
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, display: 'block' }}>
+                    Target Milestone Stage:
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                    {currentDisplayedStageCfg.progressPercent}% (Progres Real Proyek: {selectedProject.progress}%)
+                  </Typography>
+                </Grid>
+              </Grid>
+
+              <Divider sx={{ my: 1.5 }} />
+
+              <Typography variant="body2" sx={{ fontSize: '0.82rem', lineHeight: 1.6, color: 'text.secondary' }}>
+                {currentDisplayedStageCfg.description}
               </Typography>
             </Box>
           </Paper>
