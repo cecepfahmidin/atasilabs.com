@@ -750,85 +750,10 @@ export const ClientDashboardView: React.FC = () => {
                 </Button>
               </Paper>
 
-              <Paper
-                variant="outlined"
-                sx={{
-                  p: 1.5,
-                  borderRadius: 2.5,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}
-              >
-                <Box>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                    Source Code & Repositori
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {docs.bast?.sourceCodeAccess || 'Diberikan saat BAST disetujui'}
-                  </Typography>
-                </Box>
-                <Chip label="Protected" size="small" variant="outlined" sx={{ fontSize: '0.65rem' }} />
-              </Paper>
-            </Stack>
-          </Paper>
-
-          {/* Client Access Rights Transparency Matrix */}
-          <Paper
-            elevation={0}
-            sx={{
-              p: 3,
-              borderRadius: 3.5,
-              border: `1px solid ${theme.palette.divider}`,
-              backgroundColor: theme.palette.background.paper,
-              mb: 3,
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
-              <SecurityIcon color="success" />
-              <Typography variant="h6" sx={{ fontWeight: 800, fontSize: '1.05rem' }}>
-                Matriks Hak Akses Klien
-              </Typography>
-            </Box>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2, fontSize: '0.82rem' }}>
-              Transparansi hak akses portal klien sesuai peran otentikasi RBAC.
-            </Typography>
-
-            <Stack spacing={1.2}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <CheckIcon sx={{ color: '#10b981', fontSize: 18 }} />
-                <Typography variant="body2" sx={{ fontSize: '0.82rem', fontWeight: 600 }}>
-                  Monitor Progres & Milestone IPW Real-time
-                </Typography>
-              </Box>
-
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <CheckIcon sx={{ color: '#10b981', fontSize: 18 }} />
-                <Typography variant="body2" sx={{ fontSize: '0.82rem', fontWeight: 600 }}>
-                  Akses & Cetak Dokumen Legal (CIF, RSD, MoU, BAST)
-                </Typography>
-              </Box>
-
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <CheckIcon sx={{ color: '#10b981', fontSize: 18 }} />
-                <Typography variant="body2" sx={{ fontSize: '0.82rem', fontWeight: 600 }}>
-                  Penandatanganan Digital Sah Berkeabsahan Hukum
-                </Typography>
-              </Box>
-
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <CheckIcon sx={{ color: '#10b981', fontSize: 18 }} />
                 <Typography variant="body2" sx={{ fontSize: '0.82rem', fontWeight: 600 }}>
                   Akses Penyerahan Aset Digital & Garansi Maintenance
-                </Typography>
-              </Box>
-
-              <Divider sx={{ my: 1 }} />
-
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, opacity: 0.7 }}>
-                <LockIcon sx={{ color: '#ef4444', fontSize: 18 }} />
-                <Typography variant="body2" sx={{ fontSize: '0.82rem', fontStyle: 'italic' }}>
-                  Restriksi Privasi Internal (Biaya HPP & Fee Developer)
                 </Typography>
               </Box>
             </Stack>
