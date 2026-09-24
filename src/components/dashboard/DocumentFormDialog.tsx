@@ -26,6 +26,7 @@ import { CIFData, RSDData, MoUData, SPKData, BASTData, RSDFeatureItem, RSDTechCo
 import { useApp } from '../../context/AppContext';
 import { getPriceForTier, getFreelancerFeeForTier, inferTierFromFee, getDynamicHppMatrix } from '../../lib/pricingUtils';
 import { numberToWordsIDR } from '../../lib/documentGenerator';
+import { parseIndonesianDateParts } from './DocumentTemplates';
 
 interface DocumentFormDialogProps {
   open: boolean;
@@ -92,10 +93,19 @@ export const DocumentFormDialog: React.FC<DocumentFormDialogProps> = ({
   );
 
   const handleChange = (field: string, value: any) => {
-    setFormData((prev: any) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setFormData((prev: any) => {
+      const updated = {
+        ...prev,
+        [field]: value,
+      };
+      if (field === 'date' || field === 'issueDate') {
+        const { dayName } = parseIndonesianDateParts(value);
+        if (dayName && dayName !== '............') {
+          updated.dayName = dayName;
+        }
+      }
+      return updated;
+    });
   };
 
   const handleTierSelectChange = (newTier: string) => {

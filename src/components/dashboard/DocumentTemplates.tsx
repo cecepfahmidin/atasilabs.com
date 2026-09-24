@@ -33,7 +33,15 @@ export function parseIndonesianDateParts(dateStr?: string) {
       formattedDate: '../../20..',
     };
   }
-  const d = new Date(dateStr);
+
+  let d: Date;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    const [y, m, day] = dateStr.split('-').map(Number);
+    d = new Date(y, m - 1, day);
+  } else {
+    d = new Date(dateStr);
+  }
+
   if (isNaN(d.getTime())) {
     return {
       dayName: '............',
@@ -1444,7 +1452,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
 
                   {/* Pembukaan Dokumen MoU */}
                   <Typography variant="body2" sx={{ color: '#334155', mb: 1.5, lineHeight: 1.6 }}>
-                    Pada hari ini, <strong>{mou.dayName || '.....'}</strong>, Tanggal <strong>{mou.date}</strong>, telah terjadi kesepakatan kerjasama, diantara:
+                    Pada hari ini, <strong>{parseIndonesianDateParts(mou.date).dayName || mou.dayName || '.....'}</strong>, Tanggal <strong>{mou.date}</strong>, telah terjadi kesepakatan kerjasama, diantara:
                   </Typography>
 
                   <Box sx={{ pl: 2, mb: 2 }}>
@@ -1832,7 +1840,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
 
                   {/* Pembukaan SPK */}
                   <Typography variant="body2" sx={{ color: '#334155', mb: 2, lineHeight: 1.6 }}>
-                    Pada hari ini, Tanggal <strong>{spk.date}</strong>, telah dibuat Surat Perintah Kerja (SPK), diantara:
+                    Pada hari ini, <strong>{parseIndonesianDateParts(spk.date).dayName || spk.dayName || '.....'}</strong>, Tanggal <strong>{spk.date}</strong>, telah dibuat Surat Perintah Kerja (SPK), diantara:
                   </Typography>
 
                   {/* Identitas Pihak 1 & Pihak 2 */}

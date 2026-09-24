@@ -231,6 +231,7 @@ export interface SPKData {
   projectId?: string;
   spkNumber: string; // .../SPK-ATL/.../20...
   date: string;
+  dayName?: string;
   tier?: string;
   atasilabsPic: string;
   atasilabsRole: string;
