@@ -53,6 +53,7 @@ export const PricingCMSView: React.FC = () => {
     name: string;
     tagline: string;
     price: number;
+    originalPrice: number;
     priceBilling: string;
     popular: boolean;
     highlightBadge: string;
@@ -66,6 +67,7 @@ export const PricingCMSView: React.FC = () => {
     name: '',
     tagline: '',
     price: 0,
+    originalPrice: 0,
     priceBilling: 'per proyek',
     popular: false,
     highlightBadge: '',
@@ -95,6 +97,7 @@ export const PricingCMSView: React.FC = () => {
       name: tier.name,
       tagline: tier.tagline,
       price: tier.price,
+      originalPrice: tier.originalPrice || 0,
       priceBilling: tier.priceBilling || 'per proyek',
       popular: !!tier.popular,
       highlightBadge: tier.highlightBadge || '',
@@ -157,6 +160,7 @@ export const PricingCMSView: React.FC = () => {
     updatePricingTier(selectedTier.id, {
       ...formData,
       price: Number(formData.price) || 0,
+      originalPrice: Number(formData.originalPrice) || 0,
     });
     setIsEditDialogOpen(false);
   };
@@ -319,10 +323,17 @@ export const PricingCMSView: React.FC = () => {
                     mb: 2.5,
                   }}
                 >
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '0.72rem', fontWeight: 600 }}>
-                    Harga Paket Saat Ini:
-                  </Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 900, color: '#f59e0b' }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.72rem', fontWeight: 600 }}>
+                      Harga Jual (Cust):
+                    </Typography>
+                    {tier.originalPrice && tier.originalPrice > tier.price ? (
+                      <Typography variant="caption" sx={{ textDecoration: 'line-through', color: 'error.main', fontWeight: 700, fontSize: '0.78rem' }}>
+                        Normal: {formatRupiah(tier.originalPrice)}
+                      </Typography>
+                    ) : null}
+                  </Box>
+                  <Typography variant="h5" sx={{ fontWeight: 900, color: '#f59e0b', my: 0.2 }}>
                     {formatRupiah(tier.price)}
                   </Typography>
                   <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
@@ -504,11 +515,11 @@ export const PricingCMSView: React.FC = () => {
               />
             </Grid>
 
-            {/* Row 2: Price & Billing */}
-            <Grid size={{ xs: 12, sm: 6 }}>
+            {/* Row 2: Price, Original Price & Billing */}
+            <Grid size={{ xs: 12, sm: 4 }}>
               <TextField
                 fullWidth
-                label="Nominal Harga (IDR / Rupiah)"
+                label="Harga Jual Promo (IDR)"
                 type="number"
                 value={formData.price}
                 onChange={(e) => setFormData((prev) => ({ ...prev, price: Number(e.target.value) }))}
@@ -521,14 +532,30 @@ export const PricingCMSView: React.FC = () => {
                 helperText={`Terformat: ${formatRupiah(formData.price || 0)}`}
               />
             </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <TextField
+                fullWidth
+                label="Harga Normal / Dicoret (IDR)"
+                type="number"
+                value={formData.originalPrice}
+                onChange={(e) => setFormData((prev) => ({ ...prev, originalPrice: Number(e.target.value) }))}
+                size="small"
+                slotProps={{
+                  input: {
+                    startAdornment: <InputAdornment position="start">Rp</InputAdornment>,
+                  },
+                }}
+                helperText={`Terformat: ${formatRupiah(formData.originalPrice || 0)}`}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <TextField
                 fullWidth
                 label="Keterangan Penagihan"
                 value={formData.priceBilling}
                 onChange={(e) => setFormData((prev) => ({ ...prev, priceBilling: e.target.value }))}
                 size="small"
-                helperText="Contoh: per proyek, mulai dari, atau kontrak bulanan"
+                helperText="Contoh: per proyek, mulai dari"
               />
             </Grid>
 

@@ -144,16 +144,28 @@ export const PricingSection: React.FC = () => {
                 </div>
 
                 {/* Price Display */}
-                <div className="flex items-end gap-[6px] py-3 border-y border-[#222222]">
-                  <span
-                    className={`font-grotesk text-[30px] xl:text-[36px] font-bold tracking-[-1px] leading-none ${isPopular ? 'text-[#FFD600]' : 'text-[#F5F5F0]'
-                      }`}
-                  >
-                    {formatRupiah(tier.price)}
-                  </span>
-                  <span className="font-ibm-mono text-[13px] md:text-[14px] text-[#666666] tracking-[1px] mb-[2px]">
-                    /{tier.priceBilling || 'PROYEK'}
-                  </span>
+                <div className="flex flex-col gap-1 py-3 border-y border-[#222222]">
+                  {tier.originalPrice && tier.originalPrice > tier.price ? (
+                    <div className="flex items-center gap-2">
+                      <span className="font-ibm-mono text-[13px] md:text-[14px] text-[#FF4D4D] line-through font-bold">
+                        {formatRupiah(tier.originalPrice)}
+                      </span>
+                      <span className="font-ibm-mono text-[10px] bg-[#FF4D4D]/20 text-[#FF4D4D] px-2 py-0.5 rounded font-bold border border-[#FF4D4D]/40">
+                        HEMAT DISKON
+                      </span>
+                    </div>
+                  ) : null}
+                  <div className="flex items-end gap-[6px]">
+                    <span
+                      className={`font-grotesk text-[30px] xl:text-[36px] font-bold tracking-[-1px] leading-none ${isPopular ? 'text-[#FFD600]' : 'text-[#F5F5F0]'
+                        }`}
+                    >
+                      {formatRupiah(tier.price)}
+                    </span>
+                    <span className="font-ibm-mono text-[13px] md:text-[14px] text-[#666666] tracking-[1px] mb-[2px]">
+                      /{tier.priceBilling || 'PROYEK'}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Specs & Features List */}

@@ -394,7 +394,8 @@ export interface PricingTier {
   tierNumber: 1 | 2 | 3 | 4 | 5;
   name: 'Starter' | 'Growth' | 'Profesional' | 'Enterprise' | 'Elite' | string;
   tagline: string;
-  price: number; // in IDR
+  price: number; // in IDR (Harga Jual ke Cust)
+  originalPrice?: number; // in IDR (Harga Normal yang Dicoret)
   priceBilling: string; // e.g., 'mulai dari' or 'per proyek' or 'sekali bayar'
   popular?: boolean;
   highlightBadge?: string;

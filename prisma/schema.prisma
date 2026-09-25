@@ -84,6 +84,7 @@ model PricingTier {
   name           String
   tagline        String
   price          Float
+  originalPrice  Float?
   priceBilling   String
   popular        Boolean  @default(false)
   highlightBadge String?
