@@ -41,7 +41,11 @@ export const MasterDataView: React.FC = () => {
     router.push(href);
   };
 
-  const cLevelCount = users?.filter((u) => ['CEO', 'CTO', 'CMO'].includes(u.role)).length || 3;
+  const cLevelUsers = users?.filter((u) => ['CEO', 'CTO', 'CMO'].includes(u.role?.toUpperCase() || '')) || [];
+  const cLevelCount = cLevelUsers.length || 0;
+  const cLevelNamesText = cLevelUsers.length > 0 
+    ? cLevelUsers.map(u => `${u.role} ${u.name}`).join(', ')
+    : 'CEO, CTO, CMO';
 
   return (
     <Box sx={{ pb: 6 }}>
@@ -119,7 +123,7 @@ export const MasterDataView: React.FC = () => {
                 Tim Manajemen & Leadership
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6, mb: 2.5 }}>
-                Kelola profil eksekutif C-Level (CEO Irfan Aulia, CTO Cecep Fahmidin, CMO Dian Hidayat), biografi profesional, foto avatar (R2 Cloudflare), dan sinkronisasi real-time ke landing page.
+                Kelola profil eksekutif C-Level ({cLevelNamesText}), biografi profesional, foto avatar (R2 Cloudflare), dan sinkronisasi real-time ke landing page.
               </Typography>
 
               <Divider sx={{ my: 2 }} />

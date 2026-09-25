@@ -797,7 +797,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
                           textUnderlineOffset: '3px',
                         }}
                       >
-                        {cif.party1Signature?.auditTrail?.signedBy || cif.adminName || 'Irfan Aulia Ulumudin'}
+                        {cif.party1Signature?.auditTrail?.signedBy || cif.adminName || 'Perwakilan Atasilabs'}
                       </Typography>
                       <Typography variant="caption" display="block" sx={{ fontWeight: 600, color: '#475569', mt: 0.5, fontSize: '0.78rem' }}>
                         {cif.party1Signature?.auditTrail?.signerRole || getDynamicSignerRole(cif.party1Signature?.auditTrail?.signedBy || cif.adminName, 'Founder & CEO Atasilabs')}
@@ -1315,7 +1315,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
   // Render MoU Contract
   if (type === 'MOU') {
     const mou = data as MoUData;
-    const party1Name = mou.party1Signature?.auditTrail?.signedBy || mou.atasilabsPic || 'Irfan Aulia Ulumudin';
+    const party1Name = mou.party1Signature?.auditTrail?.signedBy || mou.atasilabsPic || 'Perwakilan Atasilabs';
     const party1Role = mou.party1Signature?.auditTrail?.signerRole || getDynamicSignerRole(party1Name, mou.atasilabsRole || 'Founder & CEO Atasilabs');
     const party2Name = mou.party2Signature?.auditTrail?.signedBy || mou.clientPic || 'PIC Klien';
     const party2Role = mou.party2Signature?.auditTrail?.signerRole || getDynamicSignerRole(party2Name, mou.clientRole || 'Direktur / Penanggung Jawab Klien');

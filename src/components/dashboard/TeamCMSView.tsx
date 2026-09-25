@@ -48,9 +48,9 @@ import { User, UserRole } from '../../types';
 import { ROLE_CONFIGS } from '../../lib/rbac';
 
 const PRESET_AVATARS = [
-  { label: 'CEO Irfan', url: '/team/ceo.jpg' },
-  { label: 'CTO Cecep', url: '/team/cto.jpg' },
-  { label: 'CMO Dian', url: '/team/cmo.jpg' },
+  { label: 'Avatar Preset 1', url: '/team/ceo.jpg' },
+  { label: 'Avatar Preset 2', url: '/team/cto.jpg' },
+  { label: 'Avatar Preset 3', url: '/team/cmo.jpg' },
 ];
 
 export const TeamCMSView: React.FC = () => {
@@ -567,7 +567,7 @@ export const TeamCMSView: React.FC = () => {
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       required
-                      placeholder="Contoh: Irfan Aulia Ulumuddin"
+                      placeholder="Contoh: Nama Lengkap & Gelar"
                     />
                   </Grid>
                   <Grid item xs={12} sm={6}>
