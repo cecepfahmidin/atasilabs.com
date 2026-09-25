@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { supabase } from '@/lib/supabase';
-import { INITIAL_COMPANY_CONTACT } from '@/data/initialData';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,9 +29,9 @@ export async function GET() {
       console.warn('Prisma query failed for contact:', prismaErr);
     }
 
-    return NextResponse.json({ success: true, data: INITIAL_COMPANY_CONTACT, fallback: true });
+    return NextResponse.json({ success: true, data: null, fallback: false });
   } catch (error) {
-    return NextResponse.json({ success: true, data: INITIAL_COMPANY_CONTACT, fallback: true });
+    return NextResponse.json({ success: true, data: null, fallback: false });
   }
 }
 
@@ -60,7 +59,15 @@ export async function PUT(request: Request) {
         update: fields,
         create: {
           id: 'singleton-contact',
-          ...INITIAL_COMPANY_CONTACT,
+          companyName: fields.companyName || 'Atasi Labs',
+          brandName: fields.brandName || 'Atasi Labs Studio',
+          tagline: fields.tagline || 'Enterprise Web & AI Studio',
+          email: fields.email || 'contact@atasilabs.com',
+          whatsappNumber: fields.whatsappNumber || '6281234567890',
+          address: fields.address || 'Jakarta, Indonesia',
+          operatingHours: fields.operatingHours || 'Senin - Jumat: 09:00 - 17:00 WIB',
+          googleMapsUrl: fields.googleMapsUrl || '',
+          socialLinks: fields.socialLinks || {},
           ...fields,
         },
       });

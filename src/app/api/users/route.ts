@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { supabase } from '@/lib/supabase';
-import { INITIAL_USERS } from '@/data/initialData';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,21 +11,17 @@ export async function GET() {
       .select('*')
       .order('createdAt', { ascending: true });
 
-    if (!sbErr && sbUsers && sbUsers.length > 0) {
+    if (!sbErr && sbUsers) {
       return NextResponse.json({ success: true, data: sbUsers, fallback: false });
     }
 
     const items = await prisma.user.findMany({
       orderBy: { createdAt: 'asc' },
     });
-    if (items && items.length > 0) {
-      return NextResponse.json({ success: true, data: items, fallback: false });
-    }
-
-    return NextResponse.json({ success: true, data: INITIAL_USERS, fallback: true });
+    return NextResponse.json({ success: true, data: items || [], fallback: false });
   } catch (error) {
     console.warn('DB query failed for users:', error);
-    return NextResponse.json({ success: true, data: INITIAL_USERS, fallback: true });
+    return NextResponse.json({ success: true, data: [], fallback: false });
   }
 }
 

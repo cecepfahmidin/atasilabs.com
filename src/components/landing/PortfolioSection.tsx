@@ -6,7 +6,7 @@ import { Portfolio } from '../../types';
 import { useApp } from '../../context/AppContext';
 
 export const PortfolioSection: React.FC = () => {
-  const { portfolios } = useApp();
+  const { portfolios, isLoadingData } = useApp();
   const [selectedCategory, setSelectedCategory] = useState<string>('Semua');
   const [activeItem, setActiveItem] = useState<Portfolio | null>(null);
 
@@ -44,7 +44,25 @@ export const PortfolioSection: React.FC = () => {
         })}
       </div>
 
-      {/* Grid of Portfolio Cards */}
+      {/* Loading Skeleton */}
+      {isLoadingData ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3].map((n) => (
+            <div key={n} className="flex flex-col bg-[#0F0F0F] border-2 border-[#2D2D2D] h-[340px] animate-pulse">
+              <div className="h-[220px] bg-[#1A1A1A]" />
+              <div className="p-5 flex flex-col gap-2">
+                <div className="h-5 bg-[#252525] w-3/4 rounded" />
+                <div className="h-4 bg-[#1E1E1E] w-full rounded" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : filteredPortfolios.length === 0 ? (
+        <div className="p-8 text-center text-[#888] font-ibm-mono border border-dashed border-[#2D2D2D]">
+          [ BELUM ADA DATA PORTOFOLIO DI SUPABASE DATABASE ]
+        </div>
+      ) : (
+      /* Grid of Portfolio Cards */
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredPortfolios.map((item, idx) => {
           const techList = item.techStack || [];
@@ -118,6 +136,7 @@ export const PortfolioSection: React.FC = () => {
           );
         })}
       </div>
+      )}
 
       {/* Detail Modal */}
       {activeItem && (

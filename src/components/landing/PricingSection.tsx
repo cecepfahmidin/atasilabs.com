@@ -13,7 +13,7 @@ const formatRupiah = (amount: number) => {
 };
 
 export const PricingSection: React.FC = () => {
-  const { pricingTiers, setSelectedServiceForInquiry } = useApp();
+  const { pricingTiers, setSelectedServiceForInquiry, isLoadingData } = useApp();
   const carouselRef = useRef<HTMLDivElement>(null);
 
   const handleSelectTier = (tierName: string, tierNumber: number) => {
@@ -77,7 +77,28 @@ export const PricingSection: React.FC = () => {
           scrollbarColor: '#333333 #111111',
         }}
       >
-        {pricingTiers.map((tier) => {
+        {isLoadingData ? (
+          [1, 2, 3].map((n) => (
+            <div
+              key={n}
+              className="flex flex-col justify-between p-6 md:p-[36px] w-[320px] sm:w-[370px] md:w-[410px] shrink-0 bg-[#0F0F0F] border border-[#2D2D2D] h-[480px] animate-pulse"
+            >
+              <div className="h-6 bg-[#252525] w-1/3 rounded" />
+              <div className="h-10 bg-[#252525] w-2/3 rounded my-4" />
+              <div className="space-y-3 my-4">
+                <div className="h-4 bg-[#1E1E1E] w-full rounded" />
+                <div className="h-4 bg-[#1E1E1E] w-4/5 rounded" />
+                <div className="h-4 bg-[#1E1E1E] w-3/4 rounded" />
+              </div>
+              <div className="h-12 bg-[#252525] w-full rounded mt-auto" />
+            </div>
+          ))
+        ) : pricingTiers.length === 0 ? (
+          <div className="p-8 text-center text-[#888] font-ibm-mono w-full border border-dashed border-[#2D2D2D]">
+            [ BELUM ADA DATA PRICING DI SUPABASE DATABASE ]
+          </div>
+        ) : (
+        pricingTiers.map((tier) => {
           const isPopular = tier.popular;
           const tierLabel = `TIER 0${tier.tierNumber}`;
 
@@ -178,7 +199,8 @@ export const PricingSection: React.FC = () => {
               </button>
             </div>
           );
-        })}
+        })
+        )}
       </div>
     </section>
   );

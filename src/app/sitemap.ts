@@ -1,6 +1,6 @@
 import { MetadataRoute } from 'next';
 import { prisma } from '@/lib/prisma';
-import { INITIAL_PORTFOLIOS, INITIAL_PRICING_TIERS } from '@/data/initialData';
+import { supabase } from '@/lib/supabase';
 
 export const revalidate = 3600; // Refresh dynamic sitemap every hour
 
@@ -8,21 +8,30 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.atasilabs.com';
   const currentDate = new Date();
 
-  // Fetch dynamic data from PostgreSQL Database
+  // Fetch dynamic data from Database
   let dbPortfolios: any[] = [];
   let dbPricing: any[] = [];
 
   try {
-    const [portfolios, pricing] = await Promise.all([
-      prisma.portfolio.findMany({ orderBy: { createdAt: 'desc' } }),
-      prisma.pricingTier.findMany({ orderBy: { tierNumber: 'asc' } }),
+    const [sbPort, sbPricing] = await Promise.all([
+      supabase.from('Portfolio').select('*').order('createdAt', { ascending: false }),
+      supabase.from('PricingTier').select('*').order('tierNumber', { ascending: true }),
     ]);
 
-    dbPortfolios = portfolios.length > 0 ? portfolios : INITIAL_PORTFOLIOS;
-    dbPricing = pricing.length > 0 ? pricing : INITIAL_PRICING_TIERS;
+    if (!sbPort.error && sbPort.data) {
+      dbPortfolios = sbPort.data;
+    } else {
+      dbPortfolios = await prisma.portfolio.findMany({ orderBy: { createdAt: 'desc' } });
+    }
+
+    if (!sbPricing.error && sbPricing.data) {
+      dbPricing = sbPricing.data;
+    } else {
+      dbPricing = await prisma.pricingTier.findMany({ orderBy: { tierNumber: 'asc' } });
+    }
   } catch (error) {
-    dbPortfolios = INITIAL_PORTFOLIOS;
-    dbPricing = INITIAL_PRICING_TIERS;
+    dbPortfolios = [];
+    dbPricing = [];
   }
 
   // Landing Page Main Navigation & Section Anchors

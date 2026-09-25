@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { supabase } from '@/lib/supabase';
-import { INITIAL_PORTFOLIOS } from '@/data/initialData';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,8 +12,8 @@ export async function GET() {
       .select('*')
       .order('createdAt', { ascending: false });
 
-    if (!sbError && sbItems && sbItems.length > 0) {
-      return NextResponse.json({ success: true, data: sbItems, fallback: false, isInitialSeed: false });
+    if (!sbError && sbItems) {
+      return NextResponse.json({ success: true, data: sbItems, fallback: false });
     }
 
     // 2. Fallback: Try Prisma DB query
@@ -22,16 +21,16 @@ export async function GET() {
       const items = await prisma.portfolio.findMany({
         orderBy: { createdAt: 'desc' },
       });
-      if (items && items.length > 0) {
-        return NextResponse.json({ success: true, data: items, fallback: false, isInitialSeed: false });
+      if (items) {
+        return NextResponse.json({ success: true, data: items, fallback: false });
       }
     } catch (prismaErr) {
       console.warn('Prisma query failed for portfolio:', prismaErr);
     }
 
-    return NextResponse.json({ success: true, data: INITIAL_PORTFOLIOS, fallback: true, isInitialSeed: false });
+    return NextResponse.json({ success: true, data: [], fallback: false });
   } catch (error) {
-    return NextResponse.json({ success: true, data: INITIAL_PORTFOLIOS, fallback: true, isInitialSeed: false });
+    return NextResponse.json({ success: true, data: [], fallback: false });
   }
 }
 

@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { supabase } from '@/lib/supabase';
-import { INITIAL_LEADS } from '@/data/initialData';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,7 +12,7 @@ export async function GET() {
       .select('*')
       .order('createdAt', { ascending: false });
 
-    if (!sbError && sbLeads && sbLeads.length > 0) {
+    if (!sbError && sbLeads) {
       return NextResponse.json({ success: true, data: sbLeads, fallback: false });
     }
 
@@ -22,17 +21,16 @@ export async function GET() {
       const leads = await prisma.lead.findMany({
         orderBy: { createdAt: 'desc' },
       });
-      if (leads && leads.length > 0) {
+      if (leads) {
         return NextResponse.json({ success: true, data: leads, fallback: false });
       }
     } catch (prismaErr) {
       console.warn('Prisma DB query failed for leads:', prismaErr);
     }
 
-    // Static fallback only if query failed and DB returns no leads
-    return NextResponse.json({ success: true, data: INITIAL_LEADS, fallback: true });
+    return NextResponse.json({ success: true, data: [], fallback: false });
   } catch (error) {
-    return NextResponse.json({ success: true, data: INITIAL_LEADS, fallback: true });
+    return NextResponse.json({ success: true, data: [], fallback: false });
   }
 }
 

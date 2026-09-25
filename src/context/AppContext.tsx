@@ -3,7 +3,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { PaletteMode } from '@mui/material';
 import { Lead, Portfolio, ClientProject, User, UserRole, LeadStatus, ProjectStatus, PricingTier, CompanyContact, Testimonial } from '../types';
-import { INITIAL_LEADS, INITIAL_PORTFOLIOS, INITIAL_PROJECTS, INITIAL_USER, INITIAL_USERS, INITIAL_PRICING_TIERS, INITIAL_COMPANY_CONTACT, INITIAL_TESTIMONIALS } from '../data/initialData';
 import { generateAutoDocumentsForProject } from '../lib/documentGenerator';
 import { DEFAULT_ROLE_PERMISSIONS, hasPermission } from '../lib/rbac';
 import { getStageFromProgress } from '../lib/ipwStages';
@@ -23,6 +22,9 @@ interface AppContextType {
   dashboardTab: 'overview' | 'leads' | 'portfolio' | 'projects' | 'pricing' | 'documents' | 'payments' | 'users' | 'hpp' | 'master-data' | 'contact' | 'testimonials' | 'team';
   setDashboardTab: (tab: 'overview' | 'leads' | 'portfolio' | 'projects' | 'pricing' | 'documents' | 'payments' | 'users' | 'hpp' | 'master-data' | 'contact' | 'testimonials' | 'team') => void;
   
+  // Data Loading Status
+  isLoadingData: boolean;
+
   // Auth & RBAC
   currentUser: User | null;
   login: (email?: string, sbUser?: any) => boolean;
@@ -192,15 +194,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [selectedDocumentProjectId, setSelectedDocumentProjectId] = useState<string>('proj-1');
   const [selectedDocumentType, setSelectedDocumentType] = useState<'CIF' | 'RSD' | 'MOU' | 'SPK' | 'BAST'>('CIF');
 
-  // Persistent States initialized from Initial Constants (to avoid SSR/Client Hydration Mismatch)
-  const [users, setUsers] = useState<User[]>(INITIAL_USERS);
+  // Loading state
+  const [isLoadingData, setIsLoadingData] = useState<boolean>(true);
+
+  // States initialized empty - loaded purely from Supabase Database
+  const [users, setUsers] = useState<User[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [leads, setLeads] = useState<Lead[]>(INITIAL_LEADS);
-  const [portfolios, setPortfolios] = useState<Portfolio[]>(INITIAL_PORTFOLIOS);
-  const [projects, setProjects] = useState<ClientProject[]>(INITIAL_PROJECTS);
-  const [pricingTiers, setPricingTiers] = useState<PricingTier[]>(INITIAL_PRICING_TIERS);
-  const [companyContact, setCompanyContact] = useState<CompanyContact>(INITIAL_COMPANY_CONTACT);
-  const [testimonials, setTestimonials] = useState<Testimonial[]>(INITIAL_TESTIMONIALS);
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
+  const [projects, setProjects] = useState<ClientProject[]>([]);
+  const [pricingTiers, setPricingTiers] = useState<PricingTier[]>([]);
+  const [companyContact, setCompanyContact] = useState<CompanyContact>({
+    companyName: 'Atasi Labs',
+    subtitle: 'Enterprise Web & AI Studio',
+    description: 'Studio pengembangan web dan software skala enterprise.',
+    email: 'contact@atasilabs.com',
+    phone: '081234567890',
+    whatsapp: '081234567890',
+    whatsappRaw: '6281234567890',
+    address: 'Jakarta, Indonesia',
+    workingHours: 'Senin - Jumat: 09:00 - 17:00 WIB',
+    facebookUrl: '',
+    instagramUrl: '',
+    ndaNotice: 'Kerahasiaan data terjamin',
+  });
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
 
   // Restore persisted current user & leads on client mount
   useEffect(() => {
@@ -547,10 +565,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       showNotification(`Berhasil login via Supabase Auth (${sbUser.email})`, 'success');
       return true;
     }
-    const targetEmail = email || INITIAL_USER.email;
+    const targetEmail = email || 'ceo@atasilabs.com';
     const foundUser = users.find((u) => u.email.toLowerCase() === targetEmail.toLowerCase()) || {
-      ...INITIAL_USER,
+      id: `usr-${Date.now()}`,
       email: targetEmail,
+      name: 'Admin User',
+      role: 'ADMIN' as const,
+      avatarUrl: '',
+      status: 'ACTIVE' as const,
+      createdAt: new Date().toISOString(),
     };
     updateCurrentUserState(foundUser);
     showNotification(`Berhasil login sebagai ${foundUser.name} [${foundUser.role}]`, 'success');
@@ -632,6 +655,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Fetch initial data from Next.js API Routes (unconditionally from DB)
   const refreshDataFromBackend = async () => {
+    setIsLoadingData(true);
     try {
       const [leadsRes, portRes, projRes, pricingRes, usersRes, testiRes, contactRes, rbacRes] = await Promise.all([
         fetch('/api/leads').then((res) => res.json()).catch(() => null),
@@ -644,27 +668,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         fetch('/api/rbac').then((res) => res.json()).catch(() => null),
       ]);
 
-      if (usersRes?.success && Array.isArray(usersRes.data) && usersRes.data.length > 0) {
+      if (usersRes?.success && Array.isArray(usersRes.data)) {
         saveUsers(usersRes.data);
       }
 
-      if (leadsRes?.success && Array.isArray(leadsRes.data) && leadsRes.data.length > 0) {
+      if (leadsRes?.success && Array.isArray(leadsRes.data)) {
         saveLeads(leadsRes.data);
       }
 
-      if (portRes?.success && Array.isArray(portRes.data) && portRes.data.length > 0) {
+      if (portRes?.success && Array.isArray(portRes.data)) {
         savePortfolios(portRes.data);
       }
 
-      if (projRes?.success && Array.isArray(projRes.data) && projRes.data.length > 0) {
+      if (projRes?.success && Array.isArray(projRes.data)) {
         saveProjects(projRes.data);
       }
 
-      if (pricingRes?.success && Array.isArray(pricingRes.data) && pricingRes.data.length > 0) {
+      if (pricingRes?.success && Array.isArray(pricingRes.data)) {
         savePricingTiers(pricingRes.data);
       }
 
-      if (testiRes?.success && Array.isArray(testiRes.data) && testiRes.data.length > 0) {
+      if (testiRes?.success && Array.isArray(testiRes.data)) {
         setTestimonials(testiRes.data);
       }
 
@@ -677,6 +701,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     } catch (err) {
       console.warn('Could not fetch from backend APIs:', err);
+    } finally {
+      setIsLoadingData(false);
     }
   };
 
@@ -1063,21 +1089,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const resetPricingTiersToDefault = async () => {
-    savePricingTiers(INITIAL_PRICING_TIERS);
-    try {
-      await Promise.all(
-        INITIAL_PRICING_TIERS.map((tier) =>
-          fetch('/api/pricing', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(tier),
-          })
-        )
-      );
-    } catch (e) {
-      console.error('Database reset pricing tiers error:', e);
-    }
-    showNotification('Pricelist dikembalikan ke spesifikasi default & tersimpan ke Database', 'info');
+    await refreshDataFromBackend();
+    showNotification('Pricelist diperbarui dari Database Supabase', 'info');
   };
 
   const updateCompanyContact = async (updatedFields: Partial<CompanyContact>) => {
@@ -1099,17 +1112,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const resetCompanyContactToDefault = async () => {
-    saveCompanyContact(INITIAL_COMPANY_CONTACT);
-    try {
-      await fetch('/api/contact', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(INITIAL_COMPANY_CONTACT),
-      });
-    } catch (e) {
-      console.error('Database reset contact error:', e);
-    }
-    showNotification('Data kontak dikembalikan ke konfigurasi default & tersimpan ke Database', 'info');
+    await refreshDataFromBackend();
+    showNotification('Data kontak diperbarui dari Database Supabase', 'info');
   };
 
   // Testimonials Management
@@ -1165,21 +1169,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const resetTestimonialsToDefault = async () => {
-    setTestimonials(INITIAL_TESTIMONIALS);
-    try {
-      await Promise.all(
-        INITIAL_TESTIMONIALS.map((testi) =>
-          fetch('/api/testimonials', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(testi),
-          })
-        )
-      );
-    } catch (e) {
-      console.error('Database reset testimonials error:', e);
-    }
-    showNotification('Testimoni dikembalikan ke data default & tersimpan ke Database', 'info');
+    await refreshDataFromBackend();
+    showNotification('Testimoni diperbarui dari Database Supabase', 'info');
   };
 
   // Notification Toast
@@ -1205,24 +1196,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const resetAllDataToDefaults = async () => {
-    saveLeads(INITIAL_LEADS);
-    savePortfolios(INITIAL_PORTFOLIOS);
-    saveProjects(INITIAL_PROJECTS);
-    savePricingTiers(INITIAL_PRICING_TIERS);
-    saveCompanyContact(INITIAL_COMPANY_CONTACT);
-    saveUsers(INITIAL_USERS);
-    setCurrentUser(INITIAL_USER);
     try {
-      await Promise.all([
-        resetPricingTiersToDefault(),
-        resetCompanyContactToDefault(),
-        resetTestimonialsToDefault(),
-        resetRolePermissionsToDefault(),
-      ]);
+      await refreshDataFromBackend();
     } catch (e) {
       console.error('Reset all data error:', e);
     }
-    showNotification('Basis data & akun pengguna berhasil direset ke data sampel awal di Database', 'info');
+    showNotification('Data telah direfresh dari Database Supabase', 'info');
   };
 
   return (
@@ -1234,6 +1213,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setActiveView,
         dashboardTab,
         setDashboardTab,
+        isLoadingData,
         currentUser,
         login,
         logout,

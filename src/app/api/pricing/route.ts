@@ -1,21 +1,26 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { supabase } from '@/lib/supabase';
-import { INITIAL_PRICING_TIERS } from '@/data/initialData';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
+    const { data: sbItems, error: sbErr } = await supabase
+      .from('PricingTier')
+      .select('*')
+      .order('tierNumber', { ascending: true });
+
+    if (!sbErr && sbItems) {
+      return NextResponse.json({ success: true, data: sbItems, fallback: false });
+    }
+
     const items = await prisma.pricingTier.findMany({
       orderBy: { tierNumber: 'asc' },
     });
-    if (!items || items.length === 0) {
-      return NextResponse.json({ success: true, data: INITIAL_PRICING_TIERS, fallback: true, isInitialSeed: true });
-    }
-    return NextResponse.json({ success: true, data: items, fallback: false, isInitialSeed: false });
+    return NextResponse.json({ success: true, data: items || [], fallback: false });
   } catch (error) {
-    return NextResponse.json({ success: true, data: INITIAL_PRICING_TIERS, fallback: true, isInitialSeed: true });
+    return NextResponse.json({ success: true, data: [], fallback: false });
   }
 }
 

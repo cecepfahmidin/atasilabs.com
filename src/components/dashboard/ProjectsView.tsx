@@ -43,6 +43,7 @@ import {
   Inventory as InventoryIcon,
 } from '@mui/icons-material';
 import { useApp } from '../../context/AppContext';
+import { CardSkeletonGrid } from '../common/SkeletonLoader';
 import { ClientProject, ProjectStatus, IPWStage } from '../../types';
 import { IPW_STAGES_CONFIG, IPW_STAGES_LIST, getStageFromProgress } from '../../lib/ipwStages';
 
@@ -54,6 +55,7 @@ export const ProjectsView: React.FC = () => {
     users,
     currentUser,
     pricingTiers,
+    isLoadingData,
     addProject,
     updateProject,
     deleteProject,
@@ -327,6 +329,11 @@ export const ProjectsView: React.FC = () => {
         />
       </Box>
 
+      {/* Loading Skeleton */}
+      {isLoadingData ? (
+        <CardSkeletonGrid count={4} xs={12} md={6} />
+      ) : (
+      <>
       {/* Empty State */}
       {projects.length === 0 && (
         <Paper
@@ -751,6 +758,8 @@ export const ProjectsView: React.FC = () => {
           );
         })}
       </Grid>
+      </>
+      )}
 
       {/* Add / Edit Project Dialog */}
       <Dialog

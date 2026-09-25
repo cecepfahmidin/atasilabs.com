@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { supabase } from '@/lib/supabase';
-import { INITIAL_PROJECTS } from '@/data/initialData';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,15 +46,10 @@ export async function GET() {
       console.warn('Prisma query failed for projects:', prismaErr);
     }
 
-    // 3. Static fallback only if database has 0 items and query failed
-    const formatted = INITIAL_PROJECTS.map((p: any) => ({
-      ...p,
-      payments: Array.isArray(p.payments) ? p.payments : [],
-      totalPaid: Number(p.totalPaid) || 0,
-    }));
-    return NextResponse.json({ success: true, data: formatted, fallback: true });
+    // 3. Fallback empty array
+    return NextResponse.json({ success: true, data: [], fallback: false });
   } catch (error) {
-    return NextResponse.json({ success: true, data: INITIAL_PROJECTS, fallback: true });
+    return NextResponse.json({ success: true, data: [], fallback: false });
   }
 }
 

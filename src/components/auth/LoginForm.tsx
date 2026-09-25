@@ -8,7 +8,6 @@ import { playKeySound, playEyeToggleSound } from './audio';
 import { useApp } from '../../context/AppContext';
 import { AtasiLabsLogo } from '../common/AtasiLabsLogo';
 import { supabase } from '../../lib/supabase';
-import { INITIAL_USERS } from '../../data/initialData';
 
 interface LoginFormProps {
   onFocusChange: (field: FocusField) => void;
@@ -86,8 +85,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         return;
       }
 
-      // 2. Validate system user credentials (with INITIAL_USERS fallback)
-      const allUsers = users && users.length > 0 ? users : INITIAL_USERS;
+      // 2. Validate system user credentials
+      const allUsers = users || [];
       const systemUser = allUsers.find((u) => u.email.trim().toLowerCase() === email.trim().toLowerCase());
 
       if (systemUser) {
