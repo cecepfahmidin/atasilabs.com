@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 import { INITIAL_PRICING_TIERS } from '@/data/initialData';
 
 export const dynamic = 'force-dynamic';
@@ -35,6 +36,13 @@ export async function PUT(request: Request) {
       });
     } catch (dbErr) {
       updated = { id, ...data, updatedAt: new Date().toISOString() };
+    }
+
+    // Dual-sync to Supabase REST client
+    try {
+      await supabase.from('PricingTier').upsert({ id, ...data });
+    } catch (sbErr) {
+      console.error('Supabase direct PUT pricing error:', sbErr);
     }
 
     return NextResponse.json({ success: true, data: updated });

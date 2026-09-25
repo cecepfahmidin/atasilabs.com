@@ -9,44 +9,9 @@ export async function GET() {
     const items = await prisma.user.findMany({
       orderBy: { createdAt: 'asc' },
     });
-
-    if (!items || items.length === 0) {
-      // Seed initial users into database if empty
-      try {
-        for (const u of INITIAL_USERS) {
-          await prisma.user.upsert({
-            where: { email: u.email },
-            update: {
-              name: u.name,
-              role: u.role,
-              avatarUrl: u.avatarUrl || '',
-              company: u.company || '',
-              phone: u.phone || '',
-              status: u.status || 'ACTIVE',
-              titleBadge: u.titleBadge || '',
-            } as any,
-            create: {
-              id: u.id,
-              email: u.email,
-              name: u.name,
-              role: u.role,
-              avatarUrl: u.avatarUrl || '',
-              company: u.company || '',
-              phone: u.phone || '',
-              status: u.status || 'ACTIVE',
-              titleBadge: u.titleBadge || '',
-            } as any,
-          });
-        }
-        const seeded = await prisma.user.findMany({ orderBy: { createdAt: 'asc' } });
-        return NextResponse.json({ success: true, data: seeded });
-      } catch (seedErr) {
-        return NextResponse.json({ success: true, data: INITIAL_USERS, fallback: true });
-      }
-    }
-
-    return NextResponse.json({ success: true, data: items, fallback: false });
+    return NextResponse.json({ success: true, data: items || [] });
   } catch (error) {
+    console.warn('Prisma DB query failed for users:', error);
     return NextResponse.json({ success: true, data: INITIAL_USERS, fallback: true });
   }
 }
