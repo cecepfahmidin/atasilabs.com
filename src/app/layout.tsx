@@ -12,31 +12,28 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.atasilabs.com'),
-  title: 'AtasiLabs - Modern Web Development Studio & Enterprise Dashboard',
-  description: 'Studio pengembangan aplikasi web full-stack profesional. Layanan pembuatan website, Landing Page, E-Commerce, dan Portal Enterprise.',
+  title: 'AtasiLabs - Modern Web & Apps Development',
+  description: 'Jasa Pembuatan Website, E-Commerce, Landing page, company profile, hingga aplikasi web custom dalam satu layanan.',
   keywords: ['website', 'landing page', 'E-Commerce', 'Portal Enterprise', 'AtasiLabs', 'Full-Stack Web Development', 'Jasa Pembuatan Website', 'Jasa Pembuatan Landing Page', 'Jasa Pembuatan E-Commerce', 'Jasa Pembuatan Portal Enterprise', 'Jasa Pembuatan Full-Stack Web Development', 'Jasa Pembuatan SaaS', 'Jasa Pembuatan Enterprise Dashboard', 'Jasa Pembuatan Aplikasi Web Full-Stack'],
   authors: [{ name: 'ATASILABS', url: 'https://www.atasilabs.com' }],
   publisher: 'ATASILABS',
   manifest: '/site.webmanifest',
   icons: {
     icon: [
-      { url: '/favicon.ico', sizes: 'any' },
       { url: '/favicon-48x48.png', type: 'image/png', sizes: '48x48' },
-      { url: '/favicon.png', type: 'image/png', sizes: '48x48' },
-      { url: '/favicon-32x32.png', type: 'image/png', sizes: '32x32' },
-      { url: '/favicon-16x16.png', type: 'image/png', sizes: '16x16' },
+      { url: '/favicon-96x96.png', type: 'image/png', sizes: '96x96' },
+      { url: '/favicon.ico', sizes: 'any' },
       { url: '/android-chrome-192x192.png', type: 'image/png', sizes: '192x192' },
       { url: '/android-chrome-512x512.png', type: 'image/png', sizes: '512x512' },
     ],
     shortcut: '/favicon.ico',
     apple: [
       { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
-      { url: '/apple-icon.png', sizes: '180x180', type: 'image/png' },
     ],
   },
   openGraph: {
-    title: 'AtasiLabs - Modern Web Development Studio & Enterprise Dashboard',
-    description: 'Studio pengembangan aplikasi web full-stack profesional. Layanan pembuatan website, Landing Page, E-Commerce, dan Portal Enterprise.',
+    title: 'AtasiLabs - Modern Web & Apps Development',
+    description: 'Jasa Pembuatan Website, E-Commerce, Landing page, company profile, hingga aplikasi web custom dalam satu layanan.',
     url: 'https://www.atasilabs.com',
     siteName: 'AtasiLabs',
     images: [
