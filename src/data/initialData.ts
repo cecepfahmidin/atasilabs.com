@@ -46,7 +46,7 @@ export const INITIAL_USERS: User[] = [
   {
     id: 'usr-cmo',
     email: 'cmo@atasilabs.com',
-    name: 'Dian Hidayat, S.E., M.Pd.I',
+    name: 'Dian Hidayat, S.Pd., M.Pd.',
     role: 'CMO',
     phone: '0857-1122-3344',
     company: 'Atasilabs Growth & Business Dev',

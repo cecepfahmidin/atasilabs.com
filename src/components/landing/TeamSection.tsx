@@ -36,7 +36,7 @@ export const TeamSection: React.FC = () => {
     },
     {
       user: cmoUser,
-      fallbackName: 'Dian Hidayat, S.E., M.Pd.I',
+      fallbackName: 'Dian Hidayat, S.Pd., M.Pd.',
       roleTitle: 'CHIEF MARKETING OFFICER',
       titleBadge: 'CMO & HEAD OF UI/UX',
       badgeColor: '#FF6B35',

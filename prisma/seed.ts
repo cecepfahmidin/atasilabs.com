@@ -20,7 +20,7 @@ const INITIAL_USERS = [
   {
     id: 'usr-cmo',
     email: 'cmo@atasilabs.com',
-    name: 'Dian Hidayat, S.E., M.Pd.I',
+    name: 'Dian Hidayat, S.Pd., M.Pd.',
     role: 'CMO',
     avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=250&q=80',
   },
