@@ -32,8 +32,8 @@ export const INITIAL_USER: User = {
 export const INITIAL_USERS: User[] = [
   INITIAL_USER,
   {
-    id: 'usr-cto',
-    email: 'cto@atasilabs.com',
+    id: 'usr-9409681',
+    email: 'cecepfahmidin@gmail.com',
     name: 'Cecep Fahmidin, S.Kom., M.Kom., Gr.',
     role: 'CTO',
     phone: '0813-9876-5432',
