@@ -90,9 +90,8 @@ export const TeamCMSView: React.FC = () => {
 
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
-  // Filter team members: CEO, CTO, CMO or designated leadership
-  const leadershipRoles: UserRole[] = ['CEO', 'CTO', 'CMO', 'ADMIN', 'DEVELOPER'];
-  const teamMembers = users.filter((u) => leadershipRoles.includes(u.role));
+  // Filter team members (all staff/management roles excluding CLIENT)
+  const teamMembers = users.filter((u) => u.role && u.role.toUpperCase() !== 'CLIENT');
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -404,7 +403,7 @@ export const TeamCMSView: React.FC = () => {
 
                 <CardContent sx={{ p: 3, flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                   <Typography variant="caption" sx={{ fontWeight: 800, color: roleConfig.hexColor, letterSpacing: 1 }}>
-                    [{item.role}] CHIEF EXECUTIVE
+                    [{item.role}] {item.roleTitle || roleConfig.label}
                   </Typography>
 
                   <Typography variant="h6" sx={{ fontWeight: 800, lineHeight: 1.2 }}>
@@ -583,6 +582,7 @@ export const TeamCMSView: React.FC = () => {
                         <MenuItem value="CMO">CMO (Chief Marketing Officer)</MenuItem>
                         <MenuItem value="ADMIN">ADMIN (System Administrator)</MenuItem>
                         <MenuItem value="DEVELOPER">DEVELOPER (In-House Dev)</MenuItem>
+                        <MenuItem value="FREELANCER">FREELANCER (Mitra Developer)</MenuItem>
                       </Select>
                     </FormControl>
                   </Grid>

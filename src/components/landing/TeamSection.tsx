@@ -8,11 +8,9 @@ import { User } from '../../types';
 export const TeamSection: React.FC = () => {
   const { users, isLoadingData } = useApp();
 
-  // Filter team members (CEO, CTO, CMO, ADMIN, DEVELOPER) dynamically from Supabase database
-  const teamUsers = users.filter((u) =>
-    ['CEO', 'CTO', 'CMO', 'ADMIN', 'DEVELOPER'].includes(u.role?.toUpperCase() || '') ||
-    Boolean(u.titleBadge) ||
-    Boolean(u.roleTitle)
+  // Filter team members (all staff/management roles excluding CLIENT) dynamically from Supabase database
+  const teamUsers = users.filter(
+    (u) => u.role && u.role.toUpperCase() !== 'CLIENT'
   );
 
   const getBadgeColor = (role?: string) => {

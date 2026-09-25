@@ -41,8 +41,9 @@ export const MasterDataView: React.FC = () => {
     router.push(href);
   };
 
+  const teamMembers = users?.filter((u) => u.role && u.role.toUpperCase() !== 'CLIENT') || [];
+  const teamCount = teamMembers.length || 0;
   const cLevelUsers = users?.filter((u) => ['CEO', 'CTO', 'CMO'].includes(u.role?.toUpperCase() || '')) || [];
-  const cLevelCount = cLevelUsers.length || 0;
   const cLevelNamesText = cLevelUsers.length > 0 
     ? cLevelUsers.map(u => `${u.role} ${u.name}`).join(', ')
     : 'CEO, CTO, CMO';
@@ -112,7 +113,7 @@ export const MasterDataView: React.FC = () => {
                   <CLevelIcon sx={{ fontSize: 28 }} />
                 </Box>
                 <Chip
-                  label={`${cLevelCount} Eksekutif C-Level`}
+                  label={`${teamCount} Anggota Tim`}
                   color="warning"
                   size="small"
                   sx={{ fontWeight: 700 }}
