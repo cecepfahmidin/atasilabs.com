@@ -7,56 +7,31 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    let leads = await prisma.lead.findMany({
-      orderBy: { createdAt: 'desc' },
-    });
+    // 1. Primary: fetch from Supabase HTTPS REST API
+    const { data: sbLeads, error: sbError } = await supabase
+      .from('Lead')
+      .select('*')
+      .order('createdAt', { ascending: false });
 
-    if (!leads || leads.length === 0) {
-      // Fallback query to Supabase REST client
-      try {
-        const { data: sbLeads } = await supabase
-          .from('Lead')
-          .select('*')
-          .order('createdAt', { ascending: false });
-
-        if (sbLeads && sbLeads.length > 0) {
-          leads = sbLeads as any;
-        } else {
-          // Seed INITIAL_LEADS to Supabase REST if completely empty
-          await Promise.all(
-            INITIAL_LEADS.map((l) =>
-              supabase.from('Lead').upsert({
-                id: l.id,
-                name: l.name,
-                email: l.email,
-                company: l.company,
-                serviceType: l.serviceType,
-                budget: l.budget,
-                message: l.message,
-                status: l.status,
-              })
-            )
-          );
-          leads = INITIAL_LEADS as any;
-        }
-      } catch (sbErr) {
-        leads = INITIAL_LEADS as any;
-      }
+    if (!sbError && sbLeads && sbLeads.length > 0) {
+      return NextResponse.json({ success: true, data: sbLeads, fallback: false });
     }
 
-    return NextResponse.json({ success: true, data: leads, fallback: false });
-  } catch (error) {
-    console.warn('Prisma DB query failed for leads, falling back to Supabase/Initial:', error);
+    // 2. Fallback: Try Prisma DB query
     try {
-      const { data: sbLeads } = await supabase
-        .from('Lead')
-        .select('*')
-        .order('createdAt', { ascending: false });
-      if (sbLeads && sbLeads.length > 0) {
-        return NextResponse.json({ success: true, data: sbLeads, fallback: false });
+      const leads = await prisma.lead.findMany({
+        orderBy: { createdAt: 'desc' },
+      });
+      if (leads && leads.length > 0) {
+        return NextResponse.json({ success: true, data: leads, fallback: false });
       }
-    } catch (sbErr) {}
+    } catch (prismaErr) {
+      console.warn('Prisma DB query failed for leads:', prismaErr);
+    }
 
+    // Static fallback only if query failed and DB returns no leads
+    return NextResponse.json({ success: true, data: INITIAL_LEADS, fallback: true });
+  } catch (error) {
     return NextResponse.json({ success: true, data: INITIAL_LEADS, fallback: true });
   }
 }

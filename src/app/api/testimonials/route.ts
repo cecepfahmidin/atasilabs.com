@@ -1,51 +1,35 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 import { INITIAL_TESTIMONIALS } from '@/data/initialData';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const items = await prisma.testimonial.findMany({
-      orderBy: { createdAt: 'desc' },
-    });
+    // 1. Primary: fetch from Supabase HTTPS REST API
+    const { data: sbItems, error: sbError } = await supabase
+      .from('Testimonial')
+      .select('*')
+      .order('createdAt', { ascending: false });
 
-    if (!items || items.length === 0) {
-      try {
-        for (const t of INITIAL_TESTIMONIALS) {
-          await prisma.testimonial.upsert({
-            where: { id: t.id },
-            update: {
-              name: t.name,
-              role: t.role,
-              company: t.company || '',
-              quote: t.quote,
-              avatarUrl: t.avatarUrl || '',
-              bgColor: t.bgColor || '#161616',
-              accentColor: t.accentColor || '#FFD600',
-              featured: t.featured ?? true,
-            },
-            create: {
-              id: t.id,
-              name: t.name,
-              role: t.role,
-              company: t.company || '',
-              quote: t.quote,
-              avatarUrl: t.avatarUrl || '',
-              bgColor: t.bgColor || '#161616',
-              accentColor: t.accentColor || '#FFD600',
-              featured: t.featured ?? true,
-            },
-          });
-        }
-        const seeded = await prisma.testimonial.findMany({ orderBy: { createdAt: 'desc' } });
-        return NextResponse.json({ success: true, data: seeded });
-      } catch (seedErr) {
-        return NextResponse.json({ success: true, data: INITIAL_TESTIMONIALS, fallback: true });
-      }
+    if (!sbError && sbItems && sbItems.length > 0) {
+      return NextResponse.json({ success: true, data: sbItems, fallback: false });
     }
 
-    return NextResponse.json({ success: true, data: items, fallback: false });
+    // 2. Fallback: Try Prisma DB query
+    try {
+      const items = await prisma.testimonial.findMany({
+        orderBy: { createdAt: 'desc' },
+      });
+      if (items && items.length > 0) {
+        return NextResponse.json({ success: true, data: items, fallback: false });
+      }
+    } catch (prismaErr) {
+      console.warn('Prisma query failed for testimonials:', prismaErr);
+    }
+
+    return NextResponse.json({ success: true, data: INITIAL_TESTIMONIALS, fallback: true });
   } catch (error) {
     return NextResponse.json({ success: true, data: INITIAL_TESTIMONIALS, fallback: true });
   }
@@ -54,38 +38,38 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, role, company, quote, avatarUrl, bgColor, accentColor, featured } = body;
+    const { id, name, role, company, quote, avatarUrl, bgColor, accentColor, featured } = body;
 
-    let created;
+    const testiId = id || `testi-${Date.now()}`;
+    const itemData = {
+      id: testiId,
+      name,
+      role,
+      company: company || '',
+      quote,
+      avatarUrl: avatarUrl || '',
+      bgColor: bgColor || '#161616',
+      accentColor: accentColor || '#FFD600',
+      featured: featured ?? true,
+    };
+
+    // Dual sync to Supabase REST API
     try {
-      created = await prisma.testimonial.create({
-        data: {
-          name,
-          role,
-          company: company || '',
-          quote,
-          avatarUrl: avatarUrl || '',
-          bgColor: bgColor || '#161616',
-          accentColor: accentColor || '#FFD600',
-          featured: featured ?? true,
-        },
-      });
-    } catch (dbErr) {
-      created = {
-        id: `testi-${Date.now()}`,
-        name,
-        role,
-        company: company || '',
-        quote,
-        avatarUrl: avatarUrl || '',
-        bgColor: bgColor || '#161616',
-        accentColor: accentColor || '#FFD600',
-        featured: featured ?? true,
-        createdAt: new Date().toISOString(),
-      };
+      await supabase.from('Testimonial').upsert(itemData);
+    } catch (sbErr) {
+      console.error('Supabase direct POST testimonial error:', sbErr);
     }
 
-    return NextResponse.json({ success: true, data: created });
+    // Prisma write fallback
+    try {
+      await prisma.testimonial.create({
+        data: itemData,
+      });
+    } catch (dbErr) {
+      console.warn('Prisma create testimonial failed:', dbErr);
+    }
+
+    return NextResponse.json({ success: true, data: itemData });
   } catch (error) {
     return NextResponse.json(
       { success: false, error: 'Failed to create testimonial' },
@@ -103,17 +87,24 @@ export async function PUT(request: Request) {
       return NextResponse.json({ success: false, error: 'ID is required' }, { status: 400 });
     }
 
-    let updated;
+    // Dual sync to Supabase REST API
     try {
-      updated = await prisma.testimonial.update({
+      await supabase.from('Testimonial').upsert({ id, ...data });
+    } catch (sbErr) {
+      console.error('Supabase direct PUT testimonial error:', sbErr);
+    }
+
+    // Prisma update fallback
+    try {
+      await prisma.testimonial.update({
         where: { id },
         data,
       });
     } catch (dbErr) {
-      updated = { id, ...data, updatedAt: new Date().toISOString() };
+      console.warn('Prisma testimonial update failed:', dbErr);
     }
 
-    return NextResponse.json({ success: true, data: updated });
+    return NextResponse.json({ success: true, data: { id, ...data } });
   } catch (error) {
     return NextResponse.json(
       { success: false, error: 'Failed to update testimonial' },
@@ -131,6 +122,14 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ success: false, error: 'ID is required' }, { status: 400 });
     }
 
+    // Supabase REST delete
+    try {
+      await supabase.from('Testimonial').delete().eq('id', id);
+    } catch (sbErr) {
+      console.error('Supabase direct DELETE testimonial error:', sbErr);
+    }
+
+    // Prisma delete
     try {
       await prisma.testimonial.delete({ where: { id } });
     } catch (dbErr) {

@@ -1,17 +1,31 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 import { INITIAL_USERS } from '@/data/initialData';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
+    const { data: sbUsers, error: sbErr } = await supabase
+      .from('User')
+      .select('*')
+      .order('createdAt', { ascending: true });
+
+    if (!sbErr && sbUsers && sbUsers.length > 0) {
+      return NextResponse.json({ success: true, data: sbUsers, fallback: false });
+    }
+
     const items = await prisma.user.findMany({
       orderBy: { createdAt: 'asc' },
     });
-    return NextResponse.json({ success: true, data: items || [] });
+    if (items && items.length > 0) {
+      return NextResponse.json({ success: true, data: items, fallback: false });
+    }
+
+    return NextResponse.json({ success: true, data: INITIAL_USERS, fallback: true });
   } catch (error) {
-    console.warn('Prisma DB query failed for users:', error);
+    console.warn('DB query failed for users:', error);
     return NextResponse.json({ success: true, data: INITIAL_USERS, fallback: true });
   }
 }
@@ -25,42 +39,35 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'Email and name are required' }, { status: 400 });
     }
 
-    let created;
+    const newUserData = {
+      id: `usr-${Date.now()}`,
+      email: email.trim(),
+      name: name.trim(),
+      role: role || 'ADMIN',
+      avatarUrl: avatarUrl || '',
+      company: company || '',
+      phone: phone || '',
+      status: status || 'ACTIVE',
+      password: password || '',
+      bio: bio || '',
+      tagline: tagline || '',
+      titleBadge: titleBadge || '',
+      createdAt: new Date().toISOString(),
+    };
+
     try {
-      created = await prisma.user.create({
-        data: {
-          email: email.trim(),
-          name: name.trim(),
-          role: role || 'ADMIN',
-          avatarUrl: avatarUrl || '',
-          company: company || '',
-          phone: phone || '',
-          status: status || 'ACTIVE',
-          password: password || '',
-          bio: bio || '',
-          tagline: tagline || '',
-          titleBadge: titleBadge || '',
-        } as any,
-      });
+      await prisma.user.create({ data: newUserData as any });
     } catch (dbErr) {
-      created = {
-        id: `usr-${Date.now()}`,
-        email,
-        name,
-        role: role || 'ADMIN',
-        avatarUrl: avatarUrl || '',
-        company: company || '',
-        phone: phone || '',
-        status: status || 'ACTIVE',
-        password: password || '',
-        bio: bio || '',
-        tagline: tagline || '',
-        titleBadge: titleBadge || '',
-        createdAt: new Date().toISOString(),
-      };
+      console.warn('Prisma user create note:', dbErr);
     }
 
-    return NextResponse.json({ success: true, data: created });
+    try {
+      await supabase.from('User').upsert(newUserData, { onConflict: 'email' });
+    } catch (sbErr) {
+      console.error('Supabase user create error:', sbErr);
+    }
+
+    return NextResponse.json({ success: true, data: newUserData });
   } catch (error) {
     return NextResponse.json(
       { success: false, error: 'Failed to create user' },
@@ -78,24 +85,36 @@ export async function PUT(request: Request) {
       return NextResponse.json({ success: false, error: 'ID or Email is required' }, { status: 400 });
     }
 
-    let updated;
+    const updatePayload = { ...fields, updatedAt: new Date().toISOString() };
+
     try {
       if (id) {
-        updated = await prisma.user.update({
+        await prisma.user.update({
           where: { id },
-          data: fields,
+          data: updatePayload,
         });
-      } else {
-        updated = await prisma.user.update({
+      } else if (email) {
+        await prisma.user.update({
           where: { email: email.trim() },
-          data: fields,
+          data: updatePayload,
         });
       }
     } catch (dbErr) {
-      updated = { id, email, ...fields, updatedAt: new Date().toISOString() };
+      console.warn('Prisma user update note:', dbErr);
     }
 
-    return NextResponse.json({ success: true, data: updated });
+    // Dual-sync to Supabase REST API
+    try {
+      if (id) {
+        await supabase.from('User').update(updatePayload).eq('id', id);
+      } else if (email) {
+        await supabase.from('User').update(updatePayload).eq('email', email.trim());
+      }
+    } catch (sbErr) {
+      console.error('Supabase user update error:', sbErr);
+    }
+
+    return NextResponse.json({ success: true, data: { id, email, ...updatePayload } });
   } catch (error) {
     return NextResponse.json(
       { success: false, error: 'Failed to update user' },
@@ -115,9 +134,11 @@ export async function DELETE(request: Request) {
 
     try {
       await prisma.user.delete({ where: { id } });
-    } catch (dbErr) {
-      // safe fallback
-    }
+    } catch (dbErr) {}
+
+    try {
+      await supabase.from('User').delete().eq('id', id);
+    } catch (sbErr) {}
 
     return NextResponse.json({ success: true, id });
   } catch (error) {
@@ -127,3 +148,4 @@ export async function DELETE(request: Request) {
     );
   }
 }
+

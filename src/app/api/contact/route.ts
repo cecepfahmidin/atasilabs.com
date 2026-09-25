@@ -1,32 +1,36 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 import { INITIAL_COMPANY_CONTACT } from '@/data/initialData';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const contact = await prisma.companyContact.findUnique({
-      where: { id: 'singleton-contact' },
-    });
+    // 1. Primary: fetch from Supabase HTTPS REST API
+    const { data: sbContact, error: sbError } = await supabase
+      .from('CompanyContact')
+      .select('*')
+      .eq('id', 'singleton-contact')
+      .maybeSingle();
 
-    if (!contact) {
-      try {
-        const seeded = await prisma.companyContact.upsert({
-          where: { id: 'singleton-contact' },
-          update: INITIAL_COMPANY_CONTACT,
-          create: {
-            id: 'singleton-contact',
-            ...INITIAL_COMPANY_CONTACT,
-          },
-        });
-        return NextResponse.json({ success: true, data: seeded });
-      } catch (seedErr) {
-        return NextResponse.json({ success: true, data: INITIAL_COMPANY_CONTACT, fallback: true });
-      }
+    if (!sbError && sbContact) {
+      return NextResponse.json({ success: true, data: sbContact, fallback: false });
     }
 
-    return NextResponse.json({ success: true, data: contact, fallback: false });
+    // 2. Fallback: Try Prisma DB query
+    try {
+      const contact = await prisma.companyContact.findUnique({
+        where: { id: 'singleton-contact' },
+      });
+      if (contact) {
+        return NextResponse.json({ success: true, data: contact, fallback: false });
+      }
+    } catch (prismaErr) {
+      console.warn('Prisma query failed for contact:', prismaErr);
+    }
+
+    return NextResponse.json({ success: true, data: INITIAL_COMPANY_CONTACT, fallback: true });
   } catch (error) {
     return NextResponse.json({ success: true, data: INITIAL_COMPANY_CONTACT, fallback: true });
   }
@@ -37,9 +41,21 @@ export async function PUT(request: Request) {
     const body = await request.json();
     const { id, ...fields } = body;
 
-    let updated;
+    const contactData = {
+      id: 'singleton-contact',
+      ...fields,
+    };
+
+    // Dual sync to Supabase REST API
     try {
-      updated = await prisma.companyContact.upsert({
+      await supabase.from('CompanyContact').upsert(contactData);
+    } catch (sbErr) {
+      console.error('Supabase direct PUT contact error:', sbErr);
+    }
+
+    // Prisma update fallback
+    try {
+      await prisma.companyContact.upsert({
         where: { id: 'singleton-contact' },
         update: fields,
         create: {
@@ -49,10 +65,10 @@ export async function PUT(request: Request) {
         },
       });
     } catch (dbErr) {
-      updated = { ...INITIAL_COMPANY_CONTACT, ...fields, updatedAt: new Date().toISOString() };
+      console.warn('Prisma contact upsert error:', dbErr);
     }
 
-    return NextResponse.json({ success: true, data: updated });
+    return NextResponse.json({ success: true, data: contactData });
   } catch (error) {
     return NextResponse.json(
       { success: false, error: 'Failed to update company contact info' },

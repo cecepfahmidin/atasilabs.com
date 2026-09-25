@@ -10,21 +10,50 @@ export async function GET(request: Request) {
     const projectId = searchParams.get('projectId');
 
     if (projectId) {
-      const doc = await (prisma as any).customDocument.findUnique({
-        where: { projectId },
-      });
-      if (!doc) {
-        return NextResponse.json({ success: true, data: null });
+      // 1. Supabase REST query
+      const { data: sbDoc } = await supabase
+        .from('CustomDocument')
+        .select('*')
+        .eq('projectId', projectId)
+        .maybeSingle();
+
+      if (sbDoc && sbDoc.data) {
+        return NextResponse.json({ success: true, data: sbDoc.data });
       }
-      return NextResponse.json({ success: true, data: doc.data });
+
+      // 2. Prisma query
+      try {
+        const doc = await (prisma as any).customDocument.findUnique({
+          where: { projectId },
+        });
+        if (doc && doc.data) {
+          return NextResponse.json({ success: true, data: doc.data });
+        }
+      } catch (pErr) {}
+
+      return NextResponse.json({ success: true, data: null });
     }
 
-    const allDocs = await (prisma as any).customDocument.findMany();
-    const map: Record<string, any> = {};
-    for (const d of allDocs) {
-      map[d.projectId] = d.data;
+    // Single fetch for all docs
+    const { data: sbDocs } = await supabase.from('CustomDocument').select('*');
+    if (sbDocs && sbDocs.length > 0) {
+      const map: Record<string, any> = {};
+      for (const d of sbDocs) {
+        map[d.projectId] = d.data;
+      }
+      return NextResponse.json({ success: true, data: map });
     }
-    return NextResponse.json({ success: true, data: map });
+
+    try {
+      const allDocs = await (prisma as any).customDocument.findMany();
+      const map: Record<string, any> = {};
+      for (const d of allDocs) {
+        map[d.projectId] = d.data;
+      }
+      return NextResponse.json({ success: true, data: map });
+    } catch (pErr) {}
+
+    return NextResponse.json({ success: true, data: {} });
   } catch (error) {
     return NextResponse.json({ success: true, data: {} });
   }
