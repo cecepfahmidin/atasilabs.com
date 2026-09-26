@@ -11,7 +11,11 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (currentUser) {
-      router.replace('/dashboard');
+      try {
+        router.replace('/dashboard');
+      } catch {
+        window.location.href = '/dashboard';
+      }
     }
   }, [currentUser, router]);
 

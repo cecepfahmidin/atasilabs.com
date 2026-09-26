@@ -15,6 +15,7 @@ interface LoginFormProps {
   onEmailChange: (val: string) => void;
   onPasswordChange: (val: string) => void;
   onLoginSuccess: (email: string) => void;
+  onLoginError?: (errorMsg: string) => void;
 }
 
 export const LoginForm: React.FC<LoginFormProps> = ({
@@ -23,6 +24,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   onEmailChange,
   onPasswordChange,
   onLoginSuccess,
+  onLoginError,
 }) => {
   const { login, users, setActiveView } = useApp();
   const [email, setEmail] = useState('');
@@ -50,6 +52,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
     const nextState = !isPasswordVisible;
     setIsPasswordVisible(nextState);
     onPasswordVisibilityChange(nextState);
+    onFocusChange('password');
     playEyeToggleSound(nextState);
   };
 
@@ -62,10 +65,12 @@ export const LoginForm: React.FC<LoginFormProps> = ({
     e.preventDefault();
     if (!email) {
       showNotification('Silakan masukkan email');
+      onLoginError?.('Silakan masukkan email');
       return;
     }
     if (!password) {
       showNotification('Silakan masukkan password');
+      onLoginError?.('Silakan masukkan password');
       return;
     }
     setIsLoading(true);
@@ -101,6 +106,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           return;
         } else {
           showNotification('Password yang Anda masukkan salah!');
+          onLoginError?.('Password yang Anda masukkan salah!');
           setIsLoading(false);
           return;
         }
@@ -108,17 +114,19 @@ export const LoginForm: React.FC<LoginFormProps> = ({
 
       // 3. User not found in system
       showNotification('Email pengguna tidak ditemukan dalam sistem!');
+      onLoginError?.('Email pengguna tidak ditemukan dalam sistem!');
       setIsLoading(false);
       return;
     } catch (err: any) {
       console.error('Login exception:', err);
       showNotification('Terjadi kesalahan saat verifikasi login.');
+      onLoginError?.('Terjadi kesalahan saat verifikasi login.');
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="relative w-full h-full flex flex-col justify-between p-5 sm:p-8 md:p-12 bg-white">
+    <div className="relative w-full flex flex-col justify-between">
       {/* Toast Notification */}
       {notification && (
         <div className="absolute top-4 right-4 z-50 bg-neutral-900 text-white text-xs font-medium px-3.5 py-2 rounded-lg shadow-lg border border-neutral-700 animate-fade-in">

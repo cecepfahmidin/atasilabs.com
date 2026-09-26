@@ -63,6 +63,9 @@ import {
   CloudUpload as UploadIcon,
   Receipt as ReceiptIcon,
   HourglassTop as PendingIcon,
+  CalendarToday as CalendarIcon,
+  WorkOutline as ProjectIcon,
+  AttachMoney as MoneyIcon,
 } from '@mui/icons-material';
 import { useApp } from '../../context/AppContext';
 import { supabase } from '../../lib/supabase';
@@ -498,7 +501,7 @@ export const ClientDashboardView: React.FC = () => {
           event: 'DOCUMENT_UPDATE',
           payload: { projectId: selectedProject.id, data: updatedProjectDocs },
         });
-      } catch (bErr) {}
+      } catch (bErr) { }
 
       showNotification(`Tanda tangan digital ${signatureModal.docTitle} berhasil tersimpan & diverifikasi!`, 'success');
       setSignatureModal((prev) => ({ ...prev, open: false }));
@@ -885,8 +888,8 @@ export const ClientDashboardView: React.FC = () => {
                           color: isCurrent
                             ? theme.palette.primary.main
                             : isCompleted
-                            ? '#10b981 !important'
-                            : undefined,
+                              ? '#10b981 !important'
+                              : undefined,
                         },
                       }}
                     >
@@ -1102,7 +1105,7 @@ export const ClientDashboardView: React.FC = () => {
                 onClick={handleOpenPaymentDialog}
                 sx={{ fontWeight: 700, borderRadius: 2.5 }}
               >
-                + Catat Pembayaran Baru
+                Catat Pembayaran Baru
               </Button>
             </Box>
 
@@ -1377,188 +1380,421 @@ export const ClientDashboardView: React.FC = () => {
         </Grid>
       </Grid>
 
-      {/* Form Dialog Input Pembayaran */}
-      <Dialog open={paymentDialogOpen} onClose={() => setPaymentDialogOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
-        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <PaymentsIcon color="primary" />
-            <Typography variant="h6" sx={{ fontWeight: 800 }}>
-              Form Input Pembayaran Proyek
-            </Typography>
+      {/* Form Dialog Input Pembayaran (Style LeadsView) */}
+      <Dialog
+        open={paymentDialogOpen}
+        onClose={() => setPaymentDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: 4,
+              p: 1,
+              backgroundColor: theme.palette.background.paper,
+              backgroundImage: 'none',
+              boxShadow: '0 24px 48px rgba(0,0,0,0.2)',
+            },
+          },
+        }}
+      >
+        <DialogTitle component="div" sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Avatar
+              sx={{
+                width: 44,
+                height: 44,
+                bgcolor: 'primary.main',
+                boxShadow: '0 4px 14px rgba(99,102,241,0.3)',
+              }}
+            >
+              <PaymentsIcon />
+            </Avatar>
+            <Box>
+              <Typography variant="h6" component="h2" sx={{ fontWeight: 800, lineHeight: 1.2 }}>
+                {isClientRole ? 'Upload Bukti Transfer Pembayaran' : 'Catat & Input Pembayaran Proyek'}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {isClientRole ? 'Kirimkan bukti transfer untuk verifikasi tim admin' : 'Kelola transaksi penerimaan transfer & termin pembayaran proyek'}
+              </Typography>
+            </Box>
           </Box>
-          <IconButton onClick={() => setPaymentDialogOpen(false)} size="small">
-            <CloseIcon />
+          <IconButton onClick={() => setPaymentDialogOpen(false)} size="small" sx={{ borderRadius: 2 }}>
+            <CloseIcon fontSize="small" />
           </IconButton>
         </DialogTitle>
 
-        <DialogContent dividers>
-          <Stack spacing={2} sx={{ pt: 1 }}>
-            <Alert severity="info" sx={{ borderRadius: 2, fontSize: '0.82rem' }}>
-              Masukkan rincian pembayaran untuk proyek <strong>{selectedProject.title}</strong> ({selectedProject.clientName}). Total Kontrak: <strong>{formatRupiah(totalBudget)}</strong>.
-            </Alert>
+        <DialogContent dividers sx={{ p: 3 }}>
+          <Alert severity="info" sx={{ mb: 3, borderRadius: 2.5, fontSize: '0.84rem' }}>
+            Masukkan rincian pembayaran untuk proyek <strong>{selectedProject.title}</strong> ({selectedProject.clientName}). Total Kontrak: <strong>{formatRupiah(totalBudget)}</strong>.
+          </Alert>
 
-            <TextField
-              fullWidth
-              size="small"
-              type="date"
-              label="Tanggal Pembayaran / Transfer"
-              InputLabelProps={{ shrink: true }}
-              value={paymentFormData.date}
-              onChange={(e) => setPaymentFormData((prev) => ({ ...prev, date: e.target.value }))}
-              required
-            />
+          <Grid container spacing={2.5}>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                fullWidth
+                type="date"
+                label="Tanggal Pembayaran / Transfer"
+                InputLabelProps={{ shrink: true }}
+                value={paymentFormData.date}
+                onChange={(e) => setPaymentFormData((prev) => ({ ...prev, date: e.target.value }))}
+                required
+              />
+            </Grid>
 
-            <TextField
-              fullWidth
-              size="small"
-              type="number"
-              label="Nominal Pembayaran (IDR)"
-              value={paymentFormData.amount || ''}
-              onChange={(e) => setPaymentFormData((prev) => ({ ...prev, amount: Number(e.target.value) }))}
-              helperText={`Terbilang: Rp ${(paymentFormData.amount || 0).toLocaleString('id-ID')}`}
-              required
-            />
-
-            <TextField
-              select
-              fullWidth
-              size="small"
-              label="Tahap / Termin Pembayaran"
-              value={paymentFormData.stage}
-              onChange={(e) => setPaymentFormData((prev) => ({ ...prev, stage: e.target.value }))}
-            >
-              <MenuItem value="DP Tahap 1 (30%)">DP Tahap 1 (30%) - Penandatanganan MoU</MenuItem>
-              <MenuItem value="Termin Progress Tahap 2 (30%)">Termin Progress Tahap 2 (30%) - Desain / Mid Dev</MenuItem>
-              <MenuItem value="Pelunasan Tahap 3 (40%)">Pelunasan Tahap 3 (40%) - Sebelum Live Deployment</MenuItem>
-              <MenuItem value="DP Tahap 1 (50%)">DP Tahap 1 (50%) - Tier 1-2</MenuItem>
-              <MenuItem value="Pelunasan Tahap 2 (50%)">Pelunasan Tahap 2 (50%) - Tier 1-2</MenuItem>
-              <MenuItem value="Pembayaran Tambahan / Add-on">Pembayaran Tambahan / Add-on</MenuItem>
-            </TextField>
-
-            {/* Upload Bukti Pembayaran / Resi Input */}
-            <Box sx={{ border: `1px dashed ${theme.palette.divider}`, borderRadius: 2.5, p: 2, textAlign: 'center', bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : '#f8fafc' }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 0.5 }}>
-                📷 Unggah Bukti Transfer / Resi Pembayaran
-              </Typography>
-              <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1.5 }}>
-                Format file PNG/JPG (Maks 5MB). Diperlukan untuk verifikasi admin.
-              </Typography>
-
-              <Button
-                variant="outlined"
-                component="label"
-                startIcon={<UploadIcon />}
-                size="small"
-                sx={{ fontWeight: 700, borderRadius: 2 }}
-              >
-                Pilih Foto Resi Bukti Transfer
-                <input type="file" accept="image/*" hidden onChange={handleFileUpload} />
-              </Button>
-
-              {paymentFormData.proofUrl && (
-                <Box sx={{ mt: 1.5, textAlign: 'center' }}>
-                  <Typography variant="caption" sx={{ fontWeight: 700, color: '#10b981', display: 'block', mb: 0.5 }}>
-                    ✓ Pratinjau Resi Terunggah:
-                  </Typography>
-                  <Box
-                    component="img"
-                    src={paymentFormData.proofUrl}
-                    alt="Pratinjau Bukti Pembayaran"
-                    sx={{ height: 100, maxWidth: '100%', objectFit: 'contain', borderRadius: 2, border: '1px solid #cbd5e1', mx: 'auto' }}
-                  />
-                </Box>
-              )}
-            </Box>
-
-            {!isClientRole && (
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 select
                 fullWidth
-                size="small"
-                label="Status Verifikasi / Approval Admin"
-                value={paymentFormData.status}
-                onChange={(e) => setPaymentFormData((prev: any) => ({ ...prev, status: e.target.value }))}
+                label="Tahap / Termin Pembayaran"
+                value={paymentFormData.stage}
+                onChange={(e) => setPaymentFormData((prev) => ({ ...prev, stage: e.target.value }))}
               >
-                <MenuItem value="VERIFIED">TERVERIFIKASI / DISUJUJU (LUNAS)</MenuItem>
-                <MenuItem value="PENDING">PENDING (Menunggu Verification Admin)</MenuItem>
-                <MenuItem value="FAILED">GAGAL / DITOLAK</MenuItem>
+                <MenuItem value="DP Tahap 1 (30%)">DP Tahap 1 (30%) - Penandatanganan MoU</MenuItem>
+                <MenuItem value="Termin Progress Tahap 2 (30%)">Termin Progress Tahap 2 (30%) - Desain / Mid Dev</MenuItem>
+                <MenuItem value="Pelunasan Tahap 3 (40%)">Pelunasan Tahap 3 (40%) - Sebelum Live Deployment</MenuItem>
+                <MenuItem value="DP Tahap 1 (50%)">DP Tahap 1 (50%) - Tier 1-2</MenuItem>
+                <MenuItem value="Pelunasan Tahap 2 (50%)">Pelunasan Tahap 2 (50%) - Tier 1-2</MenuItem>
+                <MenuItem value="Pembayaran Tambahan / Add-on">Pembayaran Tambahan / Add-on</MenuItem>
               </TextField>
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: isClientRole ? 12 : 6 }}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Nominal Pembayaran (IDR)"
+                value={paymentFormData.amount || ''}
+                onChange={(e) => setPaymentFormData((prev) => ({ ...prev, amount: Number(e.target.value) }))}
+                helperText={`Terbilang: Rp ${(paymentFormData.amount || 0).toLocaleString('id-ID')}`}
+                required
+              />
+            </Grid>
+
+            {!isClientRole && (
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  select
+                  fullWidth
+                  label="Status Verifikasi / Approval Admin"
+                  value={paymentFormData.status}
+                  onChange={(e) => setPaymentFormData((prev: any) => ({ ...prev, status: e.target.value }))}
+                >
+                  <MenuItem value="VERIFIED">TERVERIFIKASI / DISUTUJU (LUNAS)</MenuItem>
+                  <MenuItem value="PENDING">PENDING (Menunggu Verifikasi Admin)</MenuItem>
+                  <MenuItem value="FAILED">GAGAL / DITOLAK</MenuItem>
+                </TextField>
+              </Grid>
             )}
 
-            <TextField
-              fullWidth
-              multiline
-              minRows={2}
-              size="small"
-              label="Catatan & Referensi Bank (No. Rekening / Ref Transfer)"
-              placeholder="Contoh: Transfer Bank BRI Ref #88219 a.n. PT AULIA INDOLAND GRUP"
-              value={paymentFormData.notes}
-              onChange={(e) => setPaymentFormData((prev) => ({ ...prev, notes: e.target.value }))}
-            />
-          </Stack>
+            {/* Upload Bukti Pembayaran Box (Style LeadsView) */}
+            <Grid size={12}>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 3,
+                  borderRadius: 3,
+                  backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : '#f8fafc',
+                  border: `1.5px dashed ${theme.palette.divider}`,
+                  textAlign: 'center',
+                  transition: 'all 0.2s ease-in-out',
+                  '&:hover': {
+                    borderColor: theme.palette.primary.main,
+                    bgcolor: theme.palette.mode === 'dark' ? 'rgba(99,102,241,0.05)' : 'rgba(99,102,241,0.02)',
+                  },
+                }}
+              >
+                <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 0.5, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                  <UploadIcon color="primary" fontSize="small" /> Unggah Bukti Transfer / Resi Pembayaran
+                </Typography>
+                <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
+                  Format file PNG/JPG (Maks 5MB). Diperlukan untuk verifikasi admin.
+                </Typography>
+
+                <Button
+                  variant="outlined"
+                  component="label"
+                  startIcon={<UploadIcon />}
+                  sx={{ fontWeight: 700, borderRadius: 2.5, px: 3, py: 0.8, textTransform: 'none' }}
+                >
+                  Pilih Foto Resi Bukti Transfer
+                  <input type="file" accept="image/*" hidden onChange={handleFileUpload} />
+                </Button>
+
+                {paymentFormData.proofUrl && (
+                  <Box sx={{ mt: 2, p: 2, borderRadius: 2.5, bgcolor: theme.palette.mode === 'dark' ? 'rgba(16,185,129,0.1)' : 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.3)', display: 'inline-block', maxWidth: '100%' }}>
+                    <Typography variant="caption" sx={{ fontWeight: 700, color: '#10b981', display: 'block', mb: 1 }}>
+                      ✓ Pratinjau Resi Terunggah:
+                    </Typography>
+                    <Box
+                      component="img"
+                      src={paymentFormData.proofUrl}
+                      alt="Pratinjau Bukti Pembayaran"
+                      sx={{ maxHeight: 160, maxWidth: '100%', objectFit: 'contain', borderRadius: 2, border: `1px solid ${theme.palette.divider}`, mx: 'auto' }}
+                    />
+                  </Box>
+                )}
+              </Paper>
+            </Grid>
+
+            <Grid size={12}>
+              <TextField
+                fullWidth
+                multiline
+                minRows={2}
+                label="Catatan & Referensi Bank (No. Rekening / Ref Transfer)"
+                placeholder="Contoh: Transfer Bank BRI Ref #88219 a.n. PT AULIA INDOLAND GRUP"
+                value={paymentFormData.notes}
+                onChange={(e) => setPaymentFormData((prev) => ({ ...prev, notes: e.target.value }))}
+              />
+            </Grid>
+          </Grid>
         </DialogContent>
 
-        <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setPaymentDialogOpen(false)} color="inherit">
+        <DialogActions sx={{ p: 2.5, px: 3, gap: 1.5 }}>
+          <Button onClick={() => setPaymentDialogOpen(false)} variant="outlined" color="inherit" sx={{ fontWeight: 700, borderRadius: 2.5, px: 2.5, textTransform: 'none' }}>
             Batal
           </Button>
-          <Button variant="contained" color="primary" onClick={handleSavePaymentRecord} sx={{ fontWeight: 700, borderRadius: 2 }}>
+          <Button variant="contained" color="primary" onClick={handleSavePaymentRecord} sx={{ fontWeight: 800, borderRadius: 2.5, px: 3.5, py: 1, textTransform: 'none' }}>
             {isClientRole ? 'Kirim Bukti Pembayaran' : 'Simpan Pembayaran'}
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Modal Pratinjau Resi Bukti Transfer */}
+      {/* Rincian & Resi Pembayaran Modal (Exact LeadsView Detail Modal Layout) */}
       <Dialog
         open={proofPreviewModal.open}
         onClose={() => setProofPreviewModal({ open: false })}
-        maxWidth="sm"
+        maxWidth="md"
         fullWidth
-        PaperProps={{ sx: { borderRadius: 3.5 } }}
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: 4,
+              p: 1,
+              backgroundColor: theme.palette.background.paper,
+              backgroundImage: 'none',
+              boxShadow: '0 24px 48px rgba(0,0,0,0.2)',
+            },
+          },
+        }}
       >
-        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <ReceiptIcon color="primary" />
-            <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
-              Bukti Transfer & Resi Pembayaran
-            </Typography>
-          </Box>
-          <IconButton onClick={() => setProofPreviewModal({ open: false })} size="small">
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent dividers sx={{ textAlign: 'center', py: 3 }}>
-          {proofPreviewModal.payment?.proofUrl ? (
-            <Box
-              component="img"
-              src={proofPreviewModal.payment.proofUrl}
-              alt="Resi Bukti Pembayaran"
-              sx={{ maxWidth: '100%', maxHeight: 400, objectFit: 'contain', borderRadius: 2.5, boxShadow: '0 4px 20px rgba(0,0,0,0.15)' }}
-            />
-          ) : (
-            <Typography color="text.secondary">Bukti resi gambar tidak tersedia.</Typography>
-          )}
+        {proofPreviewModal.payment && (
+          <>
+            <DialogTitle component="div" sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Avatar
+                  sx={{
+                    width: 44,
+                    height: 44,
+                    bgcolor: 'primary.main',
+                    boxShadow: '0 4px 14px rgba(99,102,241,0.3)',
+                  }}
+                >
+                  <ReceiptIcon />
+                </Avatar>
+                <Box>
+                  <Typography variant="h6" component="h2" sx={{ fontWeight: 800, lineHeight: 1.2 }}>
+                    Rincian & Bukti Resi Pembayaran Proyek
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    ID Transaksi: #{proofPreviewModal.payment.id} &bull; Tanggal: {proofPreviewModal.payment.date}
+                  </Typography>
+                </Box>
+              </Box>
+              <IconButton onClick={() => setProofPreviewModal({ open: false })} size="small" sx={{ borderRadius: 2 }}>
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            </DialogTitle>
 
-          <Box sx={{ mt: 2, textAlign: 'left', p: 2, bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : '#f8fafc', borderRadius: 2.5 }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 0.5 }}>
-              Detail Transaksi:
-            </Typography>
-            <Typography variant="body2"><strong>Tanggal:</strong> {proofPreviewModal.payment?.date}</Typography>
-            <Typography variant="body2"><strong>Tahap:</strong> {proofPreviewModal.payment?.stage}</Typography>
-            <Typography variant="body2"><strong>Nominal:</strong> {formatRupiah(proofPreviewModal.payment?.amount || 0)}</Typography>
-            <Typography variant="body2"><strong>Catatan/Ref:</strong> {proofPreviewModal.payment?.notes || '-'}</Typography>
-            {proofPreviewModal.payment?.approvedBy && (
-              <Typography variant="body2" sx={{ color: '#10b981', mt: 0.5, fontWeight: 700 }}>
-                ✓ Disetujui oleh {proofPreviewModal.payment.approvedBy} pada {proofPreviewModal.payment.approvedAt}
-              </Typography>
-            )}
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setProofPreviewModal({ open: false })} variant="contained">
-            Tutup
-          </Button>
-        </DialogActions>
+            <DialogContent dividers sx={{ p: 3 }}>
+              {/* Payment Details 4-Card Grid (Matching LeadsView Detail Sender Grid) */}
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 2.5,
+                  borderRadius: 3,
+                  backgroundColor:
+                    theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(248, 250, 252, 1)',
+                  border: `1px solid ${theme.palette.divider}`,
+                  mb: 3,
+                }}
+              >
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+                    gap: 2.5,
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
+                    <Avatar sx={{ width: 34, height: 34, bgcolor: 'rgba(99,102,241,0.1)', color: '#6366f1' }}>
+                      <ProjectIcon sx={{ fontSize: 18 }} />
+                    </Avatar>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        Proyek & Klien
+                      </Typography>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+                        {selectedProject?.title || 'Proyek Klien'}
+                      </Typography>
+                      <Typography variant="caption" color="primary" sx={{ fontWeight: 600 }}>
+                        {selectedProject?.clientName || '-'}
+                      </Typography>
+                    </Box>
+                  </Box>
+
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
+                    <Avatar sx={{ width: 34, height: 34, bgcolor: 'rgba(16,185,129,0.1)', color: '#10b981' }}>
+                      <MoneyIcon sx={{ fontSize: 18 }} />
+                    </Avatar>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        Nominal Transaksi
+                      </Typography>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#10b981', fontSize: '1.05rem' }}>
+                        {formatRupiah(proofPreviewModal.payment.amount)}
+                      </Typography>
+                    </Box>
+                  </Box>
+
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
+                    <Avatar sx={{ width: 34, height: 34, bgcolor: 'rgba(245,158,11,0.1)', color: '#f59e0b' }}>
+                      <CalendarIcon sx={{ fontSize: 18 }} />
+                    </Avatar>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        Tanggal Pembayaran
+                      </Typography>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                        {proofPreviewModal.payment.date}
+                      </Typography>
+                    </Box>
+                  </Box>
+
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
+                    <Avatar sx={{ width: 34, height: 34, bgcolor: 'rgba(139,92,246,0.1)', color: '#8b5cf6' }}>
+                      <AutoIcon sx={{ fontSize: 18 }} />
+                    </Avatar>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        Tahap / Termin
+                      </Typography>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                        {proofPreviewModal.payment.stage}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Box>
+              </Paper>
+
+              {/* Resi Image Box (Matching LeadsView Message Box) */}
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+                  📷 Lampiran Bukti Transfer / Resi:
+                </Typography>
+                {proofPreviewModal.payment.proofUrl && (
+                  <Button
+                    size="small"
+                    component="a"
+                    href={proofPreviewModal.payment.proofUrl}
+                    target="_blank"
+                    startIcon={<VisibilityIcon sx={{ fontSize: 14 }} />}
+                    sx={{ fontSize: '0.75rem', textTransform: 'none', fontWeight: 700 }}
+                  >
+                    Buka Ukuran Penuh
+                  </Button>
+                )}
+              </Box>
+
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 2.5,
+                  borderRadius: 3,
+                  backgroundColor:
+                    theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : '#f8fafc',
+                  border: `1px solid ${theme.palette.divider}`,
+                  textAlign: 'center',
+                  mb: 3,
+                }}
+              >
+                {proofPreviewModal.payment.proofUrl ? (
+                  <Box
+                    component="img"
+                    src={proofPreviewModal.payment.proofUrl}
+                    alt="Resi Bukti Pembayaran"
+                    sx={{
+                      maxWidth: '100%',
+                      maxHeight: 380,
+                      objectFit: 'contain',
+                      borderRadius: 2.5,
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                      border: `1px solid ${theme.palette.divider}`,
+                    }}
+                  />
+                ) : (
+                  <Typography variant="body2" color="text.secondary" sx={{ py: 3, fontStyle: 'italic' }}>
+                    Lampiran resi gambar tidak diunggah untuk transaksi ini.
+                  </Typography>
+                )}
+              </Paper>
+
+              {/* Status & Notes Bar (Matching LeadsView Status Selector Bar) */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  p: 2,
+                  borderRadius: 2.5,
+                  bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
+                  border: `1px solid ${theme.palette.divider}`,
+                  flexWrap: 'wrap',
+                  gap: 1.5,
+                }}
+              >
+                <Box sx={{ maxWidth: '60%' }}>
+                  <Typography variant="caption" color="text.secondary" display="block" sx={{ fontWeight: 700 }}>
+                    Catatan & Referensi Bank:
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                    {proofPreviewModal.payment.notes || 'Tidak ada catatan tambahan.'}
+                  </Typography>
+                </Box>
+                <Box sx={{ textAlign: 'right' }}>
+                  <Typography variant="caption" color="text.secondary" display="block" sx={{ fontWeight: 700, mb: 0.5 }}>
+                    Status Approval:
+                  </Typography>
+                  <Chip
+                    label={
+                      proofPreviewModal.payment.status === 'VERIFIED'
+                        ? 'VERIFIED / LUNAS'
+                        : proofPreviewModal.payment.status === 'FAILED'
+                        ? 'GAGAL / DITOLAK'
+                        : 'PENDING VERIFIKASI'
+                    }
+                    size="small"
+                    color={
+                      proofPreviewModal.payment.status === 'VERIFIED'
+                        ? 'success'
+                        : proofPreviewModal.payment.status === 'FAILED'
+                        ? 'error'
+                        : 'warning'
+                    }
+                    sx={{ fontWeight: 800, fontSize: '0.75rem' }}
+                  />
+                </Box>
+              </Box>
+            </DialogContent>
+
+            <DialogActions sx={{ p: 2.5, display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+              <Button onClick={() => setProofPreviewModal({ open: false })} variant="contained" color="primary" sx={{ borderRadius: 2.5, fontWeight: 800, px: 3, textTransform: 'none' }}>
+                Tutup Rincian
+              </Button>
+            </DialogActions>
+          </>
+        )}
       </Dialog>
 
       {/* Signature Dialog Modal */}
