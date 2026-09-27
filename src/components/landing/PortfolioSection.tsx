@@ -22,7 +22,7 @@ export const PortfolioSection: React.FC = () => {
       <SectionHeader
         label="[07] // PORTOFOLIO PILIHAN"
         title={"PORTOFOLIO PILIHAN\nATASILABS"}
-        subtitle="BERBAGAI PROYEK WEBSITE DAN APLIKASI YANG BERHASIL KAMI BANAGUN BERSAMA PARA KLIEN"
+        subtitle="Proyek Website & Aplikasi yang Kami Bangun Bersama Klien"
       />
 
       {/* Category filter tabs */}
@@ -62,80 +62,80 @@ export const PortfolioSection: React.FC = () => {
           [ BELUM ADA DATA PORTOFOLIO DI SUPABASE DATABASE ]
         </div>
       ) : (
-      /* Grid of Portfolio Cards */
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredPortfolios.map((item, idx) => {
-          const techList = item.techStack || [];
-          return (
-            <div
-              key={item.id}
-              className="flex flex-col bg-[#0F0F0F] border-2 border-[#2D2D2D] hover:border-[#FFD600] transition-colors group cursor-pointer"
-              onClick={() => setActiveItem(item)}
-            >
-              {/* Image Preview Box */}
-              <div className="relative h-[220px] bg-[#161616] border-b border-[#2D2D2D] overflow-hidden flex items-center justify-center">
-                {item.imageUrl ? (
-                  <img
-                    src={item.imageUrl}
-                    alt={item.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-80 group-hover:opacity-100"
-                  />
-                ) : (
-                  <div className="flex flex-col items-center gap-2">
-                    <span className="font-ibm-mono text-[11px] text-[#444444] tracking-[2px]">[NO IMAGE PREVIEW]</span>
-                    <span className="font-ibm-mono text-[9px] text-[#FFD600]">[CLICK FOR CASE STUDY]</span>
-                  </div>
-                )}
-                {item.featured && (
-                  <div className="absolute top-3 left-3 bg-[#FFD600] text-[#0A0A0A] font-ibm-mono text-[9px] font-bold px-2 py-1 border border-[#0A0A0A]">
-                    ★ FEATURED
-                  </div>
-                )}
-                <div className="absolute bottom-3 right-3 bg-[#111111] text-[#888888] font-ibm-mono text-[9px] px-2 py-1 border border-[#2D2D2D]">
-                  0{idx + 1} / 0{filteredPortfolios.length}
-                </div>
-              </div>
-
-              {/* Content Details */}
-              <div className="flex flex-col p-6 gap-4 flex-1">
-                <div className="flex items-center justify-between">
-                  <span className="font-ibm-mono text-[10px] text-[#FF6B35] tracking-[1.5px] uppercase font-bold">
-                    [{item.category}]
-                  </span>
-                  <span className="font-ibm-mono text-[10px] text-[#666666] tracking-[1px]">
-                    READY-TO-SHIP
-                  </span>
-                </div>
-
-                <h3 className="font-grotesk text-[20px] font-bold text-[#F5F5F0] tracking-[0.5px] leading-[1.3] group-hover:text-[#FFD600] transition-colors">
-                  {item.title}
-                </h3>
-
-                <p className="font-ibm-mono text-[14px] md:text-[15px] text-[#888888] tracking-[0.5px] line-clamp-3 leading-[1.6]">
-                  {item.description}
-                </p>
-
-                {/* Tech Stack */}
-                <div className="flex flex-wrap gap-1.5 mt-auto pt-4 border-t border-[#1D1D1D]">
-                  {techList.slice(0, 4).map((tech) => (
-                    <span
-                      key={tech}
-                      className="font-ibm-mono text-[9px] bg-[#1A1A1A] text-[#AAAAAA] px-2 py-0.5 border border-[#2D2D2D]"
-                    >
-                      {tech}
-                    </span>
-                  ))}
-                  {techList.length > 4 && (
-                    <span className="font-ibm-mono text-[9px] bg-[#1A1A1A] text-[#FFD600] px-2 py-0.5 border border-[#2D2D2D]">
-                      +{techList.length - 4}
-                    </span>
+        /* Grid of Portfolio Cards */
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredPortfolios.map((item, idx) => {
+            const techList = item.techStack || [];
+            return (
+              <div
+                key={item.id}
+                className="flex flex-col bg-[#0F0F0F] border-2 border-[#2D2D2D] hover:border-[#FFD600] transition-colors group cursor-pointer"
+                onClick={() => setActiveItem(item)}
+              >
+                {/* Image Preview Box */}
+                <div className="relative h-[220px] bg-[#161616] border-b border-[#2D2D2D] overflow-hidden flex items-center justify-center">
+                  {item.imageUrl ? (
+                    <img
+                      src={item.imageUrl}
+                      alt={item.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-80 group-hover:opacity-100"
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center gap-2">
+                      <span className="font-ibm-mono text-[11px] text-[#444444] tracking-[2px]">[NO IMAGE PREVIEW]</span>
+                      <span className="font-ibm-mono text-[9px] text-[#FFD600]">[CLICK FOR CASE STUDY]</span>
+                    </div>
                   )}
+                  {item.featured && (
+                    <div className="absolute top-3 left-3 bg-[#FFD600] text-[#0A0A0A] font-ibm-mono text-[9px] font-bold px-2 py-1 border border-[#0A0A0A]">
+                      ★ FEATURED
+                    </div>
+                  )}
+                  <div className="absolute bottom-3 right-3 bg-[#111111] text-[#888888] font-ibm-mono text-[9px] px-2 py-1 border border-[#2D2D2D]">
+                    0{idx + 1} / 0{filteredPortfolios.length}
+                  </div>
+                </div>
+
+                {/* Content Details */}
+                <div className="flex flex-col p-6 gap-4 flex-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-ibm-mono text-[10px] text-[#FF6B35] tracking-[1.5px] uppercase font-bold">
+                      [{item.category}]
+                    </span>
+                    <span className="font-ibm-mono text-[10px] text-[#666666] tracking-[1px]">
+                      READY-TO-SHIP
+                    </span>
+                  </div>
+
+                  <h3 className="font-grotesk text-[20px] font-bold text-[#F5F5F0] tracking-[0.5px] leading-[1.3] group-hover:text-[#FFD600] transition-colors">
+                    {item.title}
+                  </h3>
+
+                  <p className="font-ibm-mono text-[14px] md:text-[15px] text-[#888888] tracking-[0.5px] line-clamp-3 leading-[1.6]">
+                    {item.description}
+                  </p>
+
+                  {/* Tech Stack */}
+                  <div className="flex flex-wrap gap-1.5 mt-auto pt-4 border-t border-[#1D1D1D]">
+                    {techList.slice(0, 4).map((tech) => (
+                      <span
+                        key={tech}
+                        className="font-ibm-mono text-[9px] bg-[#1A1A1A] text-[#AAAAAA] px-2 py-0.5 border border-[#2D2D2D]"
+                      >
+                        {tech}
+                      </span>
+                    ))}
+                    {techList.length > 4 && (
+                      <span className="font-ibm-mono text-[9px] bg-[#1A1A1A] text-[#FFD600] px-2 py-0.5 border border-[#2D2D2D]">
+                        +{techList.length - 4}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
       )}
 
       {/* Detail Modal */}

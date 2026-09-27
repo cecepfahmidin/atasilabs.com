@@ -33,7 +33,7 @@ const faqs = [
   {
     question: "BAGAIMANA JIKA TERJADI KENDALA ATAU ERROR SETELAH WEBSITE SELESAI?",
     answer:
-      "AtasiLabs menyediakan garansi pemeliharaan & dukungan teknis gratis (30 hingga 90 hari) setelah serah terima untuk memastikan website Anda selalu aktif dan lancar.",
+      "AtasiLabs menyediakan garansi pemeliharaan & dukungan teknis gratis (30 hingga 365 hari) setelah serah terima untuk memastikan website Anda selalu aktif dan lancar.",
   },
   {
     question: "DAPATKAH INTEGRASI FITUR KHUSUS DITAMBAHKAN DI MASA DEPAN?",

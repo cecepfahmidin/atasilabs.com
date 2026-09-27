@@ -109,7 +109,7 @@ export const ContactSection: React.FC = () => {
       <SectionHeader
         label="[10] // GET IN TOUCH"
         title={"MULAI PROYEK\nWEBSITE ANDA"}
-        subtitle="KIRIMKAN RINCIAN PROYEK ANDA. TIM ATASILABS AKAN SEGERA MERESPONS SEJALAN DENGAN KEBUTUHAN ANDA."
+        subtitle="Kirimkan rincian proyek Anda, tim atasilabs akan segera merespons kebutuhan anda."
       />
 
       {submittedLeadId ? (

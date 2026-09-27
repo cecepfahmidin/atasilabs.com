@@ -31,7 +31,7 @@ export const TeamSection: React.FC = () => {
       <SectionHeader
         label="[11] // TIM MANAJEMEN & LEADERSHIP"
         title={"TIM MANAJEMEN &\nDUKUNGAN KLIEN"}
-        subtitle="Dikelola oleh profesional berpengalaman untuk memastikan setiap proyek website dibangun dengan standar kualitas terbaik, cepat, dan presisi."
+        subtitle="Dikerjakan oleh praktisi berpengalaman untuk memastikan website Anda dibangun dengan standart kualitas terbaik, cepat dan presisi "
       />
 
       {/* Loading Skeleton */}

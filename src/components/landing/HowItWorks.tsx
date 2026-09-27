@@ -34,7 +34,7 @@ const stages = [
   {
     num: '05',
     title: 'SERAH TERIMA',
-    desc: 'Penandatanganan BAST, penyerahan akses kredensial lengkap, & garansi 30 hari.',
+    desc: 'Penandatanganan BAST, penyerahan akses kredensial lengkap, & bergaransi.',
     doc: 'BAST (Berita Acara Serah Terima)',
     badge: 'STAGE 5',
   },
@@ -46,7 +46,7 @@ export function HowItWorks() {
       <SectionHeader
         label="[02] // OPERATIONAL WORKFLOW"
         title={'ALUR PEMESANAN\nWEBSITE'}
-        subtitle="Setiap proyek diproses mengikuti 5 tahap SOP operasional bergaransi dengan penerbitan dokumen legal resmi."
+        subtitle="Setiap proyek dikerjakan melalui 5 tahapan SOP terstandar, bergaransi, dan dilindungi dokumen legal resmi."
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full items-stretch">

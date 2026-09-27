@@ -2,7 +2,7 @@
 
 const stats = [
   { value: '100%', label: 'KEPUASAN & KUALITAS', border: true },
-  { value: '30 HARI', label: 'GARANSI PERBAIKAN BUG', border: true },
+  { value: '30-365 HARI', label: 'GARANSI PERBAIKAN BUG', border: true },
   { value: '0 IDR', label: 'BIAYA TERSEMBUNYI', border: true },
   { value: '5 PAKET', label: 'PEMBUATAN WEBSITE & LANDING PAGE', border: false },
 ];
