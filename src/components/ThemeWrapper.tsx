@@ -11,6 +11,25 @@ export function ThemeWrapper({ children }: { children: React.ReactNode }) {
   const effectiveMode = activeView === 'landing' ? 'dark' : themeMode;
   const theme = useMemo(() => createAppTheme(effectiveMode), [effectiveMode]);
 
+  // Handle auto-reload when a new deployment invalidates cached JS chunks
+  React.useEffect(() => {
+    const handleChunkError = (event: ErrorEvent) => {
+      const errorMsg = event.message || event.error?.toString() || '';
+      if (errorMsg.includes('ChunkLoadError') || errorMsg.includes('Loading chunk')) {
+        console.warn('⚡ Detected ChunkLoadError from new build deployment, auto-refreshing page...');
+        const reloadKey = 'atasilabs_chunk_reload';
+        const lastReload = sessionStorage.getItem(reloadKey);
+        if (!lastReload || Date.now() - Number(lastReload) > 10000) {
+          sessionStorage.setItem(reloadKey, Date.now().toString());
+          window.location.reload();
+        }
+      }
+    };
+
+    window.addEventListener('error', handleChunkError);
+    return () => window.removeEventListener('error', handleChunkError);
+  }, []);
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
