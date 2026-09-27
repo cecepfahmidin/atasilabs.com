@@ -35,9 +35,12 @@ import {
   Calculate as CalcIcon,
   AutoAwesome as AutoIcon,
   FolderSpecial as FolderIcon,
+  Payments as PaymentsIcon,
+  Receipt as ReceiptIcon,
 } from '@mui/icons-material';
 import { useApp } from '../../context/AppContext';
 import { ClientDashboardView } from './ClientDashboardView';
+import { FreelancerDashboardView } from './FreelancerDashboardView';
 
 export const OverviewView: React.FC = () => {
   const theme = useTheme();
@@ -52,8 +55,45 @@ export const OverviewView: React.FC = () => {
   } = useApp();
 
   const [previewClientPortal, setPreviewClientPortal] = React.useState(false);
+  const [previewFreelancerPortal, setPreviewFreelancerPortal] = React.useState(false);
 
-  // If user role is CLIENT or if admin activated preview mode, render ClientDashboardView
+  const { verifiedPaymentsTotal, pendingPaymentsCount } = React.useMemo(() => {
+    let total = 0;
+    let pending = 0;
+    (projects || []).forEach((proj) => {
+      (proj.payments || []).forEach((pay) => {
+        if (pay.status === 'VERIFIED') total += pay.amount;
+        if (pay.status === 'PENDING') pending++;
+      });
+    });
+    return { verifiedPaymentsTotal: total, pendingPaymentsCount: pending };
+  }, [projects]);
+
+  // If user role is FREELANCER or if admin activated freelancer preview mode, render FreelancerDashboardView
+  if (currentUser?.role === 'FREELANCER' || previewFreelancerPortal) {
+    return (
+      <Box sx={{ width: '100%' }}>
+        {currentUser?.role !== 'FREELANCER' && (
+          <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Alert severity="info" sx={{ flexGrow: 1, mr: 2, borderRadius: 2 }}>
+              <strong>Mode Preview Admin:</strong> Anda sedang melihat tampilan Portal Mitra Developer / Freelancer.
+            </Alert>
+            <Button
+              variant="outlined"
+              color="primary"
+              onClick={() => setPreviewFreelancerPortal(false)}
+              sx={{ fontWeight: 700, borderRadius: 2 }}
+            >
+              Kembali ke Studio Control Center
+            </Button>
+          </Box>
+        )}
+        <FreelancerDashboardView />
+      </Box>
+    );
+  }
+
+  // If user role is CLIENT or if admin activated client preview mode, render ClientDashboardView
   if (currentUser?.role === 'CLIENT' || previewClientPortal) {
     return (
       <Box sx={{ width: '100%' }}>
@@ -99,25 +139,25 @@ export const OverviewView: React.FC = () => {
       tabTarget: 'projects',
     },
     {
+      title: 'Pembayaran & Invoice',
+      value: formatRupiah(verifiedPaymentsTotal),
+      subtitle: pendingPaymentsCount > 0 ? `⚠️ ${pendingPaymentsCount} pending approval admin` : 'Seluruh transaksi terverifikasi',
+      icon: <PaymentsIcon sx={{ color: '#10b981' }} />,
+      color: '#10b981',
+      tabTarget: 'payments',
+    },
+    {
       title: 'Dokumen Operasional (Auto)',
       value: projects.length * 5,
       subtitle: 'Paket CIF, RSD, MoU, SPK, BAST',
-      icon: <DescriptionIcon sx={{ color: '#10b981' }} />,
-      color: '#10b981',
+      icon: <DescriptionIcon sx={{ color: '#8b5cf6' }} />,
+      color: '#8b5cf6',
       tabTarget: 'documents',
-    },
-    {
-      title: 'Pesan Masuk',
-      value: leads.length,
-      subtitle: `${unreadLeadsCount} pesan baru perlu direspon`,
-      icon: <EmailIcon sx={{ color: '#3b82f6' }} />,
-      color: '#3b82f6',
-      tabTarget: 'leads',
     },
     {
       title: 'Nilai Pipeline Proyek',
       value: formatRupiah(totalPipelineBudget),
-      subtitle: 'Akumulasi total kontrak',
+      subtitle: 'Akumulasi total nilai kontrak',
       icon: <TrendingUpIcon sx={{ color: '#f59e0b' }} />,
       color: '#f59e0b',
       tabTarget: 'projects',
@@ -169,7 +209,7 @@ export const OverviewView: React.FC = () => {
               Selamat Datang di Studio Control Center Atasilabs
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 700 }}>
-              Pusat kendali manajemen proyek, otomatisasi 5 paket dokumen (CIF, RSD, MoU, SPK, BAST), kalkulator HPP, dan pengelolaan pesan prospek.
+              Pusat kendali manajemen proyek, transaksi & invoice pembayaran, otomatisasi 5 paket dokumen (CIF, RSD, MoU, SPK, BAST), dan pengelolaan prospek.
             </Typography>
           </Box>
 
@@ -177,11 +217,20 @@ export const OverviewView: React.FC = () => {
             <Button
               variant="contained"
               color="primary"
+              startIcon={<PaymentsIcon />}
+              onClick={() => setDashboardTab('payments')}
+              sx={{ fontWeight: 800, borderRadius: 2.5 }}
+            >
+              Input & Status Pembayaran
+            </Button>
+            <Button
+              variant="outlined"
+              color="secondary"
               startIcon={<DescriptionIcon />}
               onClick={() => setDashboardTab('documents')}
               sx={{ fontWeight: 700, borderRadius: 2.5 }}
             >
-              Cetak / Kelola Dokumen
+              Cetak Dokumen
             </Button>
             <Button
               variant="outlined"
@@ -194,12 +243,12 @@ export const OverviewView: React.FC = () => {
             </Button>
             <Button
               variant="outlined"
-              color="inherit"
-              startIcon={<AssignmentIcon />}
-              onClick={() => setDashboardTab('projects')}
+              color="secondary"
+              startIcon={<CodeIcon />}
+              onClick={() => setPreviewFreelancerPortal(true)}
               sx={{ fontWeight: 700, borderRadius: 2.5 }}
             >
-              Proyek Aktif
+              Preview Portal Dev
             </Button>
           </Stack>
         </Box>

@@ -67,6 +67,104 @@ export function parseIndonesianDateParts(dateStr?: string) {
   return { dayName, dayNum, monthName, yearNum, formattedDate };
 }
 
+export function formatIndonesianDateLong(dateStr?: string): string {
+  if (!dateStr || dateStr === '-' || dateStr === '....') {
+    return new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+  }
+
+  const trimmed = dateStr.trim();
+  if (/^\d{1,2}\s+[A-Za-z]+\s+\d{4}$/.test(trimmed)) {
+    return trimmed;
+  }
+
+  let d: Date;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    const [y, m, day] = trimmed.split('-').map(Number);
+    d = new Date(y, m - 1, day);
+  } else {
+    d = new Date(trimmed);
+  }
+
+  if (isNaN(d.getTime())) return dateStr;
+
+  const months = [
+    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+  ];
+  return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+/**
+ * DocListItem: Standardized document list item with hanging indent, number alignment,
+ * bullet alignment, and consistent hierarchy across all document templates.
+ */
+interface DocListItemProps {
+  num?: string | React.ReactNode;
+  children: React.ReactNode;
+  level?: 1 | 2 | 3;
+  mb?: number | string;
+  boldNum?: boolean;
+}
+
+const DocListItem: React.FC<DocListItemProps> = ({
+  num,
+  children,
+  level = 1,
+  mb = 0.5,
+  boldNum = true,
+}) => {
+  const levelIndent = level === 1 ? 0 : level === 2 ? '1.25rem' : '2.5rem';
+  const prefixWidth = level === 1 ? '1.5rem' : level === 2 ? '1.5rem' : '1.25rem';
+
+  if (!num) {
+    return (
+      <Box sx={{ pl: levelIndent, mb, color: '#334155', fontSize: '0.85rem', lineHeight: 1.6 }}>
+        {children}
+      </Box>
+    );
+  }
+
+  return (
+    <Box
+      className="doc-list-item"
+      sx={{
+        display: 'flex',
+        alignItems: 'flex-start',
+        pl: levelIndent,
+        mb: mb,
+        width: '100%',
+      }}
+    >
+      <Box
+        className="doc-list-prefix"
+        sx={{
+          minWidth: prefixWidth,
+          width: prefixWidth,
+          flexShrink: 0,
+          fontWeight: boldNum ? 700 : 400,
+          color: '#0f172a',
+          fontSize: '0.85rem',
+          lineHeight: 1.6,
+          userSelect: 'none',
+        }}
+      >
+        {num}
+      </Box>
+      <Box
+        className="doc-list-content"
+        sx={{
+          flex: 1,
+          color: '#334155',
+          fontSize: '0.85rem',
+          lineHeight: 1.6,
+        }}
+      >
+        {children}
+      </Box>
+    </Box>
+  );
+};
+
 interface DocumentTemplateProps {
   type: 'CIF' | 'RSD' | 'MOU' | 'SPK' | 'BAST' | 'QA';
   data: CIFData | RSDData | MoUData | SPKData | BASTData | QAData;
@@ -86,6 +184,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
 }) => {
   const { showNotification, currentUser, users } = useApp();
   const isClientRole = currentUser?.role === 'CLIENT';
+  const isFreelancerRole = currentUser?.role === 'FREELANCER';
 
   const getDynamicSignerRole = (name?: string, fallbackRole?: string): string => {
     if (name && users && users.length > 0) {
@@ -171,13 +270,16 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
     const finalParty2Role = party2Sig?.auditTrail?.signerRole || getDynamicSignerRole(finalParty2Name, party2Role);
 
     return (
-      <Box className="signature-block avoid-break" sx={{ mt: 5, pt: 2, borderTop: '1px dashed rgba(0,0,0,0.15)' }}>
-        <Typography variant="caption" display="block" textAlign="right" sx={{ mb: 1.5, color: 'text.secondary' }}>
-          {locationCity}, {dateStr}
-        </Typography>
-
+      <Box className="signature-block avoid-break" sx={{ mt: 5, pt: 1, mb: '1.2cm' }}>
         <Grid container spacing={3} justifyContent={isSingleSigner ? 'flex-end' : 'space-between'}>
           <Grid item xs={6} sm={isSingleSigner ? 5 : 6} textAlign="center">
+            {isSingleSigner ? (
+              <Typography variant="caption" display="block" textAlign="center" sx={{ mb: 1, color: 'text.secondary' }}>
+                {locationCity}, {formatIndonesianDateLong(dateStr)}
+              </Typography>
+            ) : (
+              <Box sx={{ minHeight: '1.25rem', mb: 1 }} />
+            )}
             <Typography variant="caption" display="block" color="text.secondary">{party1Title}</Typography>
             <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>{party1Sub}</Typography>
 
@@ -191,7 +293,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
               />
             ) : (
               <Box sx={{ height: 50, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {!isClientRole && onSignParty1Cb && (
+                {!isClientRole && !isFreelancerRole && onSignParty1Cb && (
                   <Button
                     size="small"
                     variant="outlined"
@@ -215,6 +317,9 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
 
           {!isSingleSigner && (
             <Grid item xs={6} sm={6} textAlign="center">
+              <Typography variant="caption" display="block" textAlign="center" sx={{ mb: 1, color: 'text.secondary' }}>
+                {locationCity}, {formatIndonesianDateLong(dateStr)}
+              </Typography>
               <Typography variant="caption" display="block" color="text.secondary">{party2Title}</Typography>
               <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>{party2Sub}</Typography>
 
@@ -228,7 +333,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
                 />
               ) : (
                 <Box sx={{ height: 50, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {onSignParty2Cb && (
+                  {(!isFreelancerRole || type === 'SPK') && onSignParty2Cb && (
                     <Button
                       size="small"
                       variant="outlined"
@@ -270,7 +375,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
             <VerifiedIcon sx={{ color: '#10b981', fontSize: 30, flexShrink: 0 }} />
             <Box sx={{ width: '100%' }}>
               <Typography variant="caption" sx={{ fontWeight: 800, color: '#047857', display: 'block', textTransform: 'uppercase', letterSpacing: 0.3 }}>
-                VERIFIKASI TANDA TANGAN ELEKTRONIK & AUDIT TRAIL (UU ITE PASAL 11)
+                VERIFIKASI TANDA TANGAN ELEKTRONIK & AUDIT TRAIL
               </Typography>
               {party1Sig?.auditTrail && (
                 <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.68rem', display: 'block' }}>
@@ -435,7 +540,22 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
                   {/* Top Document Header Title & Metadata Table */}
                   <Box sx={{ width: '100%', display: 'block', mb: 2, clear: 'both' }}>
                     {/* 1. Judul Client Intake Form (CIF) Align Center (Baris 1 - Full Width) */}
-                    <Box sx={{ width: '100%', display: 'block', textAlign: 'center', mt: 0, mb: 3, clear: 'both' }}>
+                    <Box
+                      sx={{
+                        width: '100%',
+                        display: 'block',
+                        textAlign: 'center',
+                        clear: 'both',
+                        '@media screen': {
+                          mt: '2cm',
+                          mb: 'calc(24px + 0.5cm)',
+                        },
+                        '@media print': {
+                          mt: 0,
+                          mb: 3,
+                        },
+                      }}
+                    >
                       <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', fontSize: '1.35rem', lineHeight: 1.2, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', width: '100%', textAlign: 'center' }}>
                         Client Intake Form (CIF)
                       </Typography>
@@ -747,63 +867,17 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
                   </Box>
 
                   {/* Signature Footer matching Formal Indonesian Official Document Standards */}
-                  <Box sx={{ mt: 5, pt: 2, display: 'flex', justifyContent: 'flex-end', textAlign: 'center' }}>
-                    <Box sx={{ minWidth: 260 }}>
-                      {/* Tempat & Tanggal Penandatanganan */}
-                      <Typography variant="body2" sx={{ color: '#334155', mb: 1.5, fontSize: '0.85rem' }}>
-                        Subang, {cif.date || new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-                      </Typography>
-
-                      {/* 1. JABATAN & INSTANSI DI ATAS */}
-                      <Typography variant="body2" sx={{ fontWeight: 700, color: '#0f172a', lineHeight: 1.2 }}>
-                        Hormat kami,
-                      </Typography>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 900, color: '#0f172a', letterSpacing: '0.02em', mb: 1 }}>
-                        ATASILABS
-                      </Typography>
-
-                      {/* 2. TANDATANGAN DI TENGAH */}
-                      {cif.party1Signature?.signatureBase64 ? (
-                        <Box sx={{ my: 1, p: 1, border: '1px dashed #cbd5e1', borderRadius: 1.5, bgcolor: '#f8fafc' }}>
-                          <Box
-                            component="img"
-                            src={cif.party1Signature.signatureBase64}
-                            alt="Tanda Tangan Admin"
-                            sx={{ maxHeight: 65, maxWidth: 190, mx: 'auto', display: 'block', objectFit: 'contain' }}
-                          />
-                          {cif.party1Signature.auditTrail?.signedAt && (
-                            <Typography variant="caption" display="block" color="text.secondary" sx={{ fontSize: '0.68rem', mt: 0.5, fontStyle: 'italic' }}>
-                              Signed: {cif.party1Signature.auditTrail.signedAt}
-                            </Typography>
-                          )}
-                        </Box>
-                      ) : (
-                        <Box sx={{ minHeight: 70, display: 'flex', alignItems: 'center', justifyContent: 'center', my: 1 }}>
-                          <Typography variant="caption" sx={{ color: '#94a3b8', fontStyle: 'italic' }}>
-                            ( Tanda Tangan Digital )
-                          </Typography>
-                        </Box>
-                      )}
-
-                      {/* 3. NAMA LENGKAP & JABATAN DI BAWAH (KAIDAH RESMI NASKAH DINAS) */}
-                      <Typography
-                        variant="body1"
-                        sx={{
-                          fontWeight: 800,
-                          color: '#0f172a',
-                          mt: 1.5,
-                          fontSize: '0.925rem',
-                          textDecoration: 'underline',
-                          textUnderlineOffset: '3px',
-                        }}
-                      >
-                        {cif.party1Signature?.auditTrail?.signedBy || cif.adminName || 'Perwakilan Atasilabs'}
-                      </Typography>
-                      <Typography variant="caption" display="block" sx={{ fontWeight: 600, color: '#475569', mt: 0.5, fontSize: '0.78rem' }}>
-                        {cif.party1Signature?.auditTrail?.signerRole || getDynamicSignerRole(cif.party1Signature?.auditTrail?.signedBy || cif.adminName, 'Founder & CEO Atasilabs')}
-                      </Typography>
-                    </Box>
-                  </Box>
+                  <DocumentSignatureFooter
+                    locationCity="Subang"
+                    dateStr={cif.date}
+                    party1Title="Admin / Sales,"
+                    party1Sub="ATASILABS"
+                    party1Name={cif.adminName || 'Cecep Fahmidin'}
+                    party1Role="Admin / Sales Lead"
+                    party1Sig={cif.party1Signature}
+                    onSignParty1Cb={onSignParty1}
+                    isSingleSigner={true}
+                  />
                 </Box>
               </td>
             </tr>
@@ -811,7 +885,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
           <tfoot>
             <tr>
               <td style={{ padding: 0, margin: 0, border: 'none', background: 'transparent', height: '2.2cm' }}>
-                <div className="footer-space" style={{ height: '2.2cm' }}></div>
+                <div className="footer-space" style={{ height: '3.5cm' }}></div>
               </td>
             </tr>
           </tfoot>
@@ -923,7 +997,22 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
                   {/* Top Document Header Title & Metadata Table */}
                   <Box sx={{ width: '100%', display: 'block', mb: 2, clear: 'both' }}>
                     {/* 1. Judul Requirement Specification Document (RSD) Align Center (Baris 1 - Full Width) */}
-                    <Box sx={{ width: '100%', display: 'block', textAlign: 'center', mt: 0, mb: 3, clear: 'both' }}>
+                    <Box
+                      sx={{
+                        width: '100%',
+                        display: 'block',
+                        textAlign: 'center',
+                        clear: 'both',
+                        '@media screen': {
+                          mt: '2cm',
+                          mb: 'calc(24px + 0.5cm)',
+                        },
+                        '@media print': {
+                          mt: 0,
+                          mb: 3,
+                        },
+                      }}
+                    >
                       <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', fontSize: '1.35rem', lineHeight: 1.2, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', width: '100%', textAlign: 'center' }}>
                         REQUIREMENT SPECIFICATION DOCUMENT (RSD)
                       </Typography>
@@ -1239,63 +1328,17 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
                   </Box>
 
                   {/* Signature Footer matching Formal Indonesian Official Document Standards */}
-                  <Box sx={{ mt: 5, pt: 2, display: 'flex', justifyContent: 'flex-end', textAlign: 'center' }}>
-                    <Box sx={{ minWidth: 260 }}>
-                      {/* Tempat & Tanggal Penandatanganan */}
-                      <Typography variant="body2" sx={{ color: '#334155', mb: 1.5, fontSize: '0.85rem' }}>
-                        Subang, {rsd.issueDate || new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-                      </Typography>
-
-                      {/* 1. JABATAN & INSTANSI DI ATAS */}
-                      <Typography variant="body2" sx={{ fontWeight: 700, color: '#0f172a', lineHeight: 1.2 }}>
-                        Disusun oleh,
-                      </Typography>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 900, color: '#0f172a', letterSpacing: '0.02em', mb: 1 }}>
-                        ATASILABS
-                      </Typography>
-
-                      {/* 2. TANDATANGAN DI TENGAH */}
-                      {rsd.party1Signature?.signatureBase64 ? (
-                        <Box sx={{ my: 1, p: 1, border: '1px dashed #cbd5e1', borderRadius: 1.5, bgcolor: '#f8fafc' }}>
-                          <Box
-                            component="img"
-                            src={rsd.party1Signature.signatureBase64}
-                            alt="Tanda Tangan IT Lead"
-                            sx={{ maxHeight: 65, maxWidth: 190, mx: 'auto', display: 'block', objectFit: 'contain' }}
-                          />
-                          {rsd.party1Signature.auditTrail?.signedAt && (
-                            <Typography variant="caption" display="block" color="text.secondary" sx={{ fontSize: '0.68rem', mt: 0.5, fontStyle: 'italic' }}>
-                              Signed: {rsd.party1Signature.auditTrail.signedAt}
-                            </Typography>
-                          )}
-                        </Box>
-                      ) : (
-                        <Box sx={{ minHeight: 70, display: 'flex', alignItems: 'center', justifyContent: 'center', my: 1 }}>
-                          <Typography variant="caption" sx={{ color: '#94a3b8', fontStyle: 'italic' }}>
-                            ( Tanda Tangan Digital )
-                          </Typography>
-                        </Box>
-                      )}
-
-                      {/* 3. NAMA LENGKAP & JABATAN DI BAWAH (KAIDAH RESMI NASKAH DINAS) */}
-                      <Typography
-                        variant="body1"
-                        sx={{
-                          fontWeight: 800,
-                          color: '#0f172a',
-                          mt: 1.5,
-                          fontSize: '0.925rem',
-                          textDecoration: 'underline',
-                          textUnderlineOffset: '3px',
-                        }}
-                      >
-                        {rsd.party1Signature?.auditTrail?.signedBy || rsd.authorITLead || 'Cecep Fahmidin'}
-                      </Typography>
-                      <Typography variant="caption" display="block" sx={{ fontWeight: 600, color: '#475569', mt: 0.5, fontSize: '0.78rem' }}>
-                        {rsd.party1Signature?.auditTrail?.signerRole || getDynamicSignerRole(rsd.party1Signature?.auditTrail?.signedBy || rsd.authorITLead, 'IT Lead / Software Architect')}
-                      </Typography>
-                    </Box>
-                  </Box>
+                  <DocumentSignatureFooter
+                    locationCity="Subang"
+                    dateStr={rsd.issueDate}
+                    party1Title="Disusun oleh,"
+                    party1Sub="ATASILABS"
+                    party1Name={rsd.authorITLead || 'Cecep Fahmidin'}
+                    party1Role="IT Lead / Software Architect"
+                    party1Sig={rsd.party1Signature}
+                    onSignParty1Cb={onSignParty1}
+                    isSingleSigner={true}
+                  />
                 </Box>
               </td>
             </tr>
@@ -1303,7 +1346,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
           <tfoot>
             <tr>
               <td style={{ padding: 0, margin: 0, border: 'none', background: 'transparent', height: '2.2cm' }}>
-                <div className="footer-space" style={{ height: '2.2cm' }}></div>
+                <div className="footer-space" style={{ height: '3.5cm' }}></div>
               </td>
             </tr>
           </tfoot>
@@ -1420,7 +1463,22 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
                   {/* Top Document Header Title & Metadata Table */}
                   <Box sx={{ width: '100%', display: 'block', mb: 2, clear: 'both' }}>
                     {/* 1. Judul MoU Align Center */}
-                    <Box sx={{ width: '100%', display: 'block', textAlign: 'center', mt: 0, mb: 1, clear: 'both' }}>
+                    <Box
+                      sx={{
+                        width: '100%',
+                        display: 'block',
+                        textAlign: 'center',
+                        clear: 'both',
+                        '@media screen': {
+                          mt: '2cm',
+                          mb: 'calc(8px + 0.5cm)',
+                        },
+                        '@media print': {
+                          mt: 0,
+                          mb: 1,
+                        },
+                      }}
+                    >
                       <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', fontSize: '1.35rem', lineHeight: 1.2, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', width: '100%', textAlign: 'center' }}>
                         MEMORANDUM OF UNDERSTANDING (MoU)
                       </Typography>
@@ -1455,25 +1513,25 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
                     Pada hari ini, <strong>{parseIndonesianDateParts(mou.date).dayName || mou.dayName || '.....'}</strong>, Tanggal <strong>{mou.date}</strong>, telah terjadi kesepakatan kerjasama, diantara:
                   </Typography>
 
-                  <Box sx={{ pl: 2, mb: 2 }}>
-                    <Typography variant="body2" sx={{ mb: 1, lineHeight: 1.5 }}>
-                      1. <strong>ATASILABS</strong>, sebuah entitas penyedia layanan pengembangan teknologi dan produk digital, berkedudukan di Subang, Jawa Barat, dalam hal ini diwakili oleh <strong>{party1Name}</strong> selaku <strong>{party1Role}</strong> yang selanjutnya disebut sebagai <strong>PIHAK PERTAMA</strong>.
-                    </Typography>
-                    <Typography variant="body2" sx={{ mb: 1.5, lineHeight: 1.5 }}>
-                      2. <strong>{mou.clientCompany || '(Nama Perusahaan/Klien)'}</strong>, berkedudukan di {mou.clientAddress || '(Alamat Klien)'}, dalam hal ini diwakili oleh <strong>{party2Name}</strong> selaku <strong>{party2Role}</strong>, yang selanjutnya disebut sebagai <strong>PIHAK KEDUA</strong>.
-                    </Typography>
+                  <Box sx={{ mb: 2 }}>
+                    <DocListItem num="1." level={1}>
+                      <strong>ATASILABS</strong>, sebuah entitas penyedia layanan pengembangan teknologi dan produk digital, berkedudukan di Subang, Jawa Barat, dalam hal ini diwakili oleh <strong>{party1Name}</strong> selaku <strong>{party1Role}</strong> yang selanjutnya disebut sebagai <strong>PIHAK PERTAMA</strong>.
+                    </DocListItem>
+                    <DocListItem num="2." level={1}>
+                      <strong>{mou.clientCompany || '(Nama Perusahaan/Klien)'}</strong>, berkedudukan di {mou.clientAddress || '(Alamat Klien)'}, dalam hal ini diwakili oleh <strong>{party2Name}</strong> selaku <strong>{party2Role}</strong>, yang selanjutnya disebut sebagai <strong>PIHAK KEDUA</strong>.
+                    </DocListItem>
                   </Box>
 
                   <Typography variant="body2" sx={{ mb: 1.5, lineHeight: 1.6 }}>
                     PIHAK PERTAMA dan PIHAK KEDUA secara Bersama – sama selanjutnya disebut sebagai <strong>“PARA PIHAK”</strong>. PARA PIHAK terlebih dahulu menerangkan hal-hal berikut:
                   </Typography>
-                  <Box sx={{ pl: 2, mb: 2 }}>
-                    <Typography variant="body2" sx={{ mb: 0.5 }}>
-                      • Bahwa PIHAK PERTAMA adalah pihak yang memiliki keahlian, pengalaman dan sumberdaya dalam pengembangan website, aplikasi serta produk digital.
-                    </Typography>
-                    <Typography variant="body2" sx={{ mb: 0.5 }}>
-                      • Bahwa PIHAK KEDUA membutuhkan jasa dan layanan pengembangan website untuk menunjang kegiatan operasional dan/atau bisnis PIHAK KEDUA.
-                    </Typography>
+                  <Box sx={{ mb: 2 }}>
+                    <DocListItem num="•" level={1}>
+                      Bahwa PIHAK PERTAMA adalah pihak yang memiliki keahlian, pengalaman dan sumberdaya dalam pengembangan website, aplikasi serta produk digital.
+                    </DocListItem>
+                    <DocListItem num="•" level={1}>
+                      Bahwa PIHAK KEDUA membutuhkan jasa dan layanan pengembangan website untuk menunjang kegiatan operasional dan/atau bisnis PIHAK KEDUA.
+                    </DocListItem>
                   </Box>
 
                   <Typography variant="body2" sx={{ mb: 2.5, lineHeight: 1.6 }}>
@@ -1482,174 +1540,162 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
 
                   {/* PASAL 1 */}
                   <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.5 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.8 }}>
                       PASAL 1: RUANG LINGKUP PEKERJAAN
                     </Typography>
-                    <Typography variant="body2" sx={{ lineHeight: 1.5, mb: 0.5 }}>
+                    <Typography variant="body2" sx={{ lineHeight: 1.6, mb: 1 }}>
                       PIHAK PERTAMA sepakat untuk menyediakan jasa pengembangan website kepada PIHAK KEDUA yang termasuk dalam kategori <strong>{mou.tierCategory}</strong> mencakup rincian pekerjaan sebagai berikut:
                     </Typography>
-                    <Box sx={{ pl: 2.5 }}>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>1. Perancangan, pengembangan dan integrasi database</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>2. Pengujian sistem (testing & quality assurance) sebelum peluncuran</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>3. Pelatihan singkat (user training) pengelolaan admin website</Typography>
-                    </Box>
+                    <DocListItem num="1." level={2}>Perancangan, pengembangan dan integrasi database</DocListItem>
+                    <DocListItem num="2." level={2}>Pengujian sistem (testing & quality assurance) sebelum peluncuran</DocListItem>
+                    <DocListItem num="3." level={2}>Pelatihan singkat (user training) pengelolaan admin website</DocListItem>
                   </Box>
 
                   {/* PASAL 2 */}
                   <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.5 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.8 }}>
                       PASAL 2: SPESIFIKASI DAN JADWAL PEKERJAAN
                     </Typography>
-                    <Box sx={{ pl: 1 }}>
-                      <Typography variant="body2" sx={{ lineHeight: 1.5, mb: 0.5 }}>
-                        1. Detail spesifikasi teknis dan batas waktu pengerjaan (timeline) diatur secara spesifik dalam dokumen lampiran/proposal penawaran yang menjadi satu kesatuan dengan MoU ini.
-                      </Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.5 }}>
-                        2. Keterlambatan penyelesaian pekerjaan yang diakibatkan karena keterlambatan dalam penyerahan data, materi konten, akses, keputusan klien atau perubahan scope dapat menjadi dasar penyesuaian waktu penyelesaian.
-                      </Typography>
-                    </Box>
+                    <DocListItem num="1." level={1}>
+                      Detail spesifikasi teknis dan batas waktu pengerjaan (timeline) diatur secara spesifik dalam dokumen lampiran/proposal penawaran yang menjadi satu kesatuan dengan MoU ini.
+                    </DocListItem>
+                    <DocListItem num="2." level={1}>
+                      Keterlambatan penyelesaian pekerjaan yang diakibatkan karena keterlambatan dalam penyerahan data, materi konten, akses, keputusan klien atau perubahan scope dapat menjadi dasar penyesuaian waktu penyelesaian.
+                    </DocListItem>
                   </Box>
 
                   {/* PASAL 3 */}
                   <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.5 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.8 }}>
                       PASAL 3: BIAYA DAN SKEMA PEMBAYARAN
                     </Typography>
-                    <Box sx={{ pl: 1 }}>
-                      <Typography variant="body2" sx={{ lineHeight: 1.5, mb: 1 }}>
-                        1. Total nilai investasi pekerjaan pembuatan website ini disepakati sebesar <strong>Rp {mou.totalInvestment?.toLocaleString('id-ID') || '0'} ({mou.totalInvestmentTerbilang || '-'})</strong> dengan skema pembayaran berikut:
+                    <DocListItem num="1." level={1}>
+                      Total nilai investasi pekerjaan pembuatan website ini disepakati sebesar <strong>Rp {mou.totalInvestment?.toLocaleString('id-ID') || '0'} ({mou.totalInvestmentTerbilang || '-'})</strong> dengan skema pembayaran berikut:
+                    </DocListItem>
+                    {isTier1_2 ? (
+                      <Box sx={{ my: 0.5 }}>
+                        <DocListItem num="a." level={2}>
+                          Pembayaran Tahap 1 (uang muka) ditetapkan 50% dari total harga yang telah disepakati sebesar <strong>Rp {mou.paymentScheme?.dpNominal?.toLocaleString('id-ID') || 0}</strong> yang dibayarkan pada saat penandatanganan MoU ini.
+                        </DocListItem>
+                        <DocListItem num="b." level={2}>
+                          Pembayaran Tahap 2 (pelunasan) ditetapkan 50% dari total harga yang telah disepakati sebesar <strong>Rp {mou.paymentScheme?.finalNominal?.toLocaleString('id-ID') || 0}</strong> yang dibayarkan setelah pekerjaan selesai diuji coba dan sebelum penyerahan hak akses utama/deployment live.
+                        </DocListItem>
+                      </Box>
+                    ) : (
+                      <Box sx={{ my: 0.5 }}>
+                        <DocListItem num="a." level={2}>
+                          Pembayaran Tahap 1 (uang muka) ditetapkan 30% dari total harga yang telah disepakati sebesar <strong>Rp {mou.paymentScheme?.dpNominal?.toLocaleString('id-ID') || 0}</strong> yang dibayarkan pada saat penandatanganan MoU ini.
+                        </DocListItem>
+                        <DocListItem num="b." level={2}>
+                          Pembayaran Tahap 2 (progress development) ditetapkan 30% dari total harga yang telah disepakati sebesar <strong>Rp {mou.paymentScheme?.midNominal?.toLocaleString('id-ID') || 0}</strong> yang dibayarkan setelah desain disetujui dan sistem memasuki tahap akhir.
+                        </DocListItem>
+                        <DocListItem num="c." level={2}>
+                          Pembayaran Tahap 3 (pelunasan) ditetapkan 40% dari total harga yang telah disepakati sebesar <strong>Rp {mou.paymentScheme?.finalNominal?.toLocaleString('id-ID') || 0}</strong> yang dibayarkan setelah pekerjaan selesai diuji coba dan sebelum penyerahan hak akses utama/deployment live.
+                        </DocListItem>
+                      </Box>
+                    )}
+                    <DocListItem num="2." level={1}>
+                      Pembayaran oleh PIHAK KEDUA kepada PIHAK PERTAMA dilaksanakan melalui Rekening PIHAK PERTAMA, sebagai berikut:
+                    </DocListItem>
+                    <Paper variant="outlined" sx={{ p: 1.5, mx: 2, my: 1, bgcolor: 'transparent', borderColor: '#000000', textAlign: 'center' }}>
+                      <Typography variant="subtitle2" align="center" sx={{ fontWeight: 800, color: '#0f172a', textAlign: 'center' }}>
+                        {mou.bankAccount?.bankName || 'Bank BRI'} &nbsp;&nbsp;|&nbsp;&nbsp; No. Rekening: {mou.bankAccount?.accountNumber || '4388-01-0000-25-56-7'} &nbsp;&nbsp;|&nbsp;&nbsp; a.n. {mou.bankAccount?.accountHolder || 'PT AULIA INDOLAND GRUP'}
                       </Typography>
-                      {isTier1_2 ? (
-                        <Box sx={{ pl: 2, mb: 1 }}>
-                          <Typography variant="body2" sx={{ lineHeight: 1.5, mb: 0.5 }}>
-                            a. Pembayaran Tahap 1 (uang muka) ditetapkan 50% dari total harga yang telah disepakati sebesar <strong>Rp {mou.paymentScheme?.dpNominal?.toLocaleString('id-ID') || 0}</strong> yang dibayarkan pada saat penandatanganan MoU ini.
-                          </Typography>
-                          <Typography variant="body2" sx={{ lineHeight: 1.5 }}>
-                            b. Pembayaran Tahap 2 (pelunasan) ditetapkan 50% dari total harga yang telah disepakati sebesar <strong>Rp {mou.paymentScheme?.finalNominal?.toLocaleString('id-ID') || 0}</strong> yang dibayarkan setelah pekerjaan selesai diuji coba dan sebelum penyerahan hak akses utama/deployment live.
-                          </Typography>
-                        </Box>
-                      ) : (
-                        <Box sx={{ pl: 2, mb: 1 }}>
-                          <Typography variant="body2" sx={{ lineHeight: 1.5, mb: 0.5 }}>
-                            a. Pembayaran Tahap 1 (uang muka) ditetapkan 30% dari total harga yang telah disepakati sebesar <strong>Rp {mou.paymentScheme?.dpNominal?.toLocaleString('id-ID') || 0}</strong> yang dibayarkan pada saat penandatanganan MoU ini.
-                          </Typography>
-                          <Typography variant="body2" sx={{ lineHeight: 1.5, mb: 0.5 }}>
-                            b. Pembayaran Tahap 2 (progress development) ditetapkan 30% dari total harga yang telah disepakati sebesar <strong>Rp {mou.paymentScheme?.midNominal?.toLocaleString('id-ID') || 0}</strong> yang dibayarkan setelah desain disetujui dan sistem memasuki tahap akhir.
-                          </Typography>
-                          <Typography variant="body2" sx={{ lineHeight: 1.5 }}>
-                            c. Pembayaran Tahap 3 (pelunasan) ditetapkan 40% dari total harga yang telah disepakati sebesar <strong>Rp {mou.paymentScheme?.finalNominal?.toLocaleString('id-ID') || 0}</strong> yang dibayarkan setelah pekerjaan selesai diuji coba dan sebelum penyerahan hak akses utama/deployment live.
-                          </Typography>
-                        </Box>
-                      )}
-                      <Typography variant="body2" sx={{ lineHeight: 1.5, mb: 0.5 }}>
-                        2. Pembayaran oleh PIHAK KEDUA kepada PIHAK PERTAMA dilaksanakan melalui Rekening PIHAK PERTAMA, sebagai berikut:
-                      </Typography>
-                      <Paper variant="outlined" sx={{ p: 1.5, mx: 2, my: 1, bgcolor: 'transparent', borderColor: '#000000', textAlign: 'center' }}>
-                        <Typography variant="subtitle2" align="center" sx={{ fontWeight: 800, color: '#0f172a', textAlign: 'center' }}>
-                          {mou.bankAccount?.bankName || 'Bank BRI'} &nbsp;&nbsp;|&nbsp;&nbsp; No. Rekening: {mou.bankAccount?.accountNumber || '4388-01-0000-25-56-7'} &nbsp;&nbsp;|&nbsp;&nbsp; a.n. {mou.bankAccount?.accountHolder || 'PT AULIA INDOLAND GRUP'}
-                        </Typography>
-                      </Paper>
-                      <Typography variant="body2" sx={{ lineHeight: 1.5 }}>
-                        3. Pembayaran melalui transfer dianggap sah apabila dana yang bersangkutan efektif diterima oleh PIHAK PERTAMA. PIHAK KEDUA akan dibuatkan tanda terima oleh PIHAK PERTAMA yang merupakan bagian tidak terpisahkan dari perjanjian ini.
-                      </Typography>
-                    </Box>
+                    </Paper>
+                    <DocListItem num="3." level={1}>
+                      Pembayaran melalui transfer dianggap sah apabila dana yang bersangkutan efektif diterima oleh PIHAK PERTAMA. PIHAK KEDUA akan dibuatkan tanda terima oleh PIHAK PERTAMA yang merupakan bagian tidak terpisahkan dari perjanjian ini.
+                    </DocListItem>
                   </Box>
 
                   {/* PASAL 4 */}
                   <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.5 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.8 }}>
                       PASAL 4: KEWAJIBAN PARA PIHAK
                     </Typography>
-                    <Box sx={{ pl: 1 }}>
-                      <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.3 }}>1. Kewajiban PIHAK PERTAMA:</Typography>
-                      <Box sx={{ pl: 2, mb: 1 }}>
-                        <Typography variant="body2" sx={{ lineHeight: 1.4 }}>• Mengerjakan dan menyelesaikan pembuatan website sesuai dengan spesifikasi dan jadwal yang telah disepakati.</Typography>
-                        <Typography variant="body2" sx={{ lineHeight: 1.4 }}>• Memberikan laporan perkembangan (progress report) secara berkala kepada PIHAK KEDUA.</Typography>
-                        <Typography variant="body2" sx={{ lineHeight: 1.4 }}>• Memberikan garansi perbaikan bug/error selama {mou.warrantyDays || 30} (tiga puluh) hari setelah penyerahan hasil pengerjaan.</Typography>
+                    <DocListItem num="1." level={1}>
+                      <strong>Kewajiban PIHAK PERTAMA:</strong>
+                      <Box sx={{ mt: 0.5 }}>
+                        <DocListItem num="•" level={2}>Mengerjakan dan menyelesaikan pembuatan website sesuai dengan spesifikasi dan jadwal yang telah disepakati.</DocListItem>
+                        <DocListItem num="•" level={2}>Memberikan laporan perkembangan (progress report) secara berkala kepada PIHAK KEDUA.</DocListItem>
+                        <DocListItem num="•" level={2}>Memberikan garansi perbaikan bug/error selama {mou.warrantyDays || 30} (tiga puluh) hari setelah penyerahan hasil pengerjaan.</DocListItem>
                       </Box>
-                      <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.3 }}>2. Kewajiban PIHAK KEDUA:</Typography>
-                      <Box sx={{ pl: 2 }}>
-                        <Typography variant="body2" sx={{ lineHeight: 1.4 }}>• Menyediakan data, materi konten (teks, gambar, logo, video) dan kredensial yang dibutuhkan tepat waktu.</Typography>
-                        <Typography variant="body2" sx={{ lineHeight: 1.4 }}>• Melakukan pembayaran tepat waktu sesuai kesepakatan.</Typography>
-                        <Typography variant="body2" sx={{ lineHeight: 1.4 }}>• Melakukan peninjauan (review) dan memberikan masukan/persetujuan atas hasil pengerjaan dengan tepat waktu.</Typography>
+                    </DocListItem>
+                    <DocListItem num="2." level={1}>
+                      <strong>Kewajiban PIHAK KEDUA:</strong>
+                      <Box sx={{ mt: 0.5 }}>
+                        <DocListItem num="•" level={2}>Menyediakan data, materi konten (teks, gambar, logo, video) dan kredensial yang dibutuhkan tepat waktu.</DocListItem>
+                        <DocListItem num="•" level={2}>Melakukan pembayaran tepat waktu sesuai kesepakatan.</DocListItem>
+                        <DocListItem num="•" level={2}>Melakukan peninjauan (review) dan memberikan masukan/persetujuan atas hasil pengerjaan dengan tepat waktu.</DocListItem>
                       </Box>
-                    </Box>
+                    </DocListItem>
                   </Box>
 
                   {/* PASAL 5 */}
                   <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.5 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.8 }}>
                       PASAL 5: PROSEDUR REVISI DAN PERUBAHAN PEKERJAAN
                     </Typography>
-                    <Box sx={{ pl: 1 }}>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>1. PIHAK KEDUA berhak meminta revisi atas hasil pekerjaan yang tidak sesuai dengan brief, desain atau spesifikasi yang telah disepakati.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>2. Revisi yang masih termasuk ruang lingkup pekerjaan tidak dikenakan biaya tambahan.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>3. Batas revisi yang termasuk dalam pekerjaan sebanyak {mou.revisionLimitDays || 3} kali revisi.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>4. Perubahan permintaan dari PIHAK KEDUA yang menambah atau mengubah ruang lingkup pekerjaan dapat dikenakan biaya tambahan.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>5. Persetujuan melalui dokumen, email dan/atau WhatsApp dapat dianggap sebagai persetujuan tertulis sepanjang dapat dibuktikan dan memuat kesepakatan yang jelas.</Typography>
-                    </Box>
+                    <DocListItem num="1." level={1}>PIHAK KEDUA berhak meminta revisi atas hasil pekerjaan yang tidak sesuai dengan brief, desain atau spesifikasi yang telah disepakati.</DocListItem>
+                    <DocListItem num="2." level={1}>Revisi yang masih termasuk ruang lingkup pekerjaan tidak dikenakan biaya tambahan.</DocListItem>
+                    <DocListItem num="3." level={1}>Batas revisi yang termasuk dalam pekerjaan sebanyak {mou.revisionLimitDays || 3} kali revisi.</DocListItem>
+                    <DocListItem num="4." level={1}>Perubahan permintaan dari PIHAK KEDUA yang menambah atau mengubah ruang lingkup pekerjaan dapat dikenakan biaya tambahan.</DocListItem>
+                    <DocListItem num="5." level={1}>Persetujuan melalui dokumen, email dan/atau WhatsApp dapat dianggap sebagai persetujuan tertulis sepanjang dapat dibuktikan dan memuat kesepakatan yang jelas.</DocListItem>
                   </Box>
 
                   {/* PASAL 6 */}
                   <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.5 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.8 }}>
                       PASAL 6: SERAH TERIMA DAN MASA GARANSI
                     </Typography>
-                    <Box sx={{ pl: 1 }}>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>1. PIHAK PERTAMA wajib menyerahkan website/produk digital termasuk didalamnya source code dan akses kepada PIHAK KEDUA.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>2. Serah terima pekerjaan dilakukan setelah fitur sesuai dengan spesifikasi teknis yang telah disepakati oleh PARA PIHAK.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>3. Garansi tidak mencakup:</Typography>
-                      <Box sx={{ pl: 2 }}>
-                        <Typography variant="body2" sx={{ lineHeight: 1.4 }}>a. Perubahan fitur atau desain baru</Typography>
-                        <Typography variant="body2" sx={{ lineHeight: 1.4 }}>b. Kerusakan akibat perubahan kode oleh pihak lain</Typography>
-                        <Typography variant="body2" sx={{ lineHeight: 1.4 }}>c. Gangguan hosting, domain, server atau layanan pihak ketiga yang diluar kendali PIHAK PERTAMA</Typography>
-                        <Typography variant="body2" sx={{ lineHeight: 1.4 }}>d. Pekerjaan tambahan setelah masa garansi dapat dikenakan biaya sesuai kesepakatan</Typography>
+                    <DocListItem num="1." level={1}>PIHAK PERTAMA wajib menyerahkan website/produk digital termasuk didalamnya source code dan akses kepada PIHAK KEDUA.</DocListItem>
+                    <DocListItem num="2." level={1}>Serah terima pekerjaan dilakukan setelah fitur sesuai dengan spesifikasi teknis yang telah disepakati oleh PARA PIHAK.</DocListItem>
+                    <DocListItem num="3." level={1}>
+                      Garansi tidak mencakup:
+                      <Box sx={{ mt: 0.5 }}>
+                        <DocListItem num="a." level={2}>Perubahan fitur atau desain baru</DocListItem>
+                        <DocListItem num="b." level={2}>Kerusakan akibat perubahan kode oleh pihak lain</DocListItem>
+                        <DocListItem num="c." level={2}>Gangguan hosting, domain, server atau layanan pihak ketiga yang diluar kendali PIHAK PERTAMA</DocListItem>
+                        <DocListItem num="d." level={2}>Pekerjaan tambahan setelah masa garansi dapat dikenakan biaya sesuai kesepakatan</DocListItem>
                       </Box>
-                    </Box>
+                    </DocListItem>
                   </Box>
 
                   {/* PASAL 7 */}
                   <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.5 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.8 }}>
                       PASAL 7: HAK KEKAYAAN INTELEKTUAL (HKI)
                     </Typography>
-                    <Box sx={{ pl: 1 }}>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>1. Seluruh Hak Kekayaan Intelektual atas konten, merek dagang dan data milik PIHAK KEDUA tetap sepenuhnya menjadi milik PIHAK KEDUA.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>2. Setelah pelunasan biaya pekerjaan selesai dilakukan oleh PIHAK KEDUA, hak penggunaan dan akses kode program (source code) website yang dibuat secara khusus diserahkan sepenuhnya kepada PIHAK KEDUA.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>3. PIHAK PERTAMA berhak mencantumkan hasil karya website ini ke dalam portofolio bisnis AtasiLabs kecuali ada perjanjian tertulis lain dari PIHAK KEDUA.</Typography>
-                    </Box>
+                    <DocListItem num="1." level={1}>Seluruh Hak Kekayaan Intelektual atas konten, merek dagang dan data milik PIHAK KEDUA tetap sepenuhnya menjadi milik PIHAK KEDUA.</DocListItem>
+                    <DocListItem num="2." level={1}>Setelah pelunasan biaya pekerjaan selesai dilakukan oleh PIHAK KEDUA, hak penggunaan dan akses kode program (source code) website yang dibuat secara khusus diserahkan sepenuhnya kepada PIHAK KEDUA.</DocListItem>
+                    <DocListItem num="3." level={1}>PIHAK PERTAMA berhak mencantumkan hasil karya website ini ke dalam portofolio bisnis AtasiLabs kecuali ada perjanjian tertulis lain dari PIHAK KEDUA.</DocListItem>
                   </Box>
 
                   {/* PASAL 8 */}
                   <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.5 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.8 }}>
                       PASAL 8: KERAHASIAAN INFORMASI
                     </Typography>
-                    <Typography variant="body2" sx={{ pl: 1, lineHeight: 1.5 }}>
+                    <Typography variant="body2" sx={{ lineHeight: 1.6, color: '#334155' }}>
                       PARA PIHAK sepakat untuk menjaga kerahasiaan seluruh data, informasi bisnis, dokumen teknis dan kredensial akses yang diperoleh selama proses kerjasama ini serta tidak menyebarluaskannya kepada pihak ketiga tanpa persetujuan tertulis dari pihak pemilik informasi.
                     </Typography>
                   </Box>
 
                   {/* PASAL 9 */}
                   <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.5 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.8 }}>
                       PASAL 9: JANGKA WAKTU DAN PEMBATALAN
                     </Typography>
-                    <Box sx={{ pl: 1 }}>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>1. Memorandum of Understanding (MoU) ini berlaku sejak ditandatangani hingga seluruh pengerjaan dan kewajiban selesai oleh PARA PIHAK.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>2. Apabila terjadi pembatalan sepihak oleh PIHAK KEDUA tanpa adanya kelalaian dari PIHAK PERTAMA, maka uang muka (DP) yang telah dibayarkan tidak dapat dikembalikan.</Typography>
-                    </Box>
+                    <DocListItem num="1." level={1}>Memorandum of Understanding (MoU) ini berlaku sejak ditandatangani hingga seluruh pengerjaan dan kewajiban selesai oleh PARA PIHAK.</DocListItem>
+                    <DocListItem num="2." level={1}>Apabila terjadi pembatalan sepihak oleh PIHAK KEDUA tanpa adanya kelalaian dari PIHAK PERTAMA, maka uang muka (DP) yang telah dibayarkan tidak dapat dikembalikan.</DocListItem>
                   </Box>
 
                   {/* PASAL 10 */}
                   <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.5 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.8 }}>
                       PASAL 10: FORCE MAJEURE
                     </Typography>
-                    <Box sx={{ pl: 1 }}>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>1. Force Majeure adalah keadaan diluar kendali Para Pihak yang secara langsung menghambat pelaksanaan kewajiban, seperti bencana alam, perang, kerusuhan, gangguan infrastruktur dan kebijakan pemerintah yang mempunyai akibat langsung terhadap tertundanya penyelesaian pekerjaan.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>2. Para Pihak akan melakukan musyawarah untuk menentukan penyesuaian jadwal, metode penyelesaian atau tindakan lain yang diperlukan.</Typography>
-                    </Box>
+                    <DocListItem num="1." level={1}>Force Majeure adalah keadaan diluar kendali Para Pihak yang secara langsung menghambat pelaksanaan kewajiban, seperti bencana alam, perang, kerusuhan, gangguan infrastruktur dan kebijakan pemerintah yang mempunyai akibat langsung terhadap tertundanya penyelesaian pekerjaan.</DocListItem>
+                    <DocListItem num="2." level={1}>Para Pihak akan melakukan musyawarah untuk menentukan penyesuaian jadwal, metode penyelesaian atau tindakan lain yang diperlukan.</DocListItem>
                   </Box>
 
                   {/* PASAL 11 */}
@@ -1696,7 +1742,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
           <tfoot>
             <tr>
               <td style={{ padding: 0, margin: 0, border: 'none', background: 'transparent', height: '2.2cm' }}>
-                <div className="footer-space" style={{ height: '2.2cm' }}></div>
+                <div className="footer-space" style={{ height: '3.5cm' }}></div>
               </td>
             </tr>
           </tfoot>
@@ -1810,7 +1856,22 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
                   {/* Top Document Header Title & Metadata Table */}
                   <Box sx={{ width: '100%', display: 'block', mb: 2, clear: 'both' }}>
                     {/* 1. Judul SPK Align Center */}
-                    <Box sx={{ width: '100%', display: 'block', textAlign: 'center', mt: 0, mb: 1, clear: 'both' }}>
+                    <Box
+                      sx={{
+                        width: '100%',
+                        display: 'block',
+                        textAlign: 'center',
+                        clear: 'both',
+                        '@media screen': {
+                          mt: '2cm',
+                          mb: 'calc(8px + 0.5cm)',
+                        },
+                        '@media print': {
+                          mt: 0,
+                          mb: 1,
+                        },
+                      }}
+                    >
                       <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', fontSize: '1.35rem', lineHeight: 1.2, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', width: '100%', textAlign: 'center' }}>
                         SURAT PERINTAH KERJA (SPK)
                       </Typography>
@@ -1895,223 +1956,253 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
 
                   {/* PASAL 1 */}
                   <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.5 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.8 }}>
                       PASAL 1: DASAR DAN MAKSUD PERINTAH KERJA
                     </Typography>
-                    <Box sx={{ pl: 1 }}>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>1. PIHAK PERTAMA merupakan pihak yang menerima pesanan pembuatan website dari klien.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>2. PIHAK PERTAMA memberikan perintah kerja kepada PIHAK KEDUA untuk melaksanakan pekerjaan pembuatan dan/atau pengembangan website sesuai dengan spesifikasi, ketentuan dan target serta hanya berlaku untuk satu proyek pembuatan website.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>3. PIHAK KEDUA menyatakan bersedia menerima dan melaksanakan pekerjaan secara professional, tepat waktu dan bertanggung jawab.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>4. Surat Perintah Kerja ini merupakan dokumen perintah kerja antara PIHAK PERTAMA dan PIHAK KEDUA, dan bukan merupakan perjanjian langsung antara PIHAK KEDUA dengan klien PIHAK PERTAMA.</Typography>
-                    </Box>
+                    <DocListItem num="1." level={1}>PIHAK PERTAMA merupakan pihak yang menerima pesanan pembuatan website dari klien.</DocListItem>
+                    <DocListItem num="2." level={1}>PIHAK PERTAMA memberikan perintah kerja kepada PIHAK KEDUA untuk melaksanakan pekerjaan pembuatan dan/atau pengembangan website sesuai dengan spesifikasi, ketentuan dan target serta hanya berlaku untuk satu proyek pembuatan website.</DocListItem>
+                    <DocListItem num="3." level={1}>PIHAK KEDUA menyatakan bersedia menerima dan melaksanakan pekerjaan secara professional, tepat waktu dan bertanggung jawab.</DocListItem>
+                    <DocListItem num="4." level={1}>Surat Perintah Kerja ini merupakan dokumen perintah kerja antara PIHAK PERTAMA dan PIHAK KEDUA, dan bukan merupakan perjanjian langsung antara PIHAK KEDUA dengan klien PIHAK PERTAMA.</DocListItem>
                   </Box>
 
                   {/* PASAL 2 */}
                   <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.5 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.8 }}>
                       PASAL 2: RUANG LINGKUP PEKERJAAN
                     </Typography>
-                    <Box sx={{ pl: 1 }}>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>1. Mempelajari brief dan spesifikasi website.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>2. Membuat dan/atau mengembangkan website sesuai dengan petunjuk teknis dalam Requirement Specification Document (RSD).</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>3. Mengimplementasikan halaman, fitur dan teknologi yang disepakati.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>4. Melakukan pengujian, perbaikan bug dan deployment apabila termasuk pekerjaan.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>5. Menyerahkan source code, file dan akses sesuai ketentuan dalam Surat Perintah Kerja.</Typography>
-                    </Box>
+                    <DocListItem num="1." level={1}>Mempelajari brief dan spesifikasi website.</DocListItem>
+                    <DocListItem num="2." level={1}>Membuat dan/atau mengembangkan website sesuai dengan petunjuk teknis dalam Requirement Specification Document (RSD).</DocListItem>
+                    <DocListItem num="3." level={1}>Mengimplementasikan halaman, fitur dan teknologi yang disepakati.</DocListItem>
+                    <DocListItem num="4." level={1}>Melakukan pengujian, perbaikan bug dan deployment apabila termasuk pekerjaan.</DocListItem>
+                    <DocListItem num="5." level={1}>Menyerahkan source code, file dan akses sesuai ketentuan dalam Surat Perintah Kerja.</DocListItem>
                   </Box>
 
                   {/* PASAL 3 */}
                   <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.5 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.8 }}>
                       PASAL 3: JANGKA WAKTU PELAKSANAAN PEKERJAAN
                     </Typography>
-                    <Box sx={{ pl: 1 }}>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>1. PIHAK KEDUA wajib menyelesaikan pekerjaan pada Tanggal <strong>{spk.deadlineDate || '-'}</strong> sesuai jadwal yang disepakati.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>2. PIHAK KEDUA wajib memberikan laporan progres pekerjaan secara berkala melalui grup resmi Atasilabs.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>3. Keterlambatan akibat keterlambatan materi, akses, keputusan klien atau perubahan scope dapat menjadi dasar penyesuaian waktu penyelesaian.</Typography>
-                    </Box>
+                    <DocListItem num="1." level={1}>PIHAK KEDUA wajib menyelesaikan pekerjaan pada Tanggal <strong>{spk.deadlineDate || '-'}</strong> sesuai jadwal yang disepakati.</DocListItem>
+                    <DocListItem num="2." level={1}>PIHAK KEDUA wajib memberikan laporan progres pekerjaan secara berkala melalui grup resmi Atasilabs.</DocListItem>
+                    <DocListItem num="3." level={1}>Keterlambatan akibat keterlambatan materi, akses, keputusan klien atau perubahan scope dapat menjadi dasar penyesuaian waktu penyelesaian.</DocListItem>
                   </Box>
 
                   {/* PASAL 4 */}
                   <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.5 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.8 }}>
                       PASAL 4: NILAI PEKERJAAN DAN PEMBAYARAN
                     </Typography>
-                    <Box sx={{ pl: 1 }}>
-                      <Typography variant="body2" sx={{ lineHeight: 1.5, mb: 1 }}>
-                        1. Total nilai pekerjaan sebesar <strong>Rp {spk.totalNominal?.toLocaleString('id-ID') || 0} ({spk.totalNominalTerbilang || '-'})</strong>.
-                      </Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.5, mb: 0.5 }}>
-                        2. Pembayaran dilakukan dengan ketentuan:
-                      </Typography>
+                    <DocListItem num="1." level={1}>
+                      Total nilai pekerjaan sebesar <strong>Rp {spk.totalNominal?.toLocaleString('id-ID') || 0} ({spk.totalNominalTerbilang || '-'})</strong>.
+                    </DocListItem>
+                    <DocListItem num="2." level={1}>
+                      Pembayaran dilakukan dengan ketentuan:
+                    </DocListItem>
 
-                      <TableContainer component={Paper} variant="outlined" sx={{ mb: 1, maxWidth: 600 }}>
-                        <Table size="small" sx={{ '& .MuiTableCell-root': { py: 0.4, px: 1.5, fontSize: '0.8rem', border: '1px solid #cbd5e1' } }}>
-                          <TableHead sx={{ bgcolor: '#f1f5f9' }}>
-                            <TableRow>
-                              <TableCell sx={{ fontWeight: 800 }}>Tahap</TableCell>
-                              <TableCell sx={{ fontWeight: 800, width: '20%' }}>Persentase</TableCell>
-                              <TableCell sx={{ fontWeight: 800, width: '35%' }}>Nominal</TableCell>
-                            </TableRow>
-                          </TableHead>
-                          <TableBody>
-                            <TableRow>
-                              <TableCell>SPK ditandatangani</TableCell>
-                              <TableCell>{spk.dpPercent || 40}%</TableCell>
-                              <TableCell sx={{ fontWeight: 700 }}>Rp {spk.dpNominal?.toLocaleString('id-ID') || 0}</TableCell>
-                            </TableRow>
-                            <TableRow>
-                              <TableCell>Pelunasan setelah pekerjaan selesai dan diterima Atasilabs</TableCell>
-                              <TableCell>{spk.finalPercent || 60}%</TableCell>
-                              <TableCell sx={{ fontWeight: 700 }}>Rp {spk.finalNominal?.toLocaleString('id-ID') || 0}</TableCell>
-                            </TableRow>
-                            <TableRow sx={{ bgcolor: '#f8fafc' }}>
-                              <TableCell sx={{ fontWeight: 800 }}>Total</TableCell>
-                              <TableCell sx={{ fontWeight: 800 }}>100%</TableCell>
-                              <TableCell sx={{ fontWeight: 800, color: '#0f172a' }}>Rp {spk.totalNominal?.toLocaleString('id-ID') || 0}</TableCell>
-                            </TableRow>
-                          </TableBody>
-                        </Table>
-                      </TableContainer>
+                    <TableContainer component={Paper} variant="outlined" sx={{ my: 1, ml: 3, maxWidth: 600 }}>
+                      <Table size="small" sx={{ '& .MuiTableCell-root': { py: 0.4, px: 1.5, fontSize: '0.8rem', border: '1px solid #cbd5e1' } }}>
+                        <TableHead sx={{ bgcolor: '#f1f5f9' }}>
+                          <TableRow>
+                            <TableCell sx={{ fontWeight: 800 }}>Tahap</TableCell>
+                            <TableCell sx={{ fontWeight: 800, width: '20%' }}>Persentase</TableCell>
+                            <TableCell sx={{ fontWeight: 800, width: '35%' }}>Nominal</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          <TableRow>
+                            <TableCell>SPK ditandatangani</TableCell>
+                            <TableCell>{spk.dpPercent || 40}%</TableCell>
+                            <TableCell sx={{ fontWeight: 700 }}>Rp {spk.dpNominal?.toLocaleString('id-ID') || 0}</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell>Pelunasan setelah pekerjaan selesai dan diterima Atasilabs</TableCell>
+                            <TableCell>{spk.finalPercent || 60}%</TableCell>
+                            <TableCell sx={{ fontWeight: 700 }}>Rp {spk.finalNominal?.toLocaleString('id-ID') || 0}</TableCell>
+                          </TableRow>
+                          <TableRow sx={{ bgcolor: '#f8fafc' }}>
+                            <TableCell sx={{ fontWeight: 800 }}>Total</TableCell>
+                            <TableCell sx={{ fontWeight: 800 }}>100%</TableCell>
+                            <TableCell sx={{ fontWeight: 800, color: '#0f172a' }}>Rp {spk.totalNominal?.toLocaleString('id-ID') || 0}</TableCell>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
 
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>3. Pelunasan kepada PIHAK KEDUA dilakukan setelah pekerjaan sesuai dengan spesifikasi dan hasil pekerjaan diserahkan kepada PIHAK PERTAMA.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>4. PIHAK PERTAMA berhak menunda pembayaran atas bagian pekerjaan yang belum memenuhi ketentuan dalam Surat Perintah Kerja ini.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>5. Pekerjaan tambahan dibayar berdasarkan persetujuan tertulis.</Typography>
-                    </Box>
+                    <DocListItem num="3." level={1}>Pelunasan kepada PIHAK KEDUA dilakukan setelah pekerjaan sesuai dengan spesifikasi dan hasil pekerjaan diserahkan kepada PIHAK PERTAMA.</DocListItem>
+                    <DocListItem num="4." level={1}>PIHAK PERTAMA berhak menunda pembayaran atas bagian pekerjaan yang belum memenuhi ketentuan dalam Surat Perintah Kerja ini.</DocListItem>
+                    <DocListItem num="5." level={1}>Pekerjaan tambahan dibayar berdasarkan persetujuan tertulis.</DocListItem>
                   </Box>
 
                   {/* PASAL 5 */}
                   <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.5 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.8 }}>
                       PASAL 5: KEWAJIBAN PIHAK PERTAMA
                     </Typography>
-                    <Box sx={{ pl: 1 }}>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>1. Memberikan brief, spesifikasi dan informasi yang diperlukan untuk pelaksanaan pekerjaan.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>2. Menyediakan grup komunikasi resmi untuk koordinasi teknis pelaksanaan pekerjaan.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>3. Melakukan pemeriksaan terhadap hasil pekerjaan.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>4. Membayar nilai pekerjaan sesuai dengan kesepakatan setelah kewajiban PIHAK KEDUA terpenuhi.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>5. Memberitahukan perubahan kebutuhan klien yang berpengaruh terhadap ruang lingkup pekerjaan.</Typography>
-                    </Box>
+                    <DocListItem num="1." level={1}>Memberikan brief, spesifikasi dan informasi yang diperlukan untuk pelaksanaan pekerjaan.</DocListItem>
+                    <DocListItem num="2." level={1}>Menyediakan grup komunikasi resmi untuk koordinasi teknis pelaksanaan pekerjaan.</DocListItem>
+                    <DocListItem num="3." level={1}>Melakukan pemeriksaan terhadap hasil pekerjaan.</DocListItem>
+                    <DocListItem num="4." level={1}>Membayar nilai pekerjaan sesuai dengan kesepakatan setelah kewajiban PIHAK KEDUA terpenuhi.</DocListItem>
+                    <DocListItem num="5." level={1}>Memberitahukan perubahan kebutuhan klien yang berpengaruh terhadap ruang lingkup pekerjaan.</DocListItem>
                   </Box>
 
                   {/* PASAL 6 */}
                   <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.5 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.8 }}>
                       PASAL 6: KEWAJIBAN PIHAK KEDUA
                     </Typography>
-                    <Box sx={{ pl: 1 }}>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>1. Melaksanakan pekerjaan secara professional, teliti dan bertanggung jawab.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>2. Mengikuti brief, spesifikasi dan instruksi kerja yang diberikan PIHAK PERTAMA.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>3. Memberitahukan kendala teknis maupun nonteknis yang berpotensi menghambat pekerjaan.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>4. Memberikan laporan perkembangan pekerjaan secara berkala.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>5. Tidak mengalihkan pekerjaan kepada freelancer atau pihak ketiga lain tanpa persetujuan PIHAK PERTAMA.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>6. Menjaga kerahasiaan dan keamanan seluruh akun, akses, source code, data dan informasi proyek.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>7. Melakukan perbaikan bug yang menjadi tanggung jawabnya selama masa garansi.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>8. Menyerahkan hasil pekerjaan sesuai dengan ketentuan dalam Surat Perintah Kerja.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>9. Mengembalikan dan/atau menghapus data dan akses proyek setelah pekerjaan berakhir sesuai instruksi PIHAK PERTAMA.</Typography>
-                    </Box>
+                    <DocListItem num="1." level={1}>Melaksanakan pekerjaan secara professional, teliti dan bertanggung jawab.</DocListItem>
+                    <DocListItem num="2." level={1}>Mengikuti brief, spesifikasi dan instruksi kerja yang diberikan PIHAK PERTAMA.</DocListItem>
+                    <DocListItem num="3." level={1}>Memberitahukan kendala teknis maupun nonteknis yang berpotensi menghambat pekerjaan.</DocListItem>
+                    <DocListItem num="4." level={1}>Memberikan laporan perkembangan pekerjaan secara berkala.</DocListItem>
+                    <DocListItem num="5." level={1}>Tidak mengalihkan pekerjaan kepada freelancer atau pihak ketiga lain tanpa persetujuan PIHAK PERTAMA.</DocListItem>
+                    <DocListItem num="6." level={1}>Menjaga kerahasiaan dan keamanan seluruh akun, akses, source code, data dan informasi proyek.</DocListItem>
+                    <DocListItem num="7." level={1}>Melakukan perbaikan bug yang menjadi tanggung jawabnya selama masa garansi.</DocListItem>
+                    <DocListItem num="8." level={1}>Menyerahkan hasil pekerjaan sesuai dengan ketentuan dalam Surat Perintah Kerja.</DocListItem>
+                    <DocListItem num="9." level={1}>Mengembalikan dan/atau menghapus data dan akses proyek setelah pekerjaan berakhir sesuai instruksi PIHAK PERTAMA.</DocListItem>
                   </Box>
 
                   {/* PASAL 7 */}
                   <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.5 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.8 }}>
                       PASAL 7: HAK KEKAYAAN INTELEKTUAL DAN SOURCE CODE
                     </Typography>
-                    <Box sx={{ pl: 1 }}>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>1. Seluruh hasil pekerjaan yang dibuat secara khusus untuk proyek ini dan telah dibayar lunas oleh PIHAK PERTAMA menjadi hak PIHAK PERTAMA.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>2. Hasil pekerjaan sebagaimana yang dimaksud pada ayat (1), meliputi: a. File desain, b. Source code, c. Struktur database, d. Dokumentasi, e. Konfigurasi, f. File pendukung, dan g. Hasil pekerjaan lain yang secara khusus dibuat untuk proyek.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>3. PIHAK KEDUA dilarang menjual kembali, mendistribusikan, memberikan dan/atau menggunakan ulang hasil pekerjaan untuk pihak lain tanpa persetujuan PIHAK PERTAMA.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>4. PIHAK KEDUA menjamin bahwa hasil pekerjaan yang dibuat tidak secara sengaja melanggar Hak Kekayaan Intelektual pihak lain.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>5. Apabila terdapat tuntutan pihak ketiga akibat pelanggaran yang disebabkan oleh tindakan atau kelalaian PIHAK KEDUA, PIHAK KEDUA wajib bertanggung jawab sesuai dengan ketentuan hukum yang berlaku.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>6. PIHAK KEDUA dilarang menahan, menghapus, menyembunyikan dan/atau mengunci akses source code maupun hasil pekerjaan yang telah menjadi hak PIHAK PERTAMA secara tidak sah.</Typography>
-                    </Box>
+                    <DocListItem num="1." level={1}>Seluruh hasil pekerjaan yang dibuat secara khusus untuk proyek ini dan telah dibayar lunas oleh PIHAK PERTAMA menjadi hak PIHAK PERTAMA.</DocListItem>
+                    <DocListItem num="2." level={1}>
+                      Hasil pekerjaan sebagaimana yang dimaksud pada ayat (1), meliputi:
+                      <Box sx={{ mt: 0.5 }}>
+                        <DocListItem num="a." level={2}>File desain</DocListItem>
+                        <DocListItem num="b." level={2}>Source code</DocListItem>
+                        <DocListItem num="c." level={2}>Struktur database</DocListItem>
+                        <DocListItem num="d." level={2}>Dokumentasi</DocListItem>
+                        <DocListItem num="e." level={2}>Konfigurasi</DocListItem>
+                        <DocListItem num="f." level={2}>File pendukung, dan</DocListItem>
+                        <DocListItem num="g." level={2}>Hasil pekerjaan lain yang secara khusus dibuat untuk proyek.</DocListItem>
+                      </Box>
+                    </DocListItem>
+                    <DocListItem num="3." level={1}>PIHAK KEDUA dilarang menjual kembali, mendistribusikan, memberikan dan/atau menggunakan ulang hasil pekerjaan untuk pihak lain tanpa persetujuan PIHAK PERTAMA.</DocListItem>
+                    <DocListItem num="4." level={1}>PIHAK KEDUA menjamin bahwa hasil pekerjaan yang dibuat tidak secara sengaja melanggar Hak Kekayaan Intelektual pihak lain.</DocListItem>
+                    <DocListItem num="5." level={1}>Apabila terdapat tuntutan pihak ketiga akibat pelanggaran yang disebabkan oleh tindakan atau kelalaian PIHAK KEDUA, PIHAK KEDUA wajib bertanggung jawab sesuai dengan ketentuan hukum yang berlaku.</DocListItem>
+                    <DocListItem num="6." level={1}>PIHAK KEDUA dilarang menahan, menghapus, menyembunyikan dan/atau mengunci akses source code maupun hasil pekerjaan yang telah menjadi hak PIHAK PERTAMA secara tidak sah.</DocListItem>
                   </Box>
 
                   {/* PASAL 8 */}
                   <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.5 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.8 }}>
                       PASAL 8: KOMUNIKASI DAN HUBUNGAN DENGAN KLIEN
                     </Typography>
-                    <Box sx={{ pl: 1 }}>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>1. PIHAK KEDUA diperbolehkan berkomunikasi langsung dengan klien untuk keperluan teknis proyek sepanjang dilakukan melalui grup resmi atau media yang disetujui oleh PIHAK PERTAMA.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>2. PIHAK KEDUA wajib menjaga sikap profesional, sopan dan tidak memberikan pernyataan yang dapat merugikan reputasi Atasilabs.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>3. PIHAK KEDUA wajib memberikan respon terhadap setiap pertanyaan, permintaan informasi atau kendala dari klien yang berkaitan dengan aspek teknis proyek paling lambat 60 (enam puluh) menit sejak pesan diterima dalam jam kerja yang disepakati oleh PARA PIHAK.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>4. Setiap perubahan scope, fitur, biaya atau jadwal yang berasal dari klien wajib dikonfirmasi kepada PIHAK PERTAMA sebelum dilaksanakan.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>5. PIHAK KEDUA dilarang membahas harga, menerima pembayaran atau membuat kesepakatan komersial langsung dengan klien tanpa persetujuan PIHAK PERTAMA.</Typography>
-                    </Box>
+                    <DocListItem num="1." level={1}>PIHAK KEDUA diperbolehkan berkomunikasi langsung dengan klien untuk keperluan teknis proyek sepanjang dilakukan melalui grup resmi atau media yang disetujui oleh PIHAK PERTAMA.</DocListItem>
+                    <DocListItem num="2." level={1}>PIHAK KEDUA wajib menjaga sikap profesional, sopan dan tidak memberikan pernyataan yang dapat merugikan reputasi Atasilabs.</DocListItem>
+                    <DocListItem num="3." level={1}>PIHAK KEDUA wajib memberikan respon terhadap setiap pertanyaan, permintaan informasi atau kendala dari klien yang berkaitan dengan aspek teknis proyek paling lambat 60 (enam puluh) menit sejak pesan diterima dalam jam kerja yang disepakati oleh PARA PIHAK.</DocListItem>
+                    <DocListItem num="4." level={1}>Setiap perubahan scope, fitur, biaya atau jadwal yang berasal dari klien wajib dikonfirmasi kepada PIHAK PERTAMA sebelum dilaksanakan.</DocListItem>
+                    <DocListItem num="5." level={1}>PIHAK KEDUA dilarang membahas harga, menerima pembayaran atau membuat kesepakatan komersial langsung dengan klien tanpa persetujuan PIHAK PERTAMA.</DocListItem>
                   </Box>
 
                   {/* PASAL 9 */}
                   <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.5 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.8 }}>
                       PASAL 9: PROSEDUR REVISI DAN PERUBAHAN PEKERJAAN
                     </Typography>
-                    <Box sx={{ pl: 1 }}>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>1. PIHAK PERTAMA berhak meminta revisi atas hasil pekerjaan yang tidak sesuai dengan brief, desain atau spesifikasi yang telah disepakati.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>2. Revisi yang masih termasuk ruang lingkup pekerjaan wajib dilakukan tanpa biaya tambahan.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>3. Batas revisi desain atau tampilan yang termasuk dalam pekerjaan maksimal sebanyak 3 (tiga) kali putaran revisi.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>4. Revisi akibat kesalahan atau ketidaksesuaian hasil pekerjaan PIHAK KEDUA tidak dihitung sebagai kuota revisi.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>5. Perubahan permintaan klien yang menambah atau mengubah ruang lingkup dapat dikenakan biaya tambahan.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>6. Setiap pekerjaan tambahan wajib disetujui secara tertulis, mengenai: a. Deskripsi pekerjaan, b. Biaya tambahan, c. Perubahan waktu pengerjaan, dan d. Ketentuan pembayaran.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>7. Persetujuan melalui email dan/atau WhatsApp dapat dianggap sebagai persetujuan tertulis sepanjang dapat dibuktikan dan memuat kesepakatan yang jelas.</Typography>
-                    </Box>
+                    <DocListItem num="1." level={1}>PIHAK PERTAMA berhak meminta revisi atas hasil pekerjaan yang tidak sesuai dengan brief, desain atau spesifikasi yang telah disepakati.</DocListItem>
+                    <DocListItem num="2." level={1}>Revisi yang masih termasuk ruang lingkup pekerjaan wajib dilakukan tanpa biaya tambahan.</DocListItem>
+                    <DocListItem num="3." level={1}>Batas revisi desain atau tampilan yang termasuk dalam pekerjaan maksimal sebanyak 3 (tiga) kali putaran revisi.</DocListItem>
+                    <DocListItem num="4." level={1}>Revisi akibat kesalahan atau ketidaksesuaian hasil pekerjaan PIHAK KEDUA tidak dihitung sebagai kuota revisi.</DocListItem>
+                    <DocListItem num="5." level={1}>Perubahan permintaan klien yang menambah atau mengubah ruang lingkup dapat dikenakan biaya tambahan.</DocListItem>
+                    <DocListItem num="6." level={1}>
+                      Setiap pekerjaan tambahan wajib disetujui secara tertulis, mengenai:
+                      <Box sx={{ mt: 0.5 }}>
+                        <DocListItem num="a." level={2}>Deskripsi pekerjaan</DocListItem>
+                        <DocListItem num="b." level={2}>Biaya tambahan</DocListItem>
+                        <DocListItem num="c." level={2}>Perubahan waktu pengerjaan, dan</DocListItem>
+                        <DocListItem num="d." level={2}>Ketentuan pembayaran.</DocListItem>
+                      </Box>
+                    </DocListItem>
+                    <DocListItem num="7." level={1}>Persetujuan melalui email dan/atau WhatsApp dapat dianggap sebagai persetujuan tertulis sepanjang dapat dibuktikan dan memuat kesepakatan yang jelas.</DocListItem>
                   </Box>
 
                   {/* PASAL 10 */}
                   <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.5 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.8 }}>
                       PASAL 10: PENGUJIAN, SERAH TERIMA DAN MASA GARANSI
                     </Typography>
-                    <Box sx={{ pl: 1 }}>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>1. PIHAK KEDUA wajib menyerahkan website/produk digital untuk dilakukan pemeriksaan oleh PIHAK PERTAMA.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>2. Apabila ditemukan bug atau ketidaksesuaian yang menjadi tanggung jawab PIHAK KEDUA, PIHAK KEDUA wajib melakukan perbaikan maksimal 7 (tujuh) hari kerja sejak pemberitahuan diterima.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>3. Serah terima pekerjaan dilakukan setelah: a. Fitur sesuai spesifikasi, b. Bug yang menjadi tanggung jawab PIHAK KEDUA yang telah diperbaiki, c. Menyerahkan file, source code dan akses yang menjadi bagian dari pekerjaan.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>4. Garansi tidak mencakup: a. Perubahan fitur atau desain baru, b. Kerusakan akibat perubahan kode oleh pihak lain, c. Gangguan hosting, domain, server atau layanan pihak ketiga diluar kendali PIHAK KEDUA, d. Pekerjaan tambahan setelah masa garansi dapat dikenakan biaya sesuai kesepakatan.</Typography>
-                    </Box>
+                    <DocListItem num="1." level={1}>
+                      PIHAK KEDUA wajib menyerahkan website/produk digital untuk dilakukan pemeriksaan oleh PIHAK PERTAMA.
+                    </DocListItem>
+                    <DocListItem num="2." level={1}>
+                      Apabila ditemukan bug atau ketidaksesuaian yang menjadi tanggung jawab PIHAK KEDUA, PIHAK KEDUA wajib melakukan perbaikan maksimal 7 (tujuh) hari kerja sejak pemberitahuan diterima.
+                    </DocListItem>
+                    <DocListItem num="3." level={1}>
+                      Serah terima pekerjaan dilakukan setelah:
+                      <Box sx={{ mt: 0.5 }}>
+                        <DocListItem num="a." level={2}>Fitur sesuai spesifikasi</DocListItem>
+                        <DocListItem num="b." level={2}>Bug yang menjadi tanggung jawab PIHAK KEDUA telah diperbaiki</DocListItem>
+                        <DocListItem num="c." level={2}>Menyerahkan file, source code dan akses yang menjadi bagian dari pekerjaan</DocListItem>
+                      </Box>
+                    </DocListItem>
+                    <DocListItem num="4." level={1}>
+                      Garansi tidak mencakup:
+                      <Box sx={{ mt: 0.5 }}>
+                        <DocListItem num="a." level={2}>Perubahan fitur atau desain baru</DocListItem>
+                        <DocListItem num="b." level={2}>Kerusakan akibat perubahan kode oleh pihak lain</DocListItem>
+                        <DocListItem num="c." level={2}>Gangguan hosting, domain, server atau layanan pihak ketiga diluar kendali PIHAK KEDUA</DocListItem>
+                        <DocListItem num="d." level={2}>Pekerjaan tambahan setelah masa garansi dapat dikenakan biaya sesuai kesepakatan</DocListItem>
+                      </Box>
+                    </DocListItem>
                   </Box>
 
                   {/* PASAL 11 */}
                   <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.5 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.8 }}>
                       PASAL 11: SANKSI DAN WANPRESTASI
                     </Typography>
-                    <Box sx={{ pl: 1 }}>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>1. Wanprestasi meliputi keterlambatan tanpa alasan, tidak menyelesaikan pekerjaan, tidak memperbaiki bug, pengalihan pekerjaan tanpa izin atau tindakan lain yang melanggar Surat Perintah Kerja.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>2. PIHAK PERTAMA dapat memberikan teguran tertulis dan kesempatan perbaikan selama 3 (tiga) hari kerja.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>3. Denda keterlambatan ditetapkan sebesar {spk.penaltyPerDayPercent || 0.5}% dari nilai pekerjaan per hari, maksimal {spk.maxPenaltyPercent || 10}% dari nilai pekerjaan.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>4. PIHAK PERTAMA dapat memotong pembayaran yang belum dibayarkan untuk denda keterlambatan.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>5. Denda tidak dapat dikenakan apabila keterlambatan disebabkan PIHAK PERTAMA, klien, perubahan scope atau force majeure.</Typography>
-                    </Box>
+                    <DocListItem num="1." level={1}>
+                      Wanprestasi meliputi keterlambatan tanpa alasan, tidak menyelesaikan pekerjaan, tidak memperbaiki bug, pengalihan pekerjaan tanpa izin atau tindakan lain yang melanggar Surat Perintah Kerja.
+                    </DocListItem>
+                    <DocListItem num="2." level={1}>
+                      PIHAK PERTAMA dapat memberikan teguran tertulis dan kesempatan perbaikan selama 3 (tiga) hari kerja.
+                    </DocListItem>
+                    <DocListItem num="3." level={1}>
+                      Denda keterlambatan ditetapkan sebesar {spk.penaltyPerDayPercent || 0.5}% dari nilai pekerjaan per hari, maksimal {spk.maxPenaltyPercent || 10}% dari nilai pekerjaan.
+                    </DocListItem>
+                    <DocListItem num="4." level={1}>
+                      PIHAK PERTAMA dapat memotong pembayaran yang belum dibayarkan untuk denda keterlambatan.
+                    </DocListItem>
+                    <DocListItem num="5." level={1}>
+                      Denda tidak dapat dikenakan apabila keterlambatan disebabkan PIHAK PERTAMA, klien, perubahan scope atau force majeure.
+                    </DocListItem>
                   </Box>
 
                   {/* PASAL 12 */}
                   <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.5 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.8 }}>
                       PASAL 12: PENYELESAIAN PERSELISIHAN
                     </Typography>
-                    <Box sx={{ pl: 1 }}>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>1. Setiap perselisihan akan diselesaikan terlebih dahulu melalui musyawarah untuk mufakat.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>2. Apabila dalam waktu 30 (tiga puluh) hari kalender sejak dimulainya musyawarah tidak tercapai penyelesaian, Para Pihak sepakat untuk menyelesaikan perselisihan melalui jalur hukum sesuai ketentuan peraturan perundang – undangan yang berlaku.</Typography>
-                    </Box>
+                    <DocListItem num="1." level={1}>
+                      Setiap perselisihan akan diselesaikan terlebih dahulu melalui musyawarah untuk mufakat.
+                    </DocListItem>
+                    <DocListItem num="2." level={1}>
+                      Apabila dalam waktu 30 (tiga puluh) hari kalender sejak dimulainya musyawarah tidak tercapai penyelesaian, Para Pihak sepakat untuk menyelesaikan perselisihan melalui jalur hukum sesuai ketentuan peraturan perundang – undangan yang berlaku.
+                    </DocListItem>
                   </Box>
 
                   {/* PASAL 13 */}
                   <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.5 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.8 }}>
                       PASAL 13: FORCE MAJEURE
                     </Typography>
-                    <Box sx={{ pl: 1 }}>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>1. Force majeure adalah keadaan di luar kendali Para Pihak yang secara langsung menghambat pelaksanaan kewajiban, seperti bencana alam, perang, kerusuhan, gangguan infrastruktur besar atau peristiwa lain.</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.4 }}>2. Para Pihak akan melakukan musyawarah untuk menentukan penyesuaian jadwal, metode penyelesaian atau tindakan lain yang diperlukan.</Typography>
-                    </Box>
+                    <DocListItem num="1." level={1}>
+                      Force majeure adalah keadaan di luar kendali Para Pihak yang secara langsung menghambat pelaksanaan kewajiban, seperti bencana alam, perang, kerusuhan, gangguan infrastruktur besar atau peristiwa lain.
+                    </DocListItem>
+                    <DocListItem num="2." level={1}>
+                      Para Pihak akan melakukan musyawarah untuk menentukan penyesuaian jadwal, metode penyelesaian atau tindakan lain yang diperlukan.
+                    </DocListItem>
                   </Box>
 
                   {/* PASAL 14 */}
                   <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.5 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.8 }}>
                       PASAL 14: PENUTUP
                     </Typography>
-                    <Typography variant="body2" sx={{ pl: 1, lineHeight: 1.5 }}>
+                    <Typography variant="body2" sx={{ color: '#334155', lineHeight: 1.6 }}>
                       Demikian Surat Perintah Kerja ini dibuat, Para Pihak telah membaca, memahami dan menyetujui seluruh ketentuan dalam Surat Perintah Kerja ini dan mulai berlaku sejak ditandatangani Para Pihak.
                     </Typography>
                   </Box>
@@ -2140,7 +2231,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
           <tfoot>
             <tr>
               <td style={{ padding: 0, margin: 0, border: 'none', background: 'transparent', height: '2.2cm' }}>
-                <div className="footer-space" style={{ height: '2.2cm' }}></div>
+                <div className="footer-space" style={{ height: '3.5cm' }}></div>
               </td>
             </tr>
           </tfoot>
@@ -2256,7 +2347,22 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
                   {/* Top Document Header Title & Metadata Table */}
                   <Box sx={{ width: '100%', display: 'block', mb: 2, clear: 'both' }}>
                     {/* 1. Judul BAST Align Center */}
-                    <Box sx={{ width: '100%', display: 'block', textAlign: 'center', mt: 0, mb: 1, clear: 'both' }}>
+                    <Box
+                      sx={{
+                        width: '100%',
+                        display: 'block',
+                        textAlign: 'center',
+                        clear: 'both',
+                        '@media screen': {
+                          mt: '2cm',
+                          mb: 'calc(8px + 0.5cm)',
+                        },
+                        '@media print': {
+                          mt: 0,
+                          mb: 1,
+                        },
+                      }}
+                    >
                       <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', fontSize: '1.35rem', lineHeight: 1.2, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', width: '100%', textAlign: 'center' }}>
                         BERITA ACARA SERAH TERIMA (BAST)
                       </Typography>
@@ -2289,84 +2395,78 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
                     Pada hari ini, <strong>{dayName}</strong>, Tanggal <strong>{dayNum}</strong>, Bulan <strong>{monthName}</strong> Tahun <strong>{yearNum}</strong> ({formattedDate}) telah dilaksanakan serah terima pembuatan website/produk digital, diantara:
                   </Typography>
 
-                  <Box component="ol" sx={{ pl: 2.5, m: 0, mb: 2, '& li': { mb: 1, fontSize: '0.875rem', lineHeight: 1.5 } }}>
-                    <li>
-                      <strong>ATASILABS</strong>, sebuah entitas penyedia layanan pengembangan teknologi dan produk digital, berkedudukan di {bast.atasilabsAddress || 'Jl. Cinangsi, RT 003 RW 001, Subang - Jawa Barat'}, dalam hal ini diwakili oleh <strong>{party1Name}</strong> selaku <strong>{party1Role}</strong> yang selanjutnya disebut sebagai <strong>PIHAK PERTAMA</strong>
-                    </li>
-                    <li>
-                      <strong>{bast.clientCompany || 'Nama Perusahaan Klien'}</strong>, berkedudukan di {bast.clientAddress || 'Subang, Jawa Barat'}, dalam hal ini diwakili oleh <strong>{party2Name}</strong> selaku <strong>{party2Role}</strong>, yang selanjutnya disebut sebagai <strong>PIHAK KEDUA</strong>
-                    </li>
+                  <Box sx={{ mb: 2 }}>
+                    <DocListItem num="1." level={1}>
+                      <strong>ATASILABS</strong>, sebuah entitas penyedia layanan pengembangan teknologi dan produk digital, berkedudukan di {bast.atasilabsAddress || 'Jl. Cinangsi, RT 003 RW 001, Subang - Jawa Barat'}, dalam hal ini diwakili oleh <strong>{party1Name}</strong> selaku <strong>{party1Role}</strong> yang selanjutnya disebut sebagai <strong>PIHAK PERTAMA</strong>.
+                    </DocListItem>
+                    <DocListItem num="2." level={1}>
+                      <strong>{bast.clientCompany || 'Nama Perusahaan Klien'}</strong>, berkedudukan di {bast.clientAddress || 'Subang, Jawa Barat'}, dalam hal ini diwakili oleh <strong>{party2Name}</strong> selaku <strong>{party2Role}</strong>, yang selanjutnya disebut sebagai <strong>PIHAK KEDUA</strong>.
+                    </DocListItem>
                   </Box>
 
-                  <Typography variant="body2" sx={{ lineHeight: 1.5, mb: 2 }}>
+                  <Typography variant="body2" sx={{ lineHeight: 1.6, mb: 2 }}>
                     Para Pihak sepakat dan menyatakan ketentuan Berita Acara Serah Terima, sebagai berikut:
                   </Typography>
 
                   {/* Section 1 */}
                   <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.5 }}>
-                      1. Penyelesaian Pekerjaan
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.8 }}>
+                      1. PENYELESAIAN PEKERJAAN
                     </Typography>
-                    <Box sx={{ pl: 1 }}>
-                      <Typography variant="body2" sx={{ lineHeight: 1.5 }}>
-                        PIHAK PERTAMA telah menyelesaikan 100% pekerjaan pembuatan website/produk digital sesuai dengan spesifikasi teknis dan kesepakatan awal. PIHAK KEDUA telah melakukan pengujian (<em>testing</em>) dan menerima hasil pekerjaan dalam kondisi baik dan berfungsi sebagaimana mestinya.
-                      </Typography>
-                    </Box>
+                    <Typography variant="body2" sx={{ lineHeight: 1.6, color: '#334155' }}>
+                      PIHAK PERTAMA telah menyelesaikan 100% pekerjaan pembuatan website/produk digital sesuai dengan spesifikasi teknis dan kesepakatan awal. PIHAK KEDUA telah melakukan pengujian (<em>testing</em>) dan menerima hasil pekerjaan dalam kondisi baik dan berfungsi sebagaimana mestinya.
+                    </Typography>
                   </Box>
 
                   {/* Section 2 */}
                   <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.5 }}>
-                      2. Penyerahan Akses dan Hak Milik Aset
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.8 }}>
+                      2. PENYERAHAN AKSES DAN HAK MILIK ASET
                     </Typography>
-                    <Box sx={{ pl: 1 }}>
-                      <Typography variant="body2" sx={{ lineHeight: 1.5, mb: 1 }}>
-                        PIHAK PERTAMA menyerahkan seluruh hak akses operasional kepada PIHAK KEDUA, mencakup:
-                      </Typography>
+                    <Typography variant="body2" sx={{ lineHeight: 1.6, mb: 1, color: '#334155' }}>
+                      PIHAK PERTAMA menyerahkan seluruh hak akses operasional kepada PIHAK KEDUA, mencakup:
+                    </Typography>
 
-                      <TableContainer component={Paper} variant="outlined" sx={{ mb: 1, maxWidth: 650 }}>
-                        <Table size="small" sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1.5, fontSize: '0.85rem', border: '1px solid #000' } }}>
-                          <TableBody>
-                            <TableRow>
-                              <TableCell sx={{ fontWeight: 700, width: '28%', bgcolor: '#f8fafc' }}>URL Utama</TableCell>
-                              <TableCell sx={{ width: '2%', fontWeight: 700, textAlign: 'center' }}>:</TableCell>
-                              <TableCell sx={{ color: '#1d4ed8', fontWeight: 600 }}>{bast.mainUrl || '-'}</TableCell>
-                            </TableRow>
-                            <TableRow>
-                              <TableCell sx={{ fontWeight: 700, bgcolor: '#f8fafc' }}>Akses Source Code</TableCell>
-                              <TableCell sx={{ fontWeight: 700, textAlign: 'center' }}>:</TableCell>
-                              <TableCell>{bast.sourceCodeAccess || '-'}</TableCell>
-                            </TableRow>
-                            <TableRow>
-                              <TableCell sx={{ fontWeight: 700, bgcolor: '#f8fafc' }}>Akses Panel Admin</TableCell>
-                              <TableCell sx={{ fontWeight: 700, textAlign: 'center' }}>:</TableCell>
-                              <TableCell>{bast.adminPanelAccess || '-'}</TableCell>
-                            </TableRow>
-                          </TableBody>
-                        </Table>
-                      </TableContainer>
-                    </Box>
+                    <TableContainer component={Paper} variant="outlined" sx={{ mb: 1, maxWidth: 650 }}>
+                      <Table size="small" sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1.5, fontSize: '0.85rem', border: '1px solid #000' } }}>
+                        <TableBody>
+                          <TableRow>
+                            <TableCell sx={{ fontWeight: 700, width: '28%', bgcolor: '#f8fafc' }}>URL Utama</TableCell>
+                            <TableCell sx={{ width: '2%', fontWeight: 700, textAlign: 'center' }}>:</TableCell>
+                            <TableCell sx={{ color: '#1d4ed8', fontWeight: 600 }}>{bast.mainUrl || '-'}</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell sx={{ fontWeight: 700, bgcolor: '#f8fafc' }}>Akses Source Code</TableCell>
+                            <TableCell sx={{ fontWeight: 700, textAlign: 'center' }}>:</TableCell>
+                            <TableCell>{bast.sourceCodeAccess || '-'}</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell sx={{ fontWeight: 700, bgcolor: '#f8fafc' }}>Akses Panel Admin</TableCell>
+                            <TableCell sx={{ fontWeight: 700, textAlign: 'center' }}>:</TableCell>
+                            <TableCell>{bast.adminPanelAccess || '-'}</TableCell>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
                   </Box>
 
                   {/* Section 3 */}
                   <Box sx={{ mb: 3 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.5 }}>
-                      3. Masa garansi & Ketentuan Pemeliharaan
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000', textTransform: 'uppercase', mb: 0.8 }}>
+                      3. MASA GARANSI & KETENTUAN PEMELIHARAAN
                     </Typography>
-                    <Box component="ul" sx={{ pl: 3, m: 0, '& li': { mb: 0.8, fontSize: '0.875rem', lineHeight: 1.5 } }}>
-                      <li>
-                        PIHAK PERTAMA memberikan masa garansi selama <strong>{bast.warrantyDays || 30} ({warrantyWords})</strong> hari kalender sejak Berita Acara Serah terima (BAST) ditandatangani
-                      </li>
-                      <li>
-                        Garansi Mencakup perbaikan kesalahan teknis (<em>bug, error</em> atau sistem tidak berjalan sesuai spesifikasi awal)
-                      </li>
-                      <li>
-                        Permintaan garansi disampaikan melalui kanal komunikasi resmi yang disepakati. PIHAK PERTAMA akan menindaklanjuti laporan paling lambat 1x24 jam setelah laporan diterima dengan waktu penyelesaian menyesuaikan tingkat permasalahan
-                      </li>
-                      <li>
-                        Garansi tidak berlaku untuk penambahan fitur baru diluar ruang lingkup (<em>scope</em>) awal atau kerusakan akibat kelalaian/intervensi pihak ketiga (seperti kebocoran kredensial, serangan siber atau modifikasi mandiri pada kode program)
-                      </li>
-                    </Box>
+                    <DocListItem num="•" level={1}>
+                      PIHAK PERTAMA memberikan masa garansi selama <strong>{bast.warrantyDays || 30} ({warrantyWords})</strong> hari kalender sejak Berita Acara Serah terima (BAST) ditandatangani.
+                    </DocListItem>
+                    <DocListItem num="•" level={1}>
+                      Garansi mencakup perbaikan kesalahan teknis (<em>bug, error</em> atau sistem tidak berjalan sesuai spesifikasi awal).
+                    </DocListItem>
+                    <DocListItem num="•" level={1}>
+                      Permintaan garansi disampaikan melalui kanal komunikasi resmi yang disepakati. PIHAK PERTAMA akan menindaklanjuti laporan paling lambat 1x24 jam setelah laporan diterima dengan waktu penyelesaian menyesuaikan tingkat permasalahan.
+                    </DocListItem>
+                    <DocListItem num="•" level={1}>
+                      Garansi tidak berlaku untuk penambahan fitur baru diluar ruang lingkup (<em>scope</em>) awal atau kerusakan akibat kelalaian/intervensi pihak ketiga (seperti kebocoran kredensial, serangan siber atau modifikasi mandiri pada kode program).
+                    </DocListItem>
                   </Box>
 
                   {/* Penutup */}
@@ -2398,7 +2498,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
           <tfoot>
             <tr>
               <td style={{ padding: 0, margin: 0, border: 'none', background: 'transparent', height: '2.2cm' }}>
-                <div className="footer-space" style={{ height: '2.2cm' }}></div>
+                <div className="footer-space" style={{ height: '3.5cm' }}></div>
               </td>
             </tr>
           </tfoot>
@@ -2544,7 +2644,22 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
                   {/* Top Document Header Title & Metadata Table */}
                   <Box sx={{ width: '100%', display: 'block', mb: 2, clear: 'both' }}>
                     {/* 1. Judul QA Align Center */}
-                    <Box sx={{ width: '100%', display: 'block', textAlign: 'center', mt: 0, mb: 1, clear: 'both' }}>
+                    <Box
+                      sx={{
+                        width: '100%',
+                        display: 'block',
+                        textAlign: 'center',
+                        clear: 'both',
+                        '@media screen': {
+                          mt: '2cm',
+                          mb: 'calc(8px + 0.5cm)',
+                        },
+                        '@media print': {
+                          mt: 0,
+                          mb: 1,
+                        },
+                      }}
+                    >
                       <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', fontSize: '1.35rem', lineHeight: 1.2, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', width: '100%', textAlign: 'center' }}>
                         QUALITY ASSURANCE & ACCEPTANCE TEST (QA)
                       </Typography>
@@ -2610,11 +2725,11 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
                                       ? 'error'
                                       : 'warning'
                                 }
-                                onClick={onUpdateQA && !isClientRole ? toggleOverallStatus : undefined}
-                                sx={{ fontWeight: 800, cursor: onUpdateQA && !isClientRole ? 'pointer' : 'default' }}
+                                onClick={onUpdateQA && !isClientRole && !isFreelancerRole ? toggleOverallStatus : undefined}
+                                sx={{ fontWeight: 800, cursor: onUpdateQA && !isClientRole && !isFreelancerRole ? 'pointer' : 'default' }}
                               />
                             </Tooltip>
-                            {onUpdateQA && !isClientRole && (
+                            {onUpdateQA && !isClientRole && !isFreelancerRole && (
                               <Typography variant="caption" color="text.secondary" sx={{ ml: 1, fontSize: '0.68rem' }} className="no-print">
                                 (Klik chip untuk ubah status)
                               </Typography>
@@ -2665,7 +2780,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
                             <TableCell sx={{ color: '#0f172a' }}>{item.testCase}</TableCell>
                             <TableCell sx={{ color: '#0f172a' }}>{item.expectedResult}</TableCell>
                             <TableCell>
-                              <Tooltip title={onUpdateQA && !isClientRole ? 'Klik untuk toggle status (PASSED -> FAILED -> PENDING)' : ''}>
+                              <Tooltip title={onUpdateQA && !isClientRole && !isFreelancerRole ? 'Klik untuk toggle status (PASSED -> FAILED -> PENDING)' : ''}>
                                 <Chip
                                   label={item.status}
                                   size="small"
@@ -2676,8 +2791,8 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
                                         ? 'error'
                                         : 'warning'
                                   }
-                                  onClick={onUpdateQA && !isClientRole ? () => toggleTestItemStatus(idx) : undefined}
-                                  sx={{ fontWeight: 800, height: 22, fontSize: '0.68rem', cursor: onUpdateQA && !isClientRole ? 'pointer' : 'default' }}
+                                  onClick={onUpdateQA && !isClientRole && !isFreelancerRole ? () => toggleTestItemStatus(idx) : undefined}
+                                  sx={{ fontWeight: 800, height: 22, fontSize: '0.68rem', cursor: onUpdateQA && !isClientRole && !isFreelancerRole ? 'pointer' : 'default' }}
                                 />
                               </Tooltip>
                             </TableCell>
@@ -2711,7 +2826,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
           <tfoot>
             <tr>
               <td style={{ padding: 0, margin: 0, border: 'none', background: 'transparent', height: '2.2cm' }}>
-                <div className="footer-space" style={{ height: '2.2cm' }}></div>
+                <div className="footer-space" style={{ height: '3.5cm' }}></div>
               </td>
             </tr>
           </tfoot>

@@ -42,20 +42,6 @@ import { generateAutoDocumentsForProject, generateQAFromRSD } from '../../lib/do
 
 import { useSearchParams } from 'next/navigation';
 
-const LOCAL_STORAGE_KEY_CUSTOM_DOCS = 'atasilabs_custom_project_documents';
-
-const getSavedCustomDocs = (): Record<string, any> => {
-  if (typeof window !== 'undefined') {
-    try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_KEY_CUSTOM_DOCS);
-      if (saved) return JSON.parse(saved);
-    } catch (e) {
-      console.error(e);
-    }
-  }
-  return {};
-};
-
 export const DocumentsWorkflowView: React.FC = () => {
   const theme = useTheme();
   const {
@@ -69,6 +55,7 @@ export const DocumentsWorkflowView: React.FC = () => {
   } = useApp();
 
   const isClientRole = currentUser?.role === 'CLIENT';
+  const isFreelancerRole = currentUser?.role === 'FREELANCER';
 
   const projects = useMemo(() => {
     if (isClientRole) {
@@ -84,8 +71,19 @@ export const DocumentsWorkflowView: React.FC = () => {
         );
       });
     }
+
+    if (isFreelancerRole) {
+      if (!currentUser) return [];
+      const nameLower = currentUser.name.toLowerCase();
+      return rawProjects.filter(
+        (p) =>
+          (p.freelancerName && p.freelancerName.toLowerCase().includes(nameLower)) ||
+          (p.freelancerId && p.freelancerId === currentUser.id)
+      );
+    }
+
     return rawProjects;
-  }, [rawProjects, currentUser, isClientRole]);
+  }, [rawProjects, currentUser, isClientRole, isFreelancerRole]);
 
   const searchParams = useSearchParams();
 
@@ -95,8 +93,14 @@ export const DocumentsWorkflowView: React.FC = () => {
   );
 
   // Document states
+  const initialDocType = isFreelancerRole
+    ? selectedDocumentType && ['RSD', 'SPK', 'QA'].includes(selectedDocumentType)
+      ? selectedDocumentType
+      : 'RSD'
+    : selectedDocumentType || 'CIF';
+
   const [activeDocType, setActiveDocType] = useState<'CIF' | 'RSD' | 'MOU' | 'SPK' | 'BAST' | 'QA'>(
-    selectedDocumentType || 'CIF'
+    initialDocType as any
   );
 
   const [hasSyncUrlParams, setHasSyncUrlParams] = useState(false);
@@ -117,16 +121,20 @@ export const DocumentsWorkflowView: React.FC = () => {
       if (qDocType) {
         const upper = qDocType.toUpperCase();
         if (['CIF', 'RSD', 'MOU', 'SPK', 'BAST', 'QA'].includes(upper)) {
-          setActiveDocType(upper as any);
-          setSelectedDocumentType(upper as any);
+          if (!isFreelancerRole || ['RSD', 'SPK', 'QA'].includes(upper)) {
+            setActiveDocType(upper as any);
+            setSelectedDocumentType(upper as any);
+          }
         }
       } else if (selectedDocumentType) {
-        setActiveDocType(selectedDocumentType as any);
+        if (!isFreelancerRole || ['RSD', 'SPK', 'QA'].includes(selectedDocumentType as string)) {
+          setActiveDocType(selectedDocumentType as any);
+        }
       }
 
       setHasSyncUrlParams(true);
     }
-  }, [searchParams, projects, selectedDocumentProjectId, selectedDocumentType, hasSyncUrlParams]);
+  }, [searchParams, projects, selectedDocumentProjectId, selectedDocumentType, hasSyncUrlParams, isFreelancerRole]);
   const [cifData, setCifData] = useState<CIFData>(INITIAL_CIF_DATA[0]);
   const [rsdData, setRsdData] = useState<RSDData>(INITIAL_RSD_DATA[0]);
   const [mouData, setMouData] = useState<MoUData>(INITIAL_MOU_DATA[0]);
@@ -139,13 +147,11 @@ export const DocumentsWorkflowView: React.FC = () => {
   const [isSigDialogOpen, setIsSigDialogOpen] = useState(false);
   const [sigPartyTarget, setSigPartyTarget] = useState<'Pihak Pertama' | 'Pihak Kedua'>('Pihak Pertama');
 
-  // Load documents for selected project (check DB & LocalStorage first, fallback to Auto-Gen)
+  // Load documents for selected project (check DB API first, fallback to Auto-Gen)
   useEffect(() => {
     const proj = projects.find((p) => p.id === selectedProjectId);
     if (proj) {
       const autoDocs = generateAutoDocumentsForProject(proj);
-      const allCustom = getSavedCustomDocs();
-      const projCustom = allCustom[selectedProjectId] || {};
 
       const applyDocs = (customData: any) => {
         const activeRsd = customData.rsd || autoDocs.rsd;
@@ -160,7 +166,7 @@ export const DocumentsWorkflowView: React.FC = () => {
         setQaData(syncedQa);
       };
 
-      applyDocs(projCustom);
+      applyDocs({});
 
       fetch(`/api/documents?projectId=${selectedProjectId}`)
         .then((res) => res.json())
@@ -234,21 +240,21 @@ export const DocumentsWorkflowView: React.FC = () => {
         break;
     }
 
-    // 2. Persist to LocalStorage and Database for selectedProjectId
+    // 2. Persist to Database API for selectedProjectId
     try {
-      const allCustomDocs = getSavedCustomDocs();
-      const projectDocs = allCustomDocs[selectedProjectId] || {};
       const updatedDocs = {
-        ...projectDocs,
+        cif: type === 'CIF' ? data : cifData,
+        rsd: type === 'RSD' ? data : rsdData,
+        mou: type === 'MOU' ? data : mouData,
+        spk: type === 'SPK' ? data : spkData,
+        bast: type === 'BAST' ? data : bastData,
+        qa: type === 'QA' ? data : qaData,
         [docKey]: data,
       };
 
       if (type === 'RSD' && proj) {
         updatedDocs.qa = generateQAFromRSD(data, proj, qaData);
       }
-
-      allCustomDocs[selectedProjectId] = updatedDocs;
-      localStorage.setItem(LOCAL_STORAGE_KEY_CUSTOM_DOCS, JSON.stringify(allCustomDocs));
 
       fetch('/api/documents', {
         method: 'PUT',
@@ -277,17 +283,20 @@ export const DocumentsWorkflowView: React.FC = () => {
     const freshQa = generateQAFromRSD(rsdData, proj);
     setQaData(freshQa);
 
-    try {
-      const allCustomDocs = getSavedCustomDocs();
-      const projectDocs = allCustomDocs[selectedProjectId] || {};
-      allCustomDocs[selectedProjectId] = {
-        ...projectDocs,
-        qa: freshQa,
-      };
-      localStorage.setItem(LOCAL_STORAGE_KEY_CUSTOM_DOCS, JSON.stringify(allCustomDocs));
-    } catch (e) {
-      console.error(e);
-    }
+    const updatedDocs = {
+      cif: cifData,
+      rsd: rsdData,
+      mou: mouData,
+      spk: spkData,
+      bast: bastData,
+      qa: freshQa,
+    };
+
+    fetch('/api/documents', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ projectId: selectedProjectId, data: updatedDocs }),
+    }).catch((e) => console.error('Document DB save error:', e));
 
     showNotification(`Dokumen QA berhasil di-sync ulang 100% dari spesifikasi RSD (${rsdData.functionalFeatures?.length || 0} fitur)!`, 'success');
   };
@@ -373,9 +382,15 @@ export const DocumentsWorkflowView: React.FC = () => {
         role: doc?.party1Signature?.auditTrail?.signerRole || doc?.atasilabsRole || (activeDocType === 'QA' ? 'QA Lead / Tech Lead' : 'Founder & CEO Atasilabs'),
       };
     } else {
+      if (activeDocType === 'SPK') {
+        return {
+          name: doc?.party2Signature?.auditTrail?.signedBy || doc?.freelancerName || 'Rian Hidayat',
+          role: doc?.party2Signature?.auditTrail?.signerRole || 'Senior Full-Stack Freelancer (Mitra Developer)',
+        };
+      }
       return {
-        name: doc?.party2Signature?.auditTrail?.signedBy || doc?.clientPic || doc?.picName || doc?.freelancerName || doc?.testerName || 'Klien / Partner',
-        role: doc?.party2Signature?.auditTrail?.signerRole || doc?.clientRole || doc?.picRole || 'Direktur / Penanggung Jawab',
+        name: doc?.party2Signature?.auditTrail?.signedBy || doc?.clientPic || doc?.picName || 'Budi Santoso',
+        role: doc?.party2Signature?.auditTrail?.signerRole || doc?.clientRole || doc?.picRole || 'Direktur / Penanggung Jawab Klien',
       };
     }
   };
@@ -392,13 +407,11 @@ export const DocumentsWorkflowView: React.FC = () => {
     setBastData(autoDocs.bast);
     setQaData(autoDocs.qa);
 
-    try {
-      const allCustomDocs = getSavedCustomDocs();
-      delete allCustomDocs[selectedProjectId];
-      localStorage.setItem(LOCAL_STORAGE_KEY_CUSTOM_DOCS, JSON.stringify(allCustomDocs));
-    } catch (e) {
-      console.error(e);
-    }
+    fetch('/api/documents', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ projectId: selectedProjectId, data: autoDocs }),
+    }).catch((e) => console.error('Document DB reset error:', e));
 
     showNotification(`Seluruh dokumen untuk ${proj.clientName} dikembalikan ke standar otomatis!`, 'info');
   };
@@ -499,7 +512,7 @@ export const DocumentsWorkflowView: React.FC = () => {
 
             <Grid item xs={12} sm={7} textAlign={{ sm: 'right' }}>
               <Box sx={{ display: 'flex', gap: 1, justifyContent: { sm: 'flex-end' }, flexWrap: 'wrap', mt: { xs: 1, sm: 2.5 } }}>
-                {!isClientRole && activeDocType === 'QA' && (
+                {!isClientRole && !isFreelancerRole && activeDocType === 'QA' && (
                   <Button
                     variant="outlined"
                     color="secondary"
@@ -511,7 +524,7 @@ export const DocumentsWorkflowView: React.FC = () => {
                     Sync RSD
                   </Button>
                 )}
-                {!isClientRole && (
+                {!isClientRole && !isFreelancerRole && (
                   <Button
                     variant="outlined"
                     color="primary"
@@ -523,7 +536,7 @@ export const DocumentsWorkflowView: React.FC = () => {
                     {activeDocType === 'CIF' ? 'TTD Admin' : 'TTD 1 (Atasilabs)'}
                   </Button>
                 )}
-                {activeDocType !== 'CIF' && (
+                {(activeDocType === 'SPK' || (!isFreelancerRole && activeDocType !== 'CIF' && activeDocType !== 'RSD')) && (
                   <Button
                     variant="outlined"
                     color="success"
@@ -532,7 +545,7 @@ export const DocumentsWorkflowView: React.FC = () => {
                     onClick={() => handleOpenSignatureDialog('Pihak Kedua')}
                     sx={{ fontWeight: 700 }}
                   >
-                    {isClientRole ? `Tanda Tangan Klien (${activeDocType})` : `TTD 2 (Klien)`}
+                    {activeDocType === 'SPK' ? 'Tanda Tangan Freelancer (SPK)' : isClientRole ? `Tanda Tangan Klien (${activeDocType})` : 'TTD 2 (Klien)'}
                   </Button>
                 )}
                 <Button
@@ -545,7 +558,7 @@ export const DocumentsWorkflowView: React.FC = () => {
                 >
                   Cetak (A4)
                 </Button>
-                {!isClientRole && (
+                {!isClientRole && !isFreelancerRole && (
                   <Button
                     variant="contained"
                     color="primary"
@@ -579,7 +592,11 @@ export const DocumentsWorkflowView: React.FC = () => {
               { id: 'QA', label: '5. QA & UAT', color: '#ec4899' },
               { id: 'BAST', label: '6. BAST Selesai', color: '#10b981' },
             ]
-              .filter((doc) => !isClientRole || !doc.internalOnly)
+              .filter((doc) => {
+                if (isClientRole && doc.internalOnly) return false;
+                if (isFreelancerRole && !['RSD', 'SPK', 'QA'].includes(doc.id)) return false;
+                return true;
+              })
               .map((doc) => (
                 <Grid item xs={6} sm={2} key={doc.id}>
                   <Button

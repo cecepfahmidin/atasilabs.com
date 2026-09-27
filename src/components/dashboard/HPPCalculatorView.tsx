@@ -90,15 +90,6 @@ export const HPPCalculatorView: React.FC = () => {
   const [customHppMatrix, setCustomHppMatrix] = useState<HPPItem[]>(INITIAL_HPP_MATRIX);
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_KEY_HPP);
-      if (saved) {
-        setCustomHppMatrix(JSON.parse(saved));
-      }
-    } catch (e) {
-      console.error(e);
-    }
-
     fetch('/api/hpp')
       .then((res) => res.json())
       .then((res) => {
@@ -164,27 +155,10 @@ export const HPPCalculatorView: React.FC = () => {
   // Dynamic Profit Allocation Points with LocalStorage persistence
   const [allocationPoints, setAllocationPoints] = useState<DynamicAllocationItem[]>(DEFAULT_ALLOCATION_POINTS);
 
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_KEY_ALLOCATIONS);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setAllocationPoints(parsed);
-        }
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  }, []);
+
 
   const saveAllocationsToStorage = (updated: DynamicAllocationItem[]) => {
     setAllocationPoints(updated);
-    try {
-      localStorage.setItem(LOCAL_STORAGE_KEY_ALLOCATIONS, JSON.stringify(updated));
-    } catch (e) {
-      console.error(e);
-    }
     fetch('/api/hpp', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -359,11 +333,6 @@ export const HPPCalculatorView: React.FC = () => {
     });
 
     setCustomHppMatrix(updatedMatrix);
-    try {
-      localStorage.setItem(LOCAL_STORAGE_KEY_HPP, JSON.stringify(updatedMatrix));
-    } catch (e) {
-      console.error(e);
-    }
     fetch('/api/hpp', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -396,11 +365,11 @@ export const HPPCalculatorView: React.FC = () => {
   // Reset HPP Matrix to default
   const handleResetHppMatrix = () => {
     setCustomHppMatrix(INITIAL_HPP_MATRIX);
-    try {
-      localStorage.removeItem(LOCAL_STORAGE_KEY_HPP);
-    } catch (e) {
-      console.error(e);
-    }
+    fetch('/api/hpp', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ matrix: INITIAL_HPP_MATRIX, allocations: allocationPoints }),
+    }).catch((e) => console.error('HPP DB reset matrix error:', e));
     showNotification('Matriks HPP telah dikembalikan ke standar awal.', 'info');
   };
 

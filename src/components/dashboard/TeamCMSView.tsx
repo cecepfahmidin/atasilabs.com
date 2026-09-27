@@ -26,6 +26,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Switch,
+  FormControlLabel,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -41,6 +43,9 @@ import {
   Phone as PhoneIcon,
   Email as EmailIcon,
   Security as ShieldIcon,
+  Visibility as VisibilityIcon,
+  VisibilityOff as VisibilityOffIcon,
+  DragIndicator as DragIndicatorIcon,
 } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
 import { useApp } from '../../context/AppContext';
@@ -74,6 +79,7 @@ export const TeamCMSView: React.FC = () => {
     tagline: string;
     titleBadge: string;
     roleTitle: string;
+    showOnLanding: boolean;
   }>({
     name: '',
     email: '',
@@ -86,12 +92,72 @@ export const TeamCMSView: React.FC = () => {
     tagline: '',
     titleBadge: 'CEO & FOUNDER',
     roleTitle: 'CHIEF EXECUTIVE OFFICER',
+    showOnLanding: true,
   });
 
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
-  // Filter team members (all staff/management roles excluding CLIENT)
-  const teamMembers = users.filter((u) => u.role && u.role.toUpperCase() !== 'CLIENT');
+  // Filter and sort team members (all staff/management roles excluding CLIENT)
+  const teamMembers = users
+    .filter((u) => u.role && u.role.toUpperCase() !== 'CLIENT')
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
+  // Drag and Drop state
+  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
+
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, id: string) => {
+    setDraggedId(id);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', id);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>, id: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverId !== id) {
+      setDragOverId(id);
+    }
+  };
+
+  const handleDragLeave = () => {
+    setDragOverId(null);
+  };
+
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>, targetId: string) => {
+    e.preventDefault();
+    setDragOverId(null);
+    if (!draggedId || draggedId === targetId) {
+      setDraggedId(null);
+      return;
+    }
+
+    const currentList = [...teamMembers];
+    const draggedIndex = currentList.findIndex((u) => u.id === draggedId);
+    const targetIndex = currentList.findIndex((u) => u.id === targetId);
+
+    if (draggedIndex < 0 || targetIndex < 0) {
+      setDraggedId(null);
+      return;
+    }
+
+    const itemToMove = currentList[draggedIndex];
+    currentList.splice(draggedIndex, 1);
+    currentList.splice(targetIndex, 0, itemToMove);
+
+    setDraggedId(null);
+    showNotification('Mengubah urutan posisi tampilan eksekutif...', 'info');
+
+    try {
+      await Promise.all(
+        currentList.map((user, idx) => updateUser(user.id, { order: idx }))
+      );
+      showNotification('Urutan posisi eksekutif berhasil disimpan!', 'success');
+    } catch (err) {
+      console.error(err);
+      showNotification('Gagal menyimpan urutan posisi eksekutif', 'error');
+    }
+  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -147,6 +213,23 @@ export const TeamCMSView: React.FC = () => {
     }
   };
 
+  const handleToggleLandingVisibility = async (u: User, e: React.ChangeEvent<HTMLInputElement>) => {
+    e.stopPropagation();
+    const nextVal = e.target.checked;
+    try {
+      await updateUser(u.id, { showOnLanding: nextVal });
+      showNotification(
+        nextVal
+          ? `${u.name} kini DITAMPILKAN di Laman Depan (Landing Page)`
+          : `${u.name} kini DISEMBUNYIKAN dari Laman Depan (Landing Page)`,
+        nextVal ? 'success' : 'info'
+      );
+    } catch (err) {
+      console.error(err);
+      showNotification('Gagal memperbarui visibilitas landing page', 'error');
+    }
+  };
+
   const handleOpenAdd = () => {
     setEditingUser(null);
     setFormData({
@@ -161,6 +244,7 @@ export const TeamCMSView: React.FC = () => {
       tagline: 'Visi Strategis & Layanan Klien',
       titleBadge: 'CEO & FOUNDER',
       roleTitle: 'CHIEF EXECUTIVE OFFICER',
+      showOnLanding: true,
     });
     setOpenDialog(true);
   };
@@ -212,6 +296,7 @@ export const TeamCMSView: React.FC = () => {
       tagline: defaultTagline,
       titleBadge: defaultBadge,
       roleTitle: defaultRoleTitle,
+      showOnLanding: u.showOnLanding !== false,
     });
     setOpenDialog(true);
   };
@@ -341,24 +426,73 @@ export const TeamCMSView: React.FC = () => {
         </Typography>
       </Box>
 
+      {/* Drag & Drop Reordering Instruction Banner */}
+      <Paper
+        variant="outlined"
+        sx={{
+          mb: 3,
+          p: 1.5,
+          px: 2,
+          borderRadius: 2.5,
+          bgcolor: theme.palette.mode === 'dark' ? 'rgba(245, 158, 11, 0.08)' : 'rgba(254, 243, 199, 0.5)',
+          borderColor: 'rgba(245, 158, 11, 0.4)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <DragIndicatorIcon sx={{ color: '#f59e0b', fontSize: 24 }} />
+          <Box>
+            <Typography variant="subtitle2" sx={{ fontWeight: 800, color: theme.palette.mode === 'dark' ? '#fbbf24' : '#b45309' }}>
+              Drag & Drop Kartu Eksekutif
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Klik, tahan, dan geser kartu eksekutif ke posisi lain untuk menentukan urutan tampilannya pada Laman Depan (Landing Page).
+            </Typography>
+          </Box>
+        </Box>
+        <Chip label="Dapat Digeser (Draggable)" size="small" color="warning" sx={{ fontWeight: 800, fontSize: '0.68rem' }} />
+      </Paper>
+
       {/* Grid of Team Executive Cards */}
       <Grid container spacing={3}>
         {filteredTeam.map((item) => {
           const roleConfig = ROLE_CONFIGS[item.role] || ROLE_CONFIGS.ADMIN;
           const displayAvatar = item.avatarUrl || (item.role === 'CEO' ? '/team/ceo.jpg' : item.role === 'CTO' ? '/team/cto.jpg' : '/team/cmo.jpg');
           const badgeText = item.titleBadge || (item.role === 'CEO' ? 'CEO & FOUNDER' : item.role === 'CTO' ? 'CTO & LEAD ARCHITECT' : item.role === 'CMO' ? 'CMO & HEAD OF UI/UX' : roleConfig.label);
+          const isDragging = draggedId === item.id;
+          const isDragOver = dragOverId === item.id;
 
           return (
-            <Grid item xs={12} sm={6} md={4} key={item.id}>
+            <Grid
+              item
+              xs={12}
+              sm={6}
+              md={4}
+              key={item.id}
+              draggable
+              onDragStart={(e) => handleDragStart(e, item.id)}
+              onDragOver={(e) => handleDragOver(e, item.id)}
+              onDragLeave={handleDragLeave}
+              onDrop={(e) => handleDrop(e, item.id)}
+              sx={{
+                cursor: 'grab',
+                '&:active': { cursor: 'grabbing' },
+                transition: 'all 0.2s ease',
+                opacity: isDragging ? 0.35 : 1,
+                transform: isDragOver ? 'scale(1.03)' : 'none',
+              }}
+            >
               <Card
-                elevation={0}
+                elevation={isDragOver ? 8 : 0}
                 sx={{
                   height: '100%',
                   display: 'flex',
                   flexDirection: 'column',
                   borderRadius: 3.5,
                   bgcolor: theme.palette.mode === 'dark' ? '#111111' : '#ffffff',
-                  border: `1px solid ${theme.palette.divider}`,
+                  border: isDragOver ? '2px dashed #f59e0b' : `1px solid ${theme.palette.divider}`,
                   transition: 'all 0.25s ease-in-out',
                   '&:hover': {
                     transform: 'translateY(-4px)',
@@ -399,6 +533,27 @@ export const TeamCMSView: React.FC = () => {
                       backdropFilter: 'blur(8px)',
                     }}
                   />
+                  <Tooltip title="Tahan & Geser untuk mengubah urutan (Drag to reorder)" arrow>
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        top: 10,
+                        right: 10,
+                        bgcolor: 'rgba(0, 0, 0, 0.65)',
+                        backdropFilter: 'blur(8px)',
+                        borderRadius: 1.5,
+                        p: 0.5,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#ffffff',
+                        cursor: 'grab',
+                        '&:hover': { bgcolor: 'rgba(245, 158, 11, 0.9)', color: '#000000' },
+                      }}
+                    >
+                      <DragIndicatorIcon sx={{ fontSize: 20 }} />
+                    </Box>
+                  </Tooltip>
                 </Box>
 
                 <CardContent sx={{ p: 3, flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
@@ -423,6 +578,50 @@ export const TeamCMSView: React.FC = () => {
                       ? 'Mengawasi arsitektur Next.js, optimasi kecepatan loading, keandalan cloud hosting, serta arsitektur sistem keamanan data.'
                       : 'Merancang desain antarmuka (UI/UX) yang memukau, ramah pengguna, serta strategi konversi pertumbuhan bisnis.')}
                   </Typography>
+
+                  {/* Toggle Switch Tampilkan di Laman Depan */}
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+                      p: 1.25,
+                      px: 1.5,
+                      borderRadius: 2,
+                      border: `1px solid ${theme.palette.divider}`,
+                      my: 1,
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      {item.showOnLanding !== false ? (
+                        <VisibilityIcon sx={{ fontSize: 18, color: '#10b981' }} />
+                      ) : (
+                        <VisibilityOffIcon sx={{ fontSize: 18, color: '#94a3b8' }} />
+                      )}
+                      <Box>
+                        <Typography variant="caption" sx={{ fontWeight: 800, display: 'block', lineHeight: 1.2 }}>
+                          Tampil di Laman Depan
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            fontSize: '0.68rem',
+                            fontWeight: 700,
+                            color: item.showOnLanding !== false ? '#10b981' : 'text.secondary',
+                          }}
+                        >
+                          {item.showOnLanding !== false ? 'AKTIF (Tampil di Landing)' : 'NONAKTIF (Sembunyi)'}
+                        </Typography>
+                      </Box>
+                    </Box>
+                    <Switch
+                      size="small"
+                      checked={item.showOnLanding !== false}
+                      onChange={(e) => handleToggleLandingVisibility(item, e)}
+                      color="success"
+                    />
+                  </Box>
 
                   <Box sx={{ mt: 'auto', pt: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: `1px solid ${theme.palette.divider}` }}>
                     <Chip
@@ -664,6 +863,38 @@ export const TeamCMSView: React.FC = () => {
                   onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
                   placeholder="Penjelasan ringkas peranan eksekutif dalam menjamin kepuasan dan kualitas proyek..."
                 />
+
+                <Paper
+                  variant="outlined"
+                  sx={{
+                    p: 2,
+                    borderRadius: 2.5,
+                    bgcolor: theme.palette.mode === 'dark' ? 'rgba(16, 185, 129, 0.05)' : 'rgba(16, 185, 129, 0.03)',
+                    borderColor: formData.showOnLanding ? '#10b981' : theme.palette.divider,
+                  }}
+                >
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={formData.showOnLanding}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, showOnLanding: e.target.checked }))}
+                        color="success"
+                      />
+                    }
+                    label={
+                      <Box>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+                          Tampilkan di Laman Depan (Landing Page)
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {formData.showOnLanding
+                            ? 'Profil eksekutif ini akan DITAMPILKAN di seksi Tim Manajemen pada website publik.'
+                            : 'Profil eksekutif ini akan DISEMBUNYIKAN dari website publik.'}
+                        </Typography>
+                      </Box>
+                    }
+                  />
+                </Paper>
               </Box>
             </Grid>
 

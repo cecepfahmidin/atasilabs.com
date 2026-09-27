@@ -241,7 +241,9 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, Record<string, boolean>>
 };
 
 export const hasPermission = (role: UserRole, key: string, customMap?: Record<UserRole, Record<string, boolean>>): boolean => {
+  if (key === 'payments' && role === 'FREELANCER') return false;
   if (key === 'payments') return true;
+  if (key === 'freelancer-fee') return role === 'FREELANCER' || role === 'DEVELOPER' || role === 'CEO' || role === 'CTO' || role === 'ADMIN';
   const normKey = key === 'master-data' ? 'masterData' : key;
   if (customMap && customMap[role]) {
     if (customMap[role][normKey] !== undefined) {

@@ -67,7 +67,10 @@ export interface ClientProject {
   ipwStage?: IPWStage;
   tierNumber?: 1 | 2 | 3 | 4 | 5;
   freelancerName?: string;
+  freelancerId?: string;
   freelancerFee?: number;
+  freelancerTotalPaid?: number;
+  freelancerPayments?: ProjectPaymentRecord[];
   isArchived?: boolean;
   payments?: ProjectPaymentRecord[];
   totalPaid?: number;
@@ -369,6 +372,8 @@ export interface User {
   tagline?: string;
   titleBadge?: string;
   roleTitle?: string;
+  showOnLanding?: boolean;
+  order?: number;
   createdAt: string;
   updatedAt?: string;
 }

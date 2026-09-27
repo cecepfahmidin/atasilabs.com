@@ -58,6 +58,17 @@ export const INITIAL_CIF_DATA: CIFData[] = [
       { prihal: 'Integrasi Payment', catatan: 'Proses KYC Merchant di Midtrans akan didampingi oleh tim Atasilabs.' },
     ],
     updatedAt: '2026-03-01T10:00:00.000Z',
+    party1Signature: {
+      signatureBase64: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="180" height="60"><path d="M 20 40 Q 40 10 70 30 T 120 20 T 160 35" stroke="%230f172a" stroke-width="2.5" fill="none"/></svg>',
+      auditTrail: {
+        signedAt: '27 September 2026, 09.14.35 WIB',
+        ipAddress: '103.139.11.121',
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        signedBy: 'Cecep Fahmidin',
+        signerRole: 'Admin / Sales Lead',
+        documentHash: 'ATL-SIGN-OUKB-MUJ6R45P',
+      },
+    },
   },
 ];
 
@@ -185,6 +196,17 @@ export const INITIAL_RSD_DATA: RSDData[] = [
       },
     ],
     updatedAt: '2026-03-02T11:00:00.000Z',
+    party1Signature: {
+      signatureBase64: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="180" height="60"><path d="M 20 40 Q 40 10 70 30 T 120 20 T 160 35" stroke="%230f172a" stroke-width="2.5" fill="none"/></svg>',
+      auditTrail: {
+        signedAt: '27 September 2026, 09.14.35 WIB',
+        ipAddress: '103.139.11.121',
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        signedBy: 'Cecep Fahmidin',
+        signerRole: 'IT Lead / Software Architect',
+        documentHash: 'ATL-SIGN-OUKB-MUJ6R45P',
+      },
+    },
   },
 ];
 
@@ -256,6 +278,28 @@ export const INITIAL_SPK_DATA: SPKData[] = [
     maxPenaltyPercent: 10,
     revisionLimitCount: 3,
     updatedAt: '2026-03-04T14:00:00.000Z',
+    party1Signature: {
+      signatureBase64: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="180" height="60"><path d="M 20 40 Q 40 10 70 30 T 120 20 T 160 35" stroke="%230f172a" stroke-width="2.5" fill="none"/></svg>',
+      auditTrail: {
+        signedAt: '27 September 2026, 09.14.35 WIB',
+        ipAddress: '103.139.11.121',
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        signedBy: 'Cecep Fahmidin',
+        signerRole: 'IT Lead & Managing Director Atasilabs',
+        documentHash: 'ATL-SIGN-OUKB-MUJ6R45P',
+      },
+    },
+    party2Signature: {
+      signatureBase64: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="180" height="60"><path d="M 15 35 Q 50 15 85 45 T 145 25 T 165 40" stroke="%230f172a" stroke-width="2.5" fill="none"/></svg>',
+      auditTrail: {
+        signedAt: '27 September 2026, 09.14.51 WIB',
+        ipAddress: '103.139.11.121',
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        signedBy: 'Rian Hidayat',
+        signerRole: 'Senior Full-Stack Freelancer (Mitra Developer)',
+        documentHash: 'ATL-SIGN-SPK-FL77-90B2',
+      },
+    },
   },
 ];
 
@@ -466,5 +510,27 @@ export const INITIAL_QA_DATA: QAData[] = [
       },
     ],
     updatedAt: '2026-03-20T10:00:00.000Z',
+    party1Signature: {
+      signatureBase64: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="180" height="60"><path d="M 20 40 Q 40 10 70 30 T 120 20 T 160 35" stroke="%230f172a" stroke-width="2.5" fill="none"/></svg>',
+      auditTrail: {
+        signedAt: '27 September 2026, 09.14.35 WIB',
+        ipAddress: '103.139.11.121',
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        signedBy: 'Cecep Fahmidin',
+        signerRole: 'QA LEAD & DEVELOPER',
+        documentHash: 'ATL-SIGN-OUKB-MUJ6R45P',
+      },
+    },
+    party2Signature: {
+      signatureBase64: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="180" height="60"><path d="M 15 35 Q 50 15 85 45 T 145 25 T 165 40" stroke="%230f172a" stroke-width="2.5" fill="none"/></svg>',
+      auditTrail: {
+        signedAt: '27 September 2026, 09.14.51 WIB',
+        ipAddress: '103.139.11.121',
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        signedBy: 'PT Nusantara Teknologi Mandiri (PIC UAT)',
+        signerRole: 'PIC UAT KLIEN',
+        documentHash: 'ATL-SIGN-J6LF-MUJ6REJ9',
+      },
+    },
   },
 ];

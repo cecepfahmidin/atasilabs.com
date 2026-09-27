@@ -112,6 +112,42 @@ html, body {
   line-height: 1.25 !important;
 }
 
+/* Document Typography & Hanging Indent Rules */
+.printable-document .doc-list-item {
+  display: flex !important;
+  align-items: flex-start !important;
+  width: 100% !important;
+}
+
+.printable-document .doc-list-prefix {
+  flex-shrink: 0 !important;
+  font-weight: 700 !important;
+  color: #0f172a !important;
+  font-size: 0.85rem !important;
+  line-height: 1.6 !important;
+}
+
+.printable-document .doc-list-content {
+  flex: 1 !important;
+  color: #334155 !important;
+  font-size: 0.85rem !important;
+  line-height: 1.6 !important;
+}
+
+.printable-document ol,
+.printable-document ul {
+  padding-left: 1.5rem !important;
+  margin-top: 0.35rem !important;
+  margin-bottom: 0.6rem !important;
+}
+
+.printable-document li {
+  margin-bottom: 0.35rem !important;
+  line-height: 1.6 !important;
+  font-size: 0.85rem !important;
+  color: #334155 !important;
+}
+
 @media print {
   @page {
     size: A4 portrait;
@@ -297,13 +333,13 @@ html, body {
 
   .printable-document h6,
   .printable-document .MuiTypography-h6 {
-    color: #b45309 !important;
+    color: inherit !important;
     font-size: 16px !important;
     font-weight: 800 !important;
   }
 
   .printable-document .MuiTypography-subtitle2 {
-    color: #d97706 !important;
+    color: inherit !important;
     font-size: 12px !important;
     font-weight: 800 !important;
   }
@@ -311,6 +347,7 @@ html, body {
   .printable-document .MuiTypography-body2 {
     font-size: 11px !important;
     color: #1e293b !important;
+    line-height: 1.55 !important;
   }
 
   .printable-document .MuiTypography-caption {

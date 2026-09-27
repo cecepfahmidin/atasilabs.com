@@ -66,6 +66,8 @@ export const ProjectsView: React.FC = () => {
   } = useApp();
 
   const isClientRole = currentUser?.role === 'CLIENT';
+  const isFreelancerRole = currentUser?.role === 'FREELANCER';
+  const isReadOnly = isClientRole || isFreelancerRole;
   const [filterStatus, setFilterStatus] = useState<'ALL' | 'ACTIVE' | 'COMPLETED' | 'ARCHIVED'>('ALL');
 
   const baseProjects = useMemo(() => {
@@ -83,8 +85,19 @@ export const ProjectsView: React.FC = () => {
         return matchesClient && !p.isArchived && p.status !== 'ARCHIVED';
       });
     }
+
+    if (isFreelancerRole) {
+      if (!currentUser) return [];
+      const nameLower = currentUser.name.toLowerCase();
+      return rawProjects.filter(
+        (p) =>
+          (p.freelancerName && p.freelancerName.toLowerCase().includes(nameLower)) ||
+          (p.freelancerId && p.freelancerId === currentUser.id)
+      );
+    }
+
     return rawProjects;
-  }, [rawProjects, currentUser, isClientRole]);
+  }, [rawProjects, currentUser, isClientRole, isFreelancerRole]);
 
   const counts = useMemo(() => {
     const active = baseProjects.filter((p) => !p.isArchived && p.status !== 'ARCHIVED' && p.progress < 100).length;
@@ -272,7 +285,7 @@ export const ProjectsView: React.FC = () => {
           </Typography>
         </Box>
 
-        {!isClientRole && (
+        {!isReadOnly && (
           <Button
             variant="contained"
             startIcon={<AddIcon />}
@@ -489,11 +502,11 @@ export const ProjectsView: React.FC = () => {
                         <Grid size={2} key={stg.stage}>
                           <Tooltip title={`${stg.label} (${stg.progressPercent}%)`} arrow placement="top">
                             <Box
-                              onClick={() => !isClientRole && handleStageButtonClick(proj.id, stg.stage)}
+                              onClick={() => !isReadOnly && handleStageButtonClick(proj.id, stg.stage)}
                               sx={{
                                 height: 8,
                                 borderRadius: 4,
-                                cursor: isClientRole ? 'default' : 'pointer',
+                                cursor: isReadOnly ? 'default' : 'pointer',
                                 transition: 'all 0.2s ease',
                                 backgroundColor: isCurrent
                                   ? stg.hexColor
@@ -596,7 +609,7 @@ export const ProjectsView: React.FC = () => {
                         variant="outlined"
                         fullWidth
                         size="small"
-                        disabled={isClientRole}
+                        disabled={isReadOnly}
                         value={proj.freelancerName || ''}
                         onChange={(e) => handleFreelancerChangeOnCard(proj.id, e.target.value)}
                         slotProps={{
@@ -657,7 +670,7 @@ export const ProjectsView: React.FC = () => {
                 </Grid>
 
                 {/* 1-Click Stage Switcher Bar */}
-                {!isClientRole && (
+                {!isReadOnly && (
                   <Box sx={{ mb: 2.5, mt: 'auto' }}>
                     <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, display: 'block', mb: 1 }}>
                       Pindah Tahap Operasional 6-Stage (1-Click):
@@ -728,7 +741,7 @@ export const ProjectsView: React.FC = () => {
                     Buka Dokumen ({currentStageCfg.documentAssigned.split(' ')[0]})
                   </Button>
 
-                  {!isClientRole && (
+                  {!isReadOnly && (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                       <Tooltip title={proj.isArchived ? 'Pulihkan dari Arsip' : 'Arsipkan Proyek Selesai'}>
                         <IconButton

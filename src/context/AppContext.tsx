@@ -19,8 +19,8 @@ interface AppContextType {
   toggleTheme: () => void;
   activeView: 'landing' | 'dashboard';
   setActiveView: (view: 'landing' | 'dashboard') => void;
-  dashboardTab: 'overview' | 'leads' | 'portfolio' | 'projects' | 'pricing' | 'documents' | 'payments' | 'users' | 'hpp' | 'master-data' | 'contact' | 'testimonials' | 'team';
-  setDashboardTab: (tab: 'overview' | 'leads' | 'portfolio' | 'projects' | 'pricing' | 'documents' | 'payments' | 'users' | 'hpp' | 'master-data' | 'contact' | 'testimonials' | 'team') => void;
+  dashboardTab: 'overview' | 'leads' | 'portfolio' | 'projects' | 'pricing' | 'documents' | 'payments' | 'users' | 'hpp' | 'master-data' | 'contact' | 'testimonials' | 'team' | 'freelancer-fee';
+  setDashboardTab: (tab: 'overview' | 'leads' | 'portfolio' | 'projects' | 'pricing' | 'documents' | 'payments' | 'users' | 'hpp' | 'master-data' | 'contact' | 'testimonials' | 'team' | 'freelancer-fee') => void;
   
   // Data Loading Status
   isLoadingData: boolean;
@@ -188,7 +188,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // View state
   const [activeView, setActiveView] = useState<'landing' | 'dashboard'>('landing');
-  const [dashboardTab, setDashboardTab] = useState<'overview' | 'pricing' | 'leads' | 'portfolio' | 'projects' | 'documents' | 'payments' | 'users' | 'hpp' | 'master-data' | 'contact' | 'testimonials' | 'team'>('overview');
+  const [dashboardTab, setDashboardTab] = useState<'overview' | 'pricing' | 'leads' | 'portfolio' | 'projects' | 'documents' | 'payments' | 'users' | 'hpp' | 'master-data' | 'contact' | 'testimonials' | 'team' | 'freelancer-fee'>('overview');
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [selectedServiceForInquiry, setSelectedServiceForInquiry] = useState('');
   const [selectedDocumentProjectId, setSelectedDocumentProjectId] = useState<string>('proj-1');
@@ -220,33 +220,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
 
-  // Restore persisted current user & leads on client mount
-  useEffect(() => {
-    try {
-      const savedUser = localStorage.getItem(STORAGE_KEYS.USER);
-      if (savedUser) {
-        const parsed = JSON.parse(savedUser);
-        if (parsed && parsed.email) {
-          setCurrentUser(parsed);
-        }
-      }
-    } catch (e) {
-      console.error('Failed to load user from localStorage:', e);
-    }
-
-    try {
-      const savedLeads = localStorage.getItem(STORAGE_KEYS.LEADS);
-      if (savedLeads) {
-        const parsed = JSON.parse(savedLeads);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setLeads(parsed);
-        }
-      }
-    } catch (e) {
-      console.error('Failed to load leads from localStorage:', e);
-    }
-  }, []);
-
   // Always fetch fresh data directly from Database APIs on mount
   useEffect(() => {
     refreshDataFromBackend();
@@ -254,15 +227,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const updateCurrentUserState = (user: User | null) => {
     setCurrentUser(user);
-    try {
-      if (user) {
-        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
-      } else {
-        localStorage.removeItem(STORAGE_KEYS.USER);
-      }
-    } catch (e) {
-      console.error(e);
-    }
   };
 
   // Synchronize Supabase Auth Session with App Context
@@ -329,6 +293,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                   ? JSON.parse(raw.payments)
                   : [],
                 totalPaid: raw.totalPaid !== null && raw.totalPaid !== undefined ? Number(raw.totalPaid) : 0,
+                freelancerPayments: Array.isArray(raw.freelancerPayments)
+                  ? raw.freelancerPayments
+                  : typeof raw.freelancerPayments === 'string'
+                  ? JSON.parse(raw.freelancerPayments)
+                  : [],
+                freelancerTotalPaid: raw.freelancerTotalPaid !== null && raw.freelancerTotalPaid !== undefined ? Number(raw.freelancerTotalPaid) : 0,
               };
 
               saveProjects((prev) => {
@@ -357,7 +327,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             const rawLead = payload.new as Lead;
             if (rawLead && rawLead.id) {
               saveLeads((prev) => {
-                const index = prev.findIndex((l) => l.id === rawLead.id);
+                const index = prev.findIndex(
+                  (l) =>
+                    l.id === rawLead.id ||
+                    ((l.email || '').toLowerCase().trim() === (rawLead.email || '').toLowerCase().trim() &&
+                      (l.message || '').toLowerCase().trim() === (rawLead.message || '').toLowerCase().trim())
+                );
                 if (index >= 0) {
                   const copy = [...prev];
                   copy[index] = { ...copy[index], ...rawLead };
@@ -383,11 +358,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             if (raw && raw.projectId && raw.data) {
               const dataObj = typeof raw.data === 'string' ? JSON.parse(raw.data) : raw.data;
               try {
-                const storageKey = 'atasilabs_custom_project_documents';
-                const savedDocs = localStorage.getItem(storageKey);
-                const allCustom = savedDocs ? JSON.parse(savedDocs) : {};
-                allCustom[raw.projectId] = dataObj;
-                localStorage.setItem(storageKey, JSON.stringify(allCustom));
                 window.dispatchEvent(new CustomEvent('atasilabs_document_updated', { detail: { projectId: raw.projectId, data: dataObj } }));
               } catch (e) {
                 console.error(e);
@@ -431,11 +401,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           console.log('⚡ Broadcast DOCUMENT_UPDATE received:', payload);
           if (payload && payload.projectId && payload.data) {
             try {
-              const storageKey = 'atasilabs_custom_project_documents';
-              const savedDocs = localStorage.getItem(storageKey);
-              const allCustom = savedDocs ? JSON.parse(savedDocs) : {};
-              allCustom[payload.projectId] = payload.data;
-              localStorage.setItem(storageKey, JSON.stringify(allCustom));
               window.dispatchEvent(new CustomEvent('atasilabs_document_updated', { detail: { projectId: payload.projectId, data: payload.data } }));
             } catch (e) {
               console.error(e);
@@ -450,7 +415,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           console.log('⚡ Broadcast LEAD_UPDATE received:', payload);
           if (payload && payload.id) {
             saveLeads((prev) => {
-              const index = prev.findIndex((l) => l.id === payload.id);
+              const index = prev.findIndex(
+                (l) =>
+                  l.id === payload.id ||
+                  ((l.email || '').toLowerCase().trim() === (payload.email || '').toLowerCase().trim() &&
+                    (l.message || '').toLowerCase().trim() === (payload.message || '').toLowerCase().trim())
+              );
               if (index >= 0) {
                 const copy = [...prev];
                 copy[index] = { ...copy[index], ...payload };
@@ -475,8 +445,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         console.log('📡 Supabase Realtime Connection Status:', status);
       });
 
+    // Real-time listener for cross-tab or local project storage changes
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEYS.PROJECTS && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          if (Array.isArray(parsed)) {
+            setProjects(parsed);
+          }
+        } catch (err) {}
+      }
+    };
+
+    const handleCustomProjectUpdate = (e: Event) => {
+      const customEvt = e as CustomEvent;
+      if (customEvt.detail && Array.isArray(customEvt.detail)) {
+        setProjects(customEvt.detail);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('atasilabs_projects_updated', handleCustomProjectUpdate);
+
     return () => {
       supabase.removeChannel(realtimeChannel);
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('atasilabs_projects_updated', handleCustomProjectUpdate);
     };
   }, []);
 
@@ -484,24 +478,67 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const saveUsers = (next: User[] | ((prev: User[]) => User[])) => {
     setUsers((prev) => {
       const updated = typeof next === 'function' ? next(prev) : next;
-      try {
-        localStorage.setItem(STORAGE_KEYS.USERS_LIST, JSON.stringify(updated));
-      } catch (e) {
-        console.error('Failed to save users list to localStorage:', e);
+      const seen = new Set<string>();
+      const deduplicated: User[] = [];
+      for (const u of updated) {
+        if (u && u.id) {
+          if (!seen.has(u.id)) {
+            seen.add(u.id);
+            deduplicated.push(u);
+          }
+        }
       }
-      return updated;
+      return deduplicated;
     });
   };
 
   const saveLeads = (next: Lead[] | ((prev: Lead[]) => Lead[])) => {
     setLeads((prev) => {
       const updated = typeof next === 'function' ? next(prev) : next;
-      try {
-        localStorage.setItem(STORAGE_KEYS.LEADS, JSON.stringify(updated));
-      } catch (e) {
-        console.error('Failed to save leads to localStorage:', e);
+      const seenIds = new Set<string>();
+      const seenContentKeys = new Set<string>();
+      const deduplicated: Lead[] = [];
+
+      for (const item of updated) {
+        if (!item || !item.id) continue;
+
+        const emailKey = (item.email || '').toLowerCase().trim();
+        const msgKey = (item.message || '').toLowerCase().trim();
+        const contentKey = emailKey && msgKey ? `${emailKey}::${msgKey}` : '';
+
+        // If exact ID seen before, skip
+        if (seenIds.has(item.id)) {
+          continue;
+        }
+
+        // If same email & message content seen before, merge/prefer real DB ID over temporary 'lead-' ID
+        if (contentKey && seenContentKeys.has(contentKey)) {
+          const existingIdx = deduplicated.findIndex((existing) => {
+            const eK = (existing.email || '').toLowerCase().trim();
+            const mK = (existing.message || '').toLowerCase().trim();
+            return `${eK}::${mK}` === contentKey;
+          });
+
+          if (existingIdx >= 0) {
+            const existing = deduplicated[existingIdx];
+            // If existing is temporary 'lead-...' and new item is a permanent DB ID (or has more fields), replace it
+            if (existing.id.startsWith('lead-') && !item.id.startsWith('lead-')) {
+              seenIds.delete(existing.id);
+              deduplicated[existingIdx] = item;
+              seenIds.add(item.id);
+            }
+          }
+          continue;
+        }
+
+        seenIds.add(item.id);
+        if (contentKey) {
+          seenContentKeys.add(contentKey);
+        }
+        deduplicated.push(item);
       }
-      return updated;
+
+      return deduplicated;
     });
   };
 
@@ -512,12 +549,49 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const saveProjects = (next: ClientProject[] | ((prev: ClientProject[]) => ClientProject[])) => {
     setProjects((prev) => {
       const updated = typeof next === 'function' ? next(prev) : next;
-      try {
-        localStorage.setItem(STORAGE_KEYS.PROJECTS, JSON.stringify(updated));
-      } catch (e) {
-        console.error('Failed to save projects to localStorage:', e);
+      const seenIds = new Set<string>();
+      const seenContentKeys = new Set<string>();
+      const deduplicated: ClientProject[] = [];
+
+      for (const p of updated) {
+        if (!p || !p.id) continue;
+
+        const titleKey = (p.title || '').toLowerCase().trim();
+        const clientEmailKey = (p.clientEmail || '').toLowerCase().trim();
+        const clientNameKey = (p.clientName || '').toLowerCase().trim();
+        const contentKey = titleKey && (clientEmailKey || clientNameKey) ? `${titleKey}::${clientEmailKey || clientNameKey}` : '';
+
+        // If exact ID seen before, skip duplicate
+        if (seenIds.has(p.id)) {
+          continue;
+        }
+
+        // If same project title & client info seen before, merge object fields into existing entry
+        if (contentKey && seenContentKeys.has(contentKey)) {
+          const existingIdx = deduplicated.findIndex((existing) => {
+            const tK = (existing.title || '').toLowerCase().trim();
+            const eK = (existing.clientEmail || '').toLowerCase().trim();
+            const nK = (existing.clientName || '').toLowerCase().trim();
+            return `${tK}::${eK || nK}` === contentKey;
+          });
+
+          if (existingIdx >= 0) {
+            deduplicated[existingIdx] = { ...deduplicated[existingIdx], ...p };
+          }
+          continue;
+        }
+
+        seenIds.add(p.id);
+        if (contentKey) {
+          seenContentKeys.add(contentKey);
+        }
+        deduplicated.push(p);
       }
-      return updated;
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('atasilabs_projects_updated', { detail: deduplicated }));
+      }
+      return deduplicated;
     });
   };
 
@@ -948,7 +1022,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const res = await fetch('/api/projects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(proj),
+        body: JSON.stringify({ ...proj, id: tempProj.id }),
       });
       const data = await res.json();
       if (data.success && data.data && !data.fallback) {

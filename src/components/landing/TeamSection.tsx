@@ -9,9 +9,9 @@ export const TeamSection: React.FC = () => {
   const { users, isLoadingData } = useApp();
 
   // Filter team members (all staff/management roles excluding CLIENT) dynamically from Supabase database
-  const teamUsers = users.filter(
-    (u) => u.role && u.role.toUpperCase() !== 'CLIENT'
-  );
+  const teamUsers = users
+    .filter((u) => u.role && u.role.toUpperCase() !== 'CLIENT' && u.showOnLanding !== false)
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
   const getBadgeColor = (role?: string) => {
     switch (role?.toUpperCase()) {

@@ -102,14 +102,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
 
   useEffect(() => {
     if (!isAuthChecking && !currentUser) {
-      try {
-        const saved = localStorage.getItem('webdev_sys_user');
-        if (!saved) {
-          router.push('/login');
-        }
-      } catch (e) {
-        router.push('/login');
-      }
+      router.push('/login');
     }
   }, [currentUser, isAuthChecking, router]);
 
@@ -123,11 +116,15 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
   const userRole = activeUser?.role || currentUser?.role || 'CLIENT';
   const roleConfig = ROLE_CONFIGS[userRole] || ROLE_CONFIGS.CLIENT;
 
-  // Route Protection for CLIENT role
+  // Route Protection for CLIENT & FREELANCER roles
   useEffect(() => {
-    if (userRole === 'CLIENT') {
-      const restrictedTabs = ['hpp', 'master-data', 'users', 'team', 'portfolio', 'pricing', 'contact', 'testimonials', 'leads'];
+    if (userRole === 'CLIENT' || userRole === 'FREELANCER') {
+      const restrictedTabs = userRole === 'FREELANCER'
+        ? ['payments', 'hpp', 'master-data', 'users', 'team', 'portfolio', 'pricing', 'contact', 'testimonials', 'leads']
+        : ['hpp', 'master-data', 'users', 'team', 'portfolio', 'pricing', 'contact', 'testimonials', 'leads'];
+
       const isRestrictedPath =
+        (userRole === 'FREELANCER' && pathname?.includes('/dashboard/payments')) ||
         pathname?.includes('/dashboard/hpp') ||
         pathname?.includes('/dashboard/master-data') ||
         pathname?.includes('/dashboard/users') ||
@@ -204,6 +201,13 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
       label: 'Dokumentasi',
       href: '/dashboard/documents',
       icon: <DescriptionIcon />,
+      badge: 0,
+    },
+    {
+      id: 'freelancer-fee',
+      label: 'Fee Developer',
+      href: '/dashboard/freelancer-fee',
+      icon: <PaymentsIcon />,
       badge: 0,
     },
     {
@@ -285,6 +289,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
       if (userRole === 'CLIENT' && (item.id === 'hpp' || item.id === 'master-data' || item.id === 'leads')) {
         return false;
       }
+      if (userRole === 'FREELANCER' && (item.id === 'payments' || item.id === 'hpp' || item.id === 'master-data' || item.id === 'leads')) {
+        return false;
+      }
       return true;
     })
     .map((item) => {
@@ -310,6 +317,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
   else if (dashboardTab === 'users') activeTitle = 'Master Data - Manajemen User & RBAC';
   else if (dashboardTab === 'master-data') activeTitle = 'Pusat Master Data';
   else if (dashboardTab === 'payments') activeTitle = 'Rincian & Input Pembayaran Proyek';
+  else if (dashboardTab === 'freelancer-fee') activeTitle = 'Rincian Fee Developer & Matriks HPP Tier';
   else {
     const flat = rawMenuItems.flatMap((m) => (m.children ? [m, ...m.children] : [m]));
     const found = flat.find((m) => m.id === dashboardTab);

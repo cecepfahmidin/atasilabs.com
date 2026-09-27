@@ -458,15 +458,11 @@ export const ClientDashboardView: React.FC = () => {
   }, [selectedProject?.id]);
 
   const handleSaveSignature = (sigData: DigitalSignatureData) => {
-    const storageKey = 'atasilabs_custom_project_documents';
     try {
-      const savedDocs = localStorage.getItem(storageKey);
-      const allCustom = savedDocs ? JSON.parse(savedDocs) : {};
-      const projCustom = allCustom[selectedProject.id] || {};
       const currentAuto = generateAutoDocumentsForProject(selectedProject);
 
       const docTypeKey = signatureModal.docType.toLowerCase() as 'cif' | 'rsd' | 'mou' | 'spk' | 'bast' | 'qa';
-      const targetDoc = projCustom[docTypeKey] || currentAuto[docTypeKey];
+      const targetDoc = currentAuto[docTypeKey];
 
       const newName = sigData.auditTrail?.signedBy || currentUser?.name || selectedProject.clientName;
       const newRole = sigData.auditTrail?.signerRole || currentUser?.company || 'Klien / Pihak Kedua';
@@ -480,13 +476,8 @@ export const ClientDashboardView: React.FC = () => {
       };
 
       const updatedProjectDocs = {
-        ...projCustom,
         [docTypeKey]: updatedDoc,
       };
-
-      allCustom[selectedProject.id] = updatedProjectDocs;
-
-      localStorage.setItem(storageKey, JSON.stringify(allCustom));
 
       // ⚡ Dual Sync to Database API & Supabase Realtime Broadcast
       fetch('/api/documents', {

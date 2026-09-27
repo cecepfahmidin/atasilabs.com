@@ -14,6 +14,7 @@ import { CompanyContactView } from '@/components/dashboard/CompanyContactView';
 import { TestimonialsCMSView } from '@/components/dashboard/TestimonialsCMSView';
 import { TeamCMSView } from '@/components/dashboard/TeamCMSView';
 import { PaymentsView } from '@/components/dashboard/PaymentsView';
+import { FreelancerFeeView } from '@/components/dashboard/FreelancerFeeView';
 
 export default function DashboardPage() {
   const { setActiveView, dashboardTab } = useApp();
@@ -26,6 +27,7 @@ export default function DashboardPage() {
     <DashboardLayout>
       {dashboardTab === 'overview' && <OverviewView />}
       {dashboardTab === 'documents' && <DocumentsWorkflowView />}
+      {dashboardTab === 'freelancer-fee' && <FreelancerFeeView />}
       {dashboardTab === 'payments' && <PaymentsView />}
       {dashboardTab === 'leads' && <LeadsView />}
       {dashboardTab === 'users' && <UsersView />}

@@ -240,8 +240,10 @@ export const UsersView: React.FC = () => {
     }
   };
 
-  // Filter users
-  const filteredUsers = users.filter((u) => {
+  // Filter users with deduplication by ID
+  const uniqueUsers = Array.from(new Map(users.map((u) => [u.id, u])).values());
+
+  const filteredUsers = uniqueUsers.filter((u) => {
     const matchesSearch =
       u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -251,10 +253,10 @@ export const UsersView: React.FC = () => {
   });
 
   // Calculate statistics
-  const totalUsers = users.length;
-  const cLevelCount = users.filter((u) => ['CEO', 'CTO', 'CMO'].includes(u.role)).length;
-  const adminCount = users.filter((u) => u.role === 'ADMIN').length;
-  const externalCount = users.filter((u) => ['CLIENT', 'FREELANCER'].includes(u.role)).length;
+  const totalUsers = uniqueUsers.length;
+  const cLevelCount = uniqueUsers.filter((u) => ['CEO', 'CTO', 'CMO'].includes(u.role)).length;
+  const adminCount = uniqueUsers.filter((u) => u.role === 'ADMIN').length;
+  const externalCount = uniqueUsers.filter((u) => ['CLIENT', 'FREELANCER'].includes(u.role)).length;
 
   return (
     <Box sx={{ pb: 6 }}>
@@ -439,11 +441,11 @@ export const UsersView: React.FC = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredUsers.map((u) => {
+                  filteredUsers.map((u, idx) => {
                     const roleCfg = ROLE_CONFIGS[u.role] || ROLE_CONFIGS.ADMIN;
                     const isSelf = currentUser?.id === u.id;
                     return (
-                      <TableRow key={u.id} hover sx={{ backgroundColor: isSelf ? (theme.palette.mode === 'dark' ? 'rgba(245, 158, 11, 0.06)' : 'rgba(254, 243, 199, 0.4)') : 'transparent' }}>
+                      <TableRow key={`${u.id}-${idx}`} hover sx={{ backgroundColor: isSelf ? (theme.palette.mode === 'dark' ? 'rgba(245, 158, 11, 0.06)' : 'rgba(254, 243, 199, 0.4)') : 'transparent' }}>
                         <TableCell>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                             <Avatar src={u.avatarUrl} sx={{ width: 38, height: 38, bgcolor: roleCfg.hexColor }}>
@@ -516,12 +518,12 @@ export const UsersView: React.FC = () => {
                 Tidak ada pengguna yang cocok dengan kriteria pencarian.
               </Typography>
             ) : (
-              filteredUsers.map((u) => {
+              filteredUsers.map((u, idx) => {
                 const roleCfg = ROLE_CONFIGS[u.role] || ROLE_CONFIGS.ADMIN;
                 const isSelf = currentUser?.id === u.id;
                 return (
                   <Paper
-                    key={u.id}
+                    key={`${u.id}-${idx}`}
                     variant="outlined"
                     sx={{
                       p: 2.5,

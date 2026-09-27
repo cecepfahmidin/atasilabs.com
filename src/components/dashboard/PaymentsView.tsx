@@ -26,6 +26,10 @@ import {
   Tooltip,
   Avatar,
   Divider,
+  InputAdornment,
+  Tabs,
+  Tab,
+  LinearProgress,
 } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import {
@@ -45,14 +49,22 @@ import {
   AutoAwesome as AutoIcon,
   VerifiedUser as SecurityIcon,
   Info as InfoIcon,
+  ContentCopy as CopyIcon,
+  Print as PrintIcon,
+  QrCode2 as QrCodeIcon,
+  AccountBalance as BankIcon,
+  Search as SearchIcon,
+  Download as DownloadIcon,
 } from '@mui/icons-material';
 import { useApp } from '../../context/AppContext';
 import { ClientProject, ProjectPaymentRecord } from '../../types';
+import { getFreelancerFeeForTier } from '../../lib/pricingUtils';
 
 export const PaymentsView: React.FC = () => {
   const theme = useTheme();
   const {
     projects,
+    users,
     currentUser,
     updateProject,
     showNotification,
@@ -171,6 +183,172 @@ export const PaymentsView: React.FC = () => {
     open: false,
   });
 
+  // Filter, Search, Bank Info & Invoice Modal States
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'VERIFIED' | 'PENDING' | 'FAILED'>('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [bankInfoDialogOpen, setBankInfoDialogOpen] = useState(false);
+  const [invoiceModal, setInvoiceModal] = useState<{
+    open: boolean;
+    payment?: ProjectPaymentRecord & { projectId?: string; projectTitle?: string; clientName?: string };
+  }>({
+    open: false,
+  });
+  // Admin Tab Switcher: Client Payments vs Freelancer Payouts
+  const [mainTab, setMainTab] = useState<'CLIENT' | 'FREELANCER'>('CLIENT');
+
+  // Freelancer Wage Payout Modal State for Admin
+  const [freelancerPayoutDialogOpen, setFreelancerPayoutDialogOpen] = useState(false);
+  const [freelancerPayoutFormData, setFreelancerPayoutFormData] = useState({
+    date: new Date().toISOString().split('T')[0],
+    amount: '',
+    stage: 'DP 40% SPK Signed',
+    notes: '',
+    status: 'VERIFIED' as 'VERIFIED' | 'PENDING',
+    proofUrl: '',
+    targetProjId: '',
+    freelancerId: '',
+  });
+
+  // Calculate Freelancer Wage Payout Aggregates across projects
+  const freelancerPayoutMetrics = useMemo(() => {
+    let grandFee = 0;
+    let grandPaid = 0;
+    let grandRemaining = 0;
+    let grandHarusDibayar = 0;
+
+    const list: (ProjectPaymentRecord & { projectId: string; projectTitle: string; clientName: string; freelancerName: string; tierNumber?: number; totalFee: number; remainingBalance: number })[] = [];
+
+    availableProjects.forEach((proj) => {
+      const tierKey = proj.tierNumber || 3;
+      const totalFee = proj.freelancerFee && proj.freelancerFee > 0 ? proj.freelancerFee : getFreelancerFeeForTier(tierKey);
+
+      const verifiedPayments = (proj.freelancerPayments || []).filter((p) => p.status === 'VERIFIED');
+      const alreadyPaid = verifiedPayments.reduce((sum, p) => sum + (p.amount || 0), 0) || proj.freelancerTotalPaid || 0;
+      const remainingBalance = Math.max(0, totalFee - alreadyPaid);
+
+      let requiredTarget = 0;
+      if (proj.progress === 100 || proj.status === 'COMPLETED') {
+        requiredTarget = totalFee;
+      } else if (proj.progress > 0 || proj.status === 'IN_PROGRESS') {
+        requiredTarget = Math.round(totalFee * 0.4);
+      }
+      const harusDibayarNow = Math.max(0, Math.min(remainingBalance, requiredTarget - alreadyPaid));
+
+      grandFee += totalFee;
+      grandPaid += alreadyPaid;
+      grandRemaining += remainingBalance;
+      grandHarusDibayar += harusDibayarNow;
+
+      (proj.freelancerPayments || []).forEach((pay) => {
+        list.push({
+          ...pay,
+          projectId: proj.id,
+          projectTitle: proj.title,
+          clientName: proj.clientName,
+          freelancerName: proj.freelancerName || 'Freelancer',
+          tierNumber: proj.tierNumber,
+          totalFee,
+          remainingBalance,
+        });
+      });
+    });
+
+    return {
+      list: list.sort((a, b) => new Date(b.createdAt || b.date).getTime() - new Date(a.createdAt || a.date).getTime()),
+      grandFee,
+      grandPaid,
+      grandRemaining,
+      grandHarusDibayar,
+    };
+  }, [availableProjects]);
+
+  const handleSaveFreelancerPayout = (e: React.FormEvent) => {
+    e.preventDefault();
+    const amountNum = Number(freelancerPayoutFormData.amount);
+    if (!freelancerPayoutFormData.targetProjId || !amountNum || amountNum <= 0) {
+      showNotification('Harap pilih proyek dan masukkan nominal upah yang valid', 'warning');
+      return;
+    }
+
+    const targetProj = availableProjects.find((p) => p.id === freelancerPayoutFormData.targetProjId);
+    if (!targetProj) return;
+
+    const matchedUser = users.find((u) => u.id === freelancerPayoutFormData.freelancerId) ||
+      users.find((u) => u.name === targetProj.freelancerName);
+    const payeeName = matchedUser?.name || targetProj.freelancerName || 'Freelancer Developer';
+
+    const newRecord: ProjectPaymentRecord = {
+      id: `devpay-${Date.now()}`,
+      date: freelancerPayoutFormData.date,
+      amount: amountNum,
+      stage: freelancerPayoutFormData.stage,
+      notes: freelancerPayoutFormData.notes || `Pengeluaran Upah Dev (${payeeName})`,
+      status: freelancerPayoutFormData.status,
+      proofUrl: freelancerPayoutFormData.proofUrl || undefined,
+      approvedBy: currentUser?.name || 'Admin Atasilabs',
+      approvedAt: new Date().toLocaleString('id-ID'),
+      createdAt: new Date().toISOString(),
+    };
+
+    const currentPayments = targetProj.freelancerPayments || [];
+    const updatedPayments = [newRecord, ...currentPayments];
+    const newDevTotalPaid = updatedPayments
+      .filter((p) => p.status === 'VERIFIED')
+      .reduce((sum, p) => sum + p.amount, 0);
+
+    updateProject(targetProj.id, {
+      freelancerPayments: updatedPayments,
+      freelancerTotalPaid: newDevTotalPaid,
+      freelancerName: targetProj.freelancerName || payeeName,
+    });
+
+    setFreelancerPayoutDialogOpen(false);
+    showNotification(`Catatan pengeluaran upah Rp ${amountNum.toLocaleString('id-ID')} kepada ${payeeName} (Penerima Upah) tersimpan!`, 'success');
+  };
+
+  const handleDeleteFreelancerPayout = (payId: string, projId: string) => {
+    const targetProj = availableProjects.find((p) => p.id === projId);
+    if (!targetProj) return;
+
+    const currentPayments = targetProj.freelancerPayments || [];
+    const updatedPayments = currentPayments.filter((p) => p.id !== payId);
+    const newDevTotalPaid = updatedPayments
+      .filter((p) => p.status === 'VERIFIED')
+      .reduce((sum, p) => sum + p.amount, 0);
+
+    updateProject(projId, {
+      freelancerPayments: updatedPayments,
+      freelancerTotalPaid: newDevTotalPaid,
+    });
+
+    showNotification('Catatan transaksi upah freelancer berhasil dihapus', 'info');
+  };
+
+  const filteredPaymentsList = useMemo(() => {
+    return paymentsListWithProject.filter((pay) => {
+      if (statusFilter !== 'ALL' && pay.status !== statusFilter) return false;
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchStage = pay.stage?.toLowerCase().includes(q);
+        const matchNotes = pay.notes?.toLowerCase().includes(q);
+        const matchClient = pay.clientName?.toLowerCase().includes(q);
+        const matchTitle = pay.projectTitle?.toLowerCase().includes(q);
+        const matchAmount = pay.amount.toString().includes(q);
+        if (!matchStage && !matchNotes && !matchClient && !matchTitle && !matchAmount) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [paymentsListWithProject, statusFilter, searchQuery]);
+
+  const handleCopyAccount = (text: string, bankLabel: string) => {
+    if (typeof window !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      showNotification(`Nomor Rekening ${bankLabel} (${text}) berhasil disalin!`, 'success');
+    }
+  };
+
   const formatRupiah = (num: number) => {
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
@@ -215,15 +393,53 @@ export const PaymentsView: React.FC = () => {
     setPaymentDialogOpen(true);
   };
 
-  // Handle file upload preview to Base64 Data URL
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        showNotification('Ukuran file resi bukti transfer tidak boleh melebihi 5MB', 'warning');
-        return;
-      }
+  const [isUploadingR2, setIsUploadingR2] = useState(false);
 
+  // Handle client payment file upload directly to Cloudflare R2
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      showNotification('Ukuran file resi bukti transfer tidak boleh melebihi 10MB', 'warning');
+      return;
+    }
+
+    setIsUploadingR2(true);
+    showNotification('Mengunggah bukti pembayaran ke Cloudflare R2...', 'info');
+
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', file);
+      uploadFormData.append('folder', 'proofs');
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: uploadFormData,
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.url) {
+        setPaymentFormData((prev) => ({
+          ...prev,
+          proofUrl: data.url,
+        }));
+        showNotification('Bukti resi pembayaran berhasil disimpan ke Cloudflare R2!', 'success');
+      } else {
+        const reader = new FileReader();
+        reader.onload = (uploadEvent) => {
+          const base64Str = uploadEvent.target?.result as string;
+          setPaymentFormData((prev) => ({
+            ...prev,
+            proofUrl: base64Str,
+          }));
+          showNotification('Foto resi bukti transfer dimuat!', 'success');
+        };
+        reader.readAsDataURL(file);
+      }
+    } catch (err) {
+      console.error('Bukti R2 upload error:', err);
       const reader = new FileReader();
       reader.onload = (uploadEvent) => {
         const base64Str = uploadEvent.target?.result as string;
@@ -231,9 +447,71 @@ export const PaymentsView: React.FC = () => {
           ...prev,
           proofUrl: base64Str,
         }));
-        showNotification('Foto resi bukti transfer berhasil diunggah!', 'success');
+        showNotification('Foto resi bukti transfer dimuat!', 'success');
       };
       reader.readAsDataURL(file);
+    } finally {
+      setIsUploadingR2(false);
+    }
+  };
+
+  // Handle freelancer payout file upload directly to Cloudflare R2
+  const handleFreelancerFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      showNotification('Ukuran file bukti transfer tidak boleh melebihi 10MB', 'warning');
+      return;
+    }
+
+    setIsUploadingR2(true);
+    showNotification('Mengunggah bukti transfer upah ke Cloudflare R2...', 'info');
+
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', file);
+      uploadFormData.append('folder', 'freelancer-payouts');
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: uploadFormData,
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.url) {
+        setFreelancerPayoutFormData((prev) => ({
+          ...prev,
+          proofUrl: data.url,
+        }));
+        showNotification('Bukti transfer freelancer disimpan ke Cloudflare R2!', 'success');
+      } else {
+        const reader = new FileReader();
+        reader.onload = (uploadEvent) => {
+          const base64Str = uploadEvent.target?.result as string;
+          setFreelancerPayoutFormData((prev) => ({
+            ...prev,
+            proofUrl: base64Str,
+          }));
+          showNotification('Foto bukti transfer dimuat!', 'success');
+        };
+        reader.readAsDataURL(file);
+      }
+    } catch (err) {
+      console.error('Freelancer payout R2 upload error:', err);
+      const reader = new FileReader();
+      reader.onload = (uploadEvent) => {
+        const base64Str = uploadEvent.target?.result as string;
+        setFreelancerPayoutFormData((prev) => ({
+          ...prev,
+          proofUrl: base64Str,
+        }));
+        showNotification('Foto bukti transfer dimuat!', 'success');
+      };
+      reader.readAsDataURL(file);
+    } finally {
+      setIsUploadingR2(false);
     }
   };
 
@@ -433,7 +711,202 @@ export const PaymentsView: React.FC = () => {
         </Box>
       </Box>
 
-      {/* Main Payment Container Card (Matching Dokumentasi view) */}
+      {/* Admin Tab Switcher: Client Payments vs Freelancer Payouts */}
+      {!isClientRole && (
+        <Paper elevation={0} sx={{ p: 0.8, mb: 3, borderRadius: 3, bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)', border: `1px solid ${theme.palette.divider}` }}>
+          <Tabs
+            value={mainTab}
+            onChange={(e, val) => setMainTab(val)}
+            variant="fullWidth"
+            textColor="primary"
+            indicatorColor="primary"
+          >
+            <Tab
+              icon={<PaymentsIcon />}
+              iconPosition="start"
+              label="1. Pembayaran Masuk (dari Klien)"
+              value="CLIENT"
+              sx={{ fontWeight: 800, textTransform: 'none' }}
+            />
+            <Tab
+              icon={<MoneyIcon />}
+              iconPosition="start"
+              label="2. Pengeluaran Upah Freelancer (Penerima Upah)"
+              value="FREELANCER"
+              sx={{ fontWeight: 800, textTransform: 'none' }}
+            />
+          </Tabs>
+        </Paper>
+      )}
+
+      {/* FREELANCER WAGE PAYOUT SECTION FOR ADMIN */}
+      {mainTab === 'FREELANCER' && !isClientRole && (
+        <Box>
+          <Paper variant="outlined" sx={{ p: { xs: 2.5, md: 3 }, mb: 3, borderRadius: 3.5 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 900, display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <MoneyIcon color="secondary" /> Transaksi Pengeluaran Upah Developer (Penerima Upah)
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Fitur Admin Management: Kelola transaksi transfer upah kepada mitra developer sesuai acuan Upah Dev pada HPP Financial Matrix.
+                </Typography>
+              </Box>
+
+              <Button
+                variant="contained"
+                color="secondary"
+                startIcon={<AddIcon />}
+                onClick={() => {
+                  const defaultProj = availableProjects[0];
+                  const devFee = defaultProj ? (defaultProj.freelancerFee || getFreelancerFeeForTier(defaultProj.tierNumber || 3)) : 0;
+                  setFreelancerPayoutFormData({
+                    date: new Date().toISOString().split('T')[0],
+                    amount: String(Math.round(devFee * 0.4)),
+                    stage: 'DP 40% SPK Signed',
+                    notes: '',
+                    status: 'VERIFIED',
+                    proofUrl: '',
+                    targetProjId: defaultProj?.id || '',
+                    freelancerId: users.find((u) => u.role === 'FREELANCER')?.id || '',
+                  });
+                  setFreelancerPayoutDialogOpen(true);
+                }}
+                sx={{ borderRadius: 2.5, fontWeight: 800, bgcolor: '#8b5cf6', '&:hover': { bgcolor: '#7c3aed' } }}
+              >
+                Catat Pengeluaran Upah Freelancer
+              </Button>
+            </Box>
+
+            {/* KPI Cards */}
+            <Grid container spacing={2.5} sx={{ mb: 3.5 }}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: `1px solid ${theme.palette.divider}`, bgcolor: theme.palette.mode === 'dark' ? 'rgba(139, 92, 246, 0.08)' : 'rgba(139, 92, 246, 0.04)' }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800, display: 'block' }}>
+                    1. TOTAL UPAH DEV (HPP TIER)
+                  </Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 900, color: '#8b5cf6' }}>
+                    {formatRupiah(freelancerPayoutMetrics.grandFee)}
+                  </Typography>
+                </Paper>
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: `1px solid ${theme.palette.divider}`, bgcolor: theme.palette.mode === 'dark' ? 'rgba(16, 185, 129, 0.08)' : 'rgba(16, 185, 129, 0.04)' }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800, display: 'block' }}>
+                    2. SUDAH DIBAYAR KE FREELANCER
+                  </Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 900, color: '#10b981' }}>
+                    {formatRupiah(freelancerPayoutMetrics.grandPaid)}
+                  </Typography>
+                </Paper>
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: `1px solid ${theme.palette.divider}`, bgcolor: theme.palette.mode === 'dark' ? 'rgba(245, 158, 11, 0.08)' : 'rgba(245, 158, 11, 0.04)' }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800, display: 'block' }}>
+                    3. SISA UPAH BELUM DIBAYAR
+                  </Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 900, color: '#f59e0b' }}>
+                    {formatRupiah(freelancerPayoutMetrics.grandRemaining)}
+                  </Typography>
+                </Paper>
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: `1px solid ${theme.palette.divider}`, bgcolor: theme.palette.mode === 'dark' ? 'rgba(239, 68, 68, 0.08)' : 'rgba(239, 68, 68, 0.04)' }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800, display: 'block' }}>
+                    4. HARUS DIBAYAR SEKARANG
+                  </Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 900, color: '#ef4444' }}>
+                    {formatRupiah(freelancerPayoutMetrics.grandHarusDibayar)}
+                  </Typography>
+                </Paper>
+              </Grid>
+            </Grid>
+
+            {/* Table of Freelancer Payouts */}
+            <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 3 }}>
+              <Table size="small">
+                <TableHead sx={{ bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)' }}>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 800 }}>Tanggal</TableCell>
+                    <TableCell sx={{ fontWeight: 800 }}>Penerima Upah (Freelancer)</TableCell>
+                    <TableCell sx={{ fontWeight: 800 }}>Proyek & Tier HPP</TableCell>
+                    <TableCell sx={{ fontWeight: 800 }}>Tahap SPK/BAST</TableCell>
+                    <TableCell sx={{ fontWeight: 800 }}>Nominal Upah Dibayar</TableCell>
+                    <TableCell sx={{ fontWeight: 800 }}>Status Transfer</TableCell>
+                    <TableCell sx={{ fontWeight: 800, textAlign: 'right' }}>Aksi Admin</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {freelancerPayoutMetrics.list.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                        <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                          Belum ada catatan transaksi pengeluaran upah kepada freelancer.
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    freelancerPayoutMetrics.list.map((pay) => (
+                      <TableRow key={pay.id} hover>
+                        <TableCell sx={{ fontWeight: 700 }}>{pay.date}</TableCell>
+                        <TableCell>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Avatar sx={{ width: 28, height: 28, fontSize: '0.75rem', bgcolor: '#8b5cf6' }}>
+                              {pay.freelancerName[0]?.toUpperCase()}
+                            </Avatar>
+                            <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+                              {pay.freelancerName}
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                            {pay.projectTitle}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary" display="block">
+                            Upah Dev: {formatRupiah(pay.totalFee)}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Chip label={pay.stage} size="small" color="secondary" sx={{ fontWeight: 800, fontSize: '0.65rem' }} />
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 900, color: '#10b981' }}>
+                          {formatRupiah(pay.amount)}
+                        </TableCell>
+                        <TableCell>
+                          <Chip label={pay.status} size="small" color={pay.status === 'VERIFIED' ? 'success' : 'warning'} sx={{ fontWeight: 800, fontSize: '0.65rem' }} />
+                        </TableCell>
+                        <TableCell align="right">
+                          {pay.proofUrl && (
+                            <IconButton
+                              size="small"
+                              color="info"
+                              onClick={() => setProofPreviewModal({ open: true, payment: pay })}
+                              title="Lihat Bukti Transfer R2"
+                              sx={{ mr: 0.5 }}
+                            >
+                              <VisibilityIcon fontSize="small" />
+                            </IconButton>
+                          )}
+                          <IconButton size="small" color="error" onClick={() => handleDeleteFreelancerPayout(pay.id, pay.projectId)} title="Hapus Catatan Upah">
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Paper>
+        </Box>
+      )}
+
+      {/* Main Payment Container Card for Client Inbound (Active when mainTab === 'CLIENT') */}
+      {(mainTab === 'CLIENT' || isClientRole) && (
       <Paper
         variant="outlined"
         sx={{
@@ -492,12 +965,22 @@ export const PaymentsView: React.FC = () => {
           <Grid size={{ xs: 12, sm: 5 }} textAlign={{ sm: 'right' }}>
             <Box sx={{ display: 'flex', gap: 1, justifyContent: { sm: 'flex-end' }, flexWrap: 'wrap', mt: { xs: 1, sm: 2.5 } }}>
               <Button
+                variant="outlined"
+                color="info"
+                size="medium"
+                startIcon={<BankIcon />}
+                onClick={() => setBankInfoDialogOpen(true)}
+                sx={{ fontWeight: 800, borderRadius: 2.5, px: 2, py: 1, textTransform: 'none' }}
+              >
+                Info Rekening & QRIS
+              </Button>
+              <Button
                 variant="contained"
                 color="primary"
                 size="medium"
                 startIcon={<AddIcon />}
                 onClick={handleOpenPaymentDialog}
-                sx={{ fontWeight: 800, borderRadius: 2.5, px: 2.5, py: 1 }}
+                sx={{ fontWeight: 800, borderRadius: 2.5, px: 2.5, py: 1, textTransform: 'none' }}
               >
                 Catat Pembayaran Baru
               </Button>
@@ -505,7 +988,7 @@ export const PaymentsView: React.FC = () => {
           </Grid>
         </Grid>
 
-        {/* Info Alert Box (Matching Dokumentasi view) */}
+        {/* Info Alert Box */}
         <Alert severity="info" icon={<InfoIcon />} sx={{ borderRadius: 2, mb: 3, fontSize: '0.84rem' }}>
           {isAllProjects ? (
             <>Menampilkan gabungan laporan pembayaran untuk <strong>{availableProjects.length} Proyek Klien Aktif</strong>. Seluruh catatan transaksi & resi tersimpan permanen per proyek.</>
@@ -514,7 +997,7 @@ export const PaymentsView: React.FC = () => {
           )}
         </Alert>
 
-        {/* 3 Financial Summary Cards */}
+        {/* 3 Financial Summary Cards with Enhanced Progress Bar */}
         <Grid container spacing={2.5} sx={{ mb: 3.5 }}>
           <Grid size={{ xs: 12, sm: 4 }}>
             <Paper
@@ -524,13 +1007,22 @@ export const PaymentsView: React.FC = () => {
                 borderRadius: 3,
                 bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : '#f8fafc',
                 border: `1px solid ${theme.palette.divider}`,
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                justify: 'space-between',
               }}
             >
-              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800, letterSpacing: '0.05em', display: 'block', mb: 0.8 }}>
-                {isAllProjects ? 'TOTAL KONTRAK SEMUA PROYEK' : 'TOTAL NILAI KONTRAK'}
-              </Typography>
-              <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary' }}>
-                {formatRupiah(totalBudget)}
+              <Box>
+                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800, letterSpacing: '0.05em', display: 'block', mb: 0.8 }}>
+                  {isAllProjects ? 'TOTAL KONTRAK SEMUA PROYEK' : 'TOTAL NILAI KONTRAK'}
+                </Typography>
+                <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary' }}>
+                  {formatRupiah(totalBudget)}
+                </Typography>
+              </Box>
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 1.5, fontWeight: 600 }}>
+                Nilai total kontrak yang telah disepakati
               </Typography>
             </Paper>
           </Grid>
@@ -543,14 +1035,35 @@ export const PaymentsView: React.FC = () => {
                 borderRadius: 3,
                 bgcolor: 'rgba(16, 185, 129, 0.08)',
                 borderColor: 'rgba(16, 185, 129, 0.3)',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                justify: 'space-between',
               }}
             >
-              <Typography variant="caption" sx={{ fontWeight: 800, letterSpacing: '0.05em', display: 'block', mb: 0.8, color: '#10b981' }}>
-                TOTAL TERBAYAR ({paymentProgressPct}%)
-              </Typography>
-              <Typography variant="h5" sx={{ fontWeight: 800, color: '#10b981' }}>
-                {formatRupiah(totalPaidAmount)}
-              </Typography>
+              <Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.8 }}>
+                  <Typography variant="caption" sx={{ fontWeight: 800, letterSpacing: '0.05em', color: '#10b981' }}>
+                    TOTAL TERBAYAR
+                  </Typography>
+                  <Chip label={`${paymentProgressPct}% LUNAS`} size="small" color="success" sx={{ fontWeight: 800, height: 20, fontSize: '0.65rem' }} />
+                </Box>
+                <Typography variant="h5" sx={{ fontWeight: 800, color: '#10b981' }}>
+                  {formatRupiah(totalPaidAmount)}
+                </Typography>
+              </Box>
+              <Box sx={{ mt: 1.5 }}>
+                <LinearProgress
+                  variant="determinate"
+                  value={paymentProgressPct}
+                  sx={{
+                    height: 8,
+                    borderRadius: 4,
+                    bgcolor: 'rgba(16,185,129,0.2)',
+                    '& .MuiLinearProgress-bar': { bgcolor: '#10b981', borderRadius: 4 },
+                  }}
+                />
+              </Box>
             </Paper>
           </Grid>
 
@@ -562,17 +1075,68 @@ export const PaymentsView: React.FC = () => {
                 borderRadius: 3,
                 bgcolor: remainingBalance > 0 ? 'rgba(245, 158, 11, 0.08)' : 'rgba(16, 185, 129, 0.08)',
                 borderColor: remainingBalance > 0 ? 'rgba(245, 158, 11, 0.3)' : 'rgba(16, 185, 129, 0.3)',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                justify: 'space-between',
               }}
             >
-              <Typography variant="caption" sx={{ fontWeight: 800, letterSpacing: '0.05em', display: 'block', mb: 0.8, color: remainingBalance > 0 ? '#f59e0b' : '#10b981' }}>
-                SISA PELUNASAN KONTRAK
-              </Typography>
-              <Typography variant="h5" sx={{ fontWeight: 800, color: remainingBalance > 0 ? '#f59e0b' : '#10b981' }}>
-                {remainingBalance > 0 ? formatRupiah(remainingBalance) : 'LUNAS 100% ✅'}
+              <Box>
+                <Typography variant="caption" sx={{ fontWeight: 800, letterSpacing: '0.05em', display: 'block', mb: 0.8, color: remainingBalance > 0 ? '#f59e0b' : '#10b981' }}>
+                  SISA PELUNASAN KONTRAK
+                </Typography>
+                <Typography variant="h5" sx={{ fontWeight: 800, color: remainingBalance > 0 ? '#f59e0b' : '#10b981' }}>
+                  {remainingBalance > 0 ? formatRupiah(remainingBalance) : 'LUNAS 100% ✅'}
+                </Typography>
+              </Box>
+              <Typography variant="caption" sx={{ mt: 1.5, fontWeight: 700, color: remainingBalance > 0 ? '#f59e0b' : '#10b981' }}>
+                {remainingBalance > 0 ? 'Menunggu pembayaran termin berikutnya' : 'Seluruh kewajiban pembayaran telah selesai'}
               </Typography>
             </Paper>
           </Grid>
         </Grid>
+
+        {/* Filter Tabs & Quick Search Bar */}
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2, mb: 2.5 }}>
+          <Tabs
+            value={statusFilter}
+            onChange={(_, val) => setStatusFilter(val)}
+            sx={{
+              minHeight: 38,
+              '& .MuiTab-root': {
+                minHeight: 38,
+                fontWeight: 800,
+                fontSize: '0.8rem',
+                textTransform: 'none',
+                borderRadius: 2,
+                px: 2,
+                mr: 1,
+              },
+            }}
+          >
+            <Tab label={`Semua (${paymentsListWithProject.length})`} value="ALL" />
+            <Tab label={`Terverifikasi (${paymentsListWithProject.filter((p) => p.status === 'VERIFIED').length})`} value="VERIFIED" />
+            <Tab label={`Pending Approval (${paymentsListWithProject.filter((p) => p.status === 'PENDING').length})`} value="PENDING" />
+            <Tab label={`Ditolak (${paymentsListWithProject.filter((p) => p.status === 'FAILED').length})`} value="FAILED" />
+          </Tabs>
+
+          <TextField
+            size="small"
+            placeholder="Cari transaksi / termin / catatan..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" sx={{ color: 'text.secondary' }} />
+                  </InputAdornment>
+                ),
+              },
+            }}
+            sx={{ width: { xs: '100%', sm: 280 }, '& .MuiOutlinedInput-root': { borderRadius: 2.5 } }}
+          />
+        </Box>
 
         {/* Transactions Table */}
         <TableContainer component={Box} sx={{ border: `1px solid ${theme.palette.divider}`, borderRadius: 2.5 }}>
@@ -586,12 +1150,12 @@ export const PaymentsView: React.FC = () => {
                 <TableCell sx={{ fontWeight: 800 }}>Bukti Pembayaran</TableCell>
                 <TableCell sx={{ fontWeight: 800 }}>Catatan & Ref Transfer</TableCell>
                 <TableCell sx={{ fontWeight: 800 }}>Status Approval Admin</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 800 }}>Aksi / Verifikasi</TableCell>
+                <TableCell align="right" sx={{ fontWeight: 800 }}>Aksi / Invoice</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {paymentsListWithProject.length > 0 ? (
-                paymentsListWithProject.map((pay) => (
+              {filteredPaymentsList.length > 0 ? (
+                filteredPaymentsList.map((pay) => (
                   <TableRow key={`${pay.projectId}-${pay.id}`} hover sx={{ bgcolor: pay.status === 'PENDING' ? (theme.palette.mode === 'dark' ? 'rgba(245, 158, 11, 0.05)' : '#fffbe6') : 'transparent' }}>
                     <TableCell sx={{ fontWeight: 700 }}>{pay.date}</TableCell>
                     {isAllProjects && (
@@ -618,13 +1182,13 @@ export const PaymentsView: React.FC = () => {
                           color="info"
                           startIcon={<VisibilityIcon sx={{ fontSize: 14 }} />}
                           onClick={() => setProofPreviewModal({ open: true, payment: pay })}
-                          sx={{ fontSize: '0.72rem', py: 0.3, fontWeight: 700 }}
+                          sx={{ fontSize: '0.72rem', py: 0.3, fontWeight: 700, textTransform: 'none' }}
                         >
-                          Lihat Bukti Resi
+                          Lihat Resi
                         </Button>
                       ) : (
                         <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                          Tanpa Bukti Resi
+                          Tanpa Resi
                         </Typography>
                       )}
                     </TableCell>
@@ -636,7 +1200,7 @@ export const PaymentsView: React.FC = () => {
                         <Tooltip title={pay.approvedBy ? `Disetujui oleh ${pay.approvedBy} (${pay.approvedAt || pay.date})` : 'Disetujui Admin'}>
                           <Chip
                             icon={<CheckCircleIcon sx={{ fontSize: '14px !important' }} />}
-                            label="DISUJUI ADMIN ✅"
+                            label="DISUTUJU ADMIN ✅"
                             size="small"
                             color="success"
                             sx={{ fontWeight: 800, fontSize: '0.7rem', height: 24 }}
@@ -666,7 +1230,16 @@ export const PaymentsView: React.FC = () => {
                     </TableCell>
                     <TableCell align="right">
                       <Stack direction="row" spacing={0.8} justifyContent="flex-end" alignItems="center">
-                        {/* Admin Action Buttons for PENDING payments */}
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          color="secondary"
+                          startIcon={<ReceiptIcon sx={{ fontSize: 13 }} />}
+                          onClick={() => setInvoiceModal({ open: true, payment: pay })}
+                          sx={{ fontSize: '0.7rem', py: 0.3, px: 1, fontWeight: 800, textTransform: 'none' }}
+                        >
+                          Invoice
+                        </Button>
                         {!isClientRole && pay.status === 'PENDING' && (
                           <>
                             <Button
@@ -709,6 +1282,214 @@ export const PaymentsView: React.FC = () => {
           </Table>
         </TableContainer>
       </Paper>
+      )}
+
+      {/* Dialog Modal: Catat Pengeluaran Upah Freelancer (Fitur Admin) */}
+      <Dialog open={freelancerPayoutDialogOpen} onClose={() => setFreelancerPayoutDialogOpen(false)} maxWidth="xs" fullWidth slotProps={{ paper: { sx: { borderRadius: 3.5, p: 1 } } }}>
+        <DialogTitle sx={{ fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          Catat Pengeluaran Upah Freelancer
+          <IconButton size="small" onClick={() => setFreelancerPayoutDialogOpen(false)}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+
+        <form onSubmit={handleSaveFreelancerPayout}>
+          <DialogContent dividers>
+            <Stack spacing={2.5}>
+              {/* Select Freelancer (Penerima Upah) */}
+              <TextField
+                select
+                fullWidth
+                size="small"
+                label="Penerima Upah (Freelancer)"
+                value={freelancerPayoutFormData.freelancerId}
+                onChange={(e) => setFreelancerPayoutFormData((prev) => ({ ...prev, freelancerId: e.target.value }))}
+                required
+              >
+                {users
+                  .filter((u) => u.role === 'FREELANCER' || u.role === 'DEVELOPER')
+                  .map((u) => (
+                    <MenuItem key={u.id} value={u.id}>
+                      {u.name} ({u.role}) — {u.email}
+                    </MenuItem>
+                  ))}
+              </TextField>
+
+              {/* Select Project */}
+              <TextField
+                select
+                fullWidth
+                size="small"
+                label="Pilih Proyek Target"
+                value={freelancerPayoutFormData.targetProjId}
+                onChange={(e) => {
+                  const pid = e.target.value;
+                  const proj = availableProjects.find((p) => p.id === pid);
+                  const devFee = proj ? (proj.freelancerFee || getFreelancerFeeForTier(proj.tierNumber || 3)) : 0;
+                  setFreelancerPayoutFormData((prev) => ({
+                    ...prev,
+                    targetProjId: pid,
+                    amount: prev.amount || String(Math.round(devFee * 0.4)),
+                  }));
+                }}
+                required
+              >
+                {availableProjects.map((p) => {
+                  const devFee = p.freelancerFee || getFreelancerFeeForTier(p.tierNumber || 3);
+                  return (
+                    <MenuItem key={p.id} value={p.id}>
+                      {p.title} ({p.clientName}) — Upah Dev: {formatRupiah(devFee)}
+                    </MenuItem>
+                  );
+                })}
+              </TextField>
+
+              {/* Amount Paid */}
+              <TextField
+                fullWidth
+                size="small"
+                type="number"
+                label="Nominal Upah Dibayar (Rp)"
+                placeholder="misal: 1400000"
+                value={freelancerPayoutFormData.amount}
+                onChange={(e) => setFreelancerPayoutFormData((prev) => ({ ...prev, amount: e.target.value }))}
+                required
+              />
+
+              {/* Stage / Termin */}
+              <TextField
+                select
+                fullWidth
+                size="small"
+                label="Tahap / Skema Pembayaran Upah"
+                value={freelancerPayoutFormData.stage}
+                onChange={(e) => setFreelancerPayoutFormData((prev) => ({ ...prev, stage: e.target.value }))}
+              >
+                <MenuItem value="DP 40% SPK Signed">DP 40% (Tahap Rilis SPK)</MenuItem>
+                <MenuItem value="Pelunasan 60% BAST">Pelunasan 60% (Tahap Closure BAST)</MenuItem>
+                <MenuItem value="Pembayaran Gradual / Termin">Pembayaran Gradual / Termin</MenuItem>
+                <MenuItem value="Bonus / Insentif Dev">Bonus / Insentif Dev</MenuItem>
+              </TextField>
+
+              {/* Date */}
+              <TextField
+                fullWidth
+                size="small"
+                type="date"
+                label="Tanggal Transfer Upah"
+                value={freelancerPayoutFormData.date}
+                onChange={(e) => setFreelancerPayoutFormData((prev) => ({ ...prev, date: e.target.value }))}
+                slotProps={{ inputLabel: { shrink: true } }}
+              />
+
+              {/* Dedicated Cloudflare R2 Image Upload Box */}
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 2.5,
+                  borderRadius: 3,
+                  bgcolor: theme.palette.mode === 'dark' ? 'rgba(139, 92, 246, 0.04)' : '#fcfaff',
+                  border: `1.5px dashed ${theme.palette.mode === 'dark' ? 'rgba(139, 92, 246, 0.3)' : 'rgba(139, 92, 246, 0.4)'}`,
+                  textAlign: 'center',
+                  transition: 'all 0.2s',
+                }}
+              >
+                <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 0.5, color: '#8b5cf6', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                  <UploadIcon fontSize="small" /> Upload Bukti Resi Gambar (Cloudflare R2)
+                </Typography>
+                <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
+                  Pilih foto/resi transfer bank (PNG, JPG, WebP - Maks 10MB). Gambar otomatis diunggah ke Cloudflare R2.
+                </Typography>
+
+                {freelancerPayoutFormData.proofUrl ? (
+                  <Box sx={{ textAlign: 'center' }}>
+                    <Box
+                      component="img"
+                      src={freelancerPayoutFormData.proofUrl}
+                      alt="Bukti Resi Transfer"
+                      sx={{
+                        maxHeight: 180,
+                        maxWidth: '100%',
+                        objectFit: 'contain',
+                        borderRadius: 2.5,
+                        border: '1px solid rgba(16,185,129,0.4)',
+                        boxShadow: '0 4px 14px rgba(0,0,0,0.15)',
+                        mb: 1.5,
+                        mx: 'auto',
+                        display: 'block',
+                      }}
+                    />
+                    <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                      <Button
+                        variant="outlined"
+                        component="label"
+                        color="secondary"
+                        size="small"
+                        disabled={isUploadingR2}
+                        startIcon={<UploadIcon />}
+                        sx={{ fontWeight: 800, borderRadius: 2, textTransform: 'none' }}
+                      >
+                        {isUploadingR2 ? 'Mengunggah ke R2...' : 'Ganti Gambar Resi'}
+                        <input type="file" accept="image/*" hidden onChange={handleFreelancerFileUpload} />
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        color="error"
+                        size="small"
+                        onClick={() => setFreelancerPayoutFormData((prev) => ({ ...prev, proofUrl: '' }))}
+                        sx={{ fontWeight: 800, borderRadius: 2, textTransform: 'none' }}
+                      >
+                        Hapus Gambar
+                      </Button>
+                    </Box>
+                  </Box>
+                ) : (
+                  <Button
+                    variant="contained"
+                    component="label"
+                    disabled={isUploadingR2}
+                    startIcon={<UploadIcon />}
+                    sx={{
+                      fontWeight: 800,
+                      borderRadius: 2.5,
+                      px: 3,
+                      py: 1.2,
+                      textTransform: 'none',
+                      bgcolor: '#8b5cf6',
+                      '&:hover': { bgcolor: '#7c3aed' },
+                      boxShadow: '0 4px 14px rgba(139, 92, 246, 0.35)',
+                    }}
+                  >
+                    {isUploadingR2 ? 'Mengunggah ke Cloudflare R2...' : '📷 Pilih Gambar Resi Transfer'}
+                    <input type="file" accept="image/*" hidden onChange={handleFreelancerFileUpload} />
+                  </Button>
+                )}
+              </Paper>
+
+              {/* Notes */}
+              <TextField
+                fullWidth
+                size="small"
+                multiline
+                rows={2}
+                label="Catatan Pembayaran Upah"
+                placeholder="Catatan transfer fee developer..."
+                value={freelancerPayoutFormData.notes}
+                onChange={(e) => setFreelancerPayoutFormData((prev) => ({ ...prev, notes: e.target.value }))}
+              />
+            </Stack>
+          </DialogContent>
+
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={() => setFreelancerPayoutDialogOpen(false)} sx={{ fontWeight: 700 }}>
+              Batal
+            </Button>
+            <Button type="submit" variant="contained" color="secondary" sx={{ fontWeight: 800, borderRadius: 2, bgcolor: '#8b5cf6', '&:hover': { bgcolor: '#7c3aed' } }}>
+              Simpan Pengeluaran Upah
+            </Button>
+          </DialogActions>
+        </form>
+      </Dialog>
 
       {/* Form Dialog Modal Input Pembayaran (Style LeadsView) */}
       <Dialog
@@ -1141,6 +1922,372 @@ export const PaymentsView: React.FC = () => {
             <DialogActions sx={{ p: 2.5, display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
               <Button onClick={() => setProofPreviewModal({ open: false })} variant="contained" color="primary" sx={{ borderRadius: 2.5, fontWeight: 800, px: 3, textTransform: 'none' }}>
                 Tutup Rincian
+              </Button>
+            </DialogActions>
+          </>
+        )}
+      </Dialog>
+
+      {/* Informasi Rekening Bank & QRIS Modal */}
+      <Dialog
+        open={bankInfoDialogOpen}
+        onClose={() => setBankInfoDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: 4,
+              p: 1,
+              backgroundColor: theme.palette.background.paper,
+              backgroundImage: 'none',
+              boxShadow: '0 24px 48px rgba(0,0,0,0.2)',
+            },
+          },
+        }}
+      >
+        <DialogTitle component="div" sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Avatar sx={{ width: 44, height: 44, bgcolor: 'primary.main', boxShadow: '0 4px 14px rgba(99,102,241,0.3)' }}>
+              <BankIcon />
+            </Avatar>
+            <Box>
+              <Typography variant="h6" component="h2" sx={{ fontWeight: 800, lineHeight: 1.2 }}>
+                Informasi Rekening Resmi & QRIS
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Metode Pembayaran Resmi PT ATASILABS DIGITAL INDONESIA
+              </Typography>
+            </Box>
+          </Box>
+          <IconButton onClick={() => setBankInfoDialogOpen(false)} size="small" sx={{ borderRadius: 2 }}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent dividers sx={{ p: 3 }}>
+          <Alert severity="success" icon={<SecurityIcon />} sx={{ mb: 3, borderRadius: 2.5, fontSize: '0.84rem' }}>
+            Pastikan seluruh transfer pembayaran ditujukan ke rekening resmi atas nama <strong>PT ATASILABS DIGITAL INDONESIA</strong>.
+          </Alert>
+
+          <Stack spacing={2}>
+            {/* BRI Card */}
+            <Paper variant="outlined" sx={{ p: 2, borderRadius: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Avatar sx={{ bgcolor: 'rgba(99,102,241,0.1)', color: 'primary.main', fontWeight: 900, fontSize: '0.85rem' }}>
+                  BRI
+                </Avatar>
+                <Box>
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    BANK BRI (PT ATASILABS DIGITAL INDONESIA)
+                  </Typography>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 900, fontFamily: 'monospace', letterSpacing: 0.5 }}>
+                    1234-01-000123-53-0
+                  </Typography>
+                </Box>
+              </Box>
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<CopyIcon sx={{ fontSize: 14 }} />}
+                onClick={() => handleCopyAccount('1234-01-000123-53-0', 'BRI')}
+                sx={{ fontWeight: 800, borderRadius: 2, textTransform: 'none', fontSize: '0.75rem' }}
+              >
+                Salin
+              </Button>
+            </Paper>
+
+            {/* BCA Card */}
+            <Paper variant="outlined" sx={{ p: 2, borderRadius: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Avatar sx={{ bgcolor: 'rgba(16,185,129,0.1)', color: '#10b981', fontWeight: 900, fontSize: '0.85rem' }}>
+                  BCA
+                </Avatar>
+                <Box>
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    BANK BCA (PT ATASILABS DIGITAL INDONESIA)
+                  </Typography>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 900, fontFamily: 'monospace', letterSpacing: 0.5 }}>
+                    8830-9988-12
+                  </Typography>
+                </Box>
+              </Box>
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<CopyIcon sx={{ fontSize: 14 }} />}
+                onClick={() => handleCopyAccount('8830-9988-12', 'BCA')}
+                sx={{ fontWeight: 800, borderRadius: 2, textTransform: 'none', fontSize: '0.75rem' }}
+              >
+                Salin
+              </Button>
+            </Paper>
+
+            {/* Mandiri Card */}
+            <Paper variant="outlined" sx={{ p: 2, borderRadius: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Avatar sx={{ bgcolor: 'rgba(245,158,11,0.1)', color: '#f59e0b', fontWeight: 900, fontSize: '0.85rem' }}>
+                  MDR
+                </Avatar>
+                <Box>
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    BANK MANDIRI (PT ATASILABS DIGITAL INDONESIA)
+                  </Typography>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 900, fontFamily: 'monospace', letterSpacing: 0.5 }}>
+                    137-00-1928374-1
+                  </Typography>
+                </Box>
+              </Box>
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<CopyIcon sx={{ fontSize: 14 }} />}
+                onClick={() => handleCopyAccount('137-00-1928374-1', 'Mandiri')}
+                sx={{ fontWeight: 800, borderRadius: 2, textTransform: 'none', fontSize: '0.75rem' }}
+              >
+                Salin
+              </Button>
+            </Paper>
+
+            {/* QRIS Container */}
+            <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 3, textAlign: 'center', bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : '#f8fafc' }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                <QrCodeIcon color="primary" /> QRIS All Payment (GoPay / OVO / Dana / Mobile Banking)
+              </Typography>
+              <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
+                Scan QR Code berikut menggunakan aplikasi e-Wallet atau Mobile Banking yang mendukung QRIS
+              </Typography>
+              <Box
+                sx={{
+                  width: 180,
+                  height: 180,
+                  mx: 'auto',
+                  borderRadius: 3,
+                  p: 1.5,
+                  bgcolor: '#ffffff',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexDirection: 'column',
+                  border: '1px solid #e2e8f0',
+                }}
+              >
+                <QrCodeIcon sx={{ fontSize: 110, color: '#1e293b' }} />
+                <Typography variant="caption" sx={{ fontWeight: 900, color: '#0f172a', fontSize: '0.68rem', mt: -1 }}>
+                  NMIN: ID10293847561
+                </Typography>
+              </Box>
+            </Paper>
+          </Stack>
+        </DialogContent>
+
+        <DialogActions sx={{ p: 2.5, px: 3 }}>
+          <Button onClick={() => setBankInfoDialogOpen(false)} variant="contained" color="primary" sx={{ fontWeight: 800, borderRadius: 2.5, px: 3, textTransform: 'none' }}>
+            Tutup Informasi Bank
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Official Printable Invoice Modal */}
+      <Dialog
+        open={invoiceModal.open}
+        onClose={() => setInvoiceModal({ open: false })}
+        maxWidth="md"
+        fullWidth
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: 4,
+              p: 1,
+              backgroundColor: theme.palette.background.paper,
+              backgroundImage: 'none',
+              boxShadow: '0 24px 48px rgba(0,0,0,0.2)',
+            },
+          },
+        }}
+      >
+        {invoiceModal.payment && (
+          <>
+            <DialogTitle component="div" sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Avatar sx={{ width: 44, height: 44, bgcolor: 'secondary.main', boxShadow: '0 4px 14px rgba(139,92,246,0.3)' }}>
+                  <ReceiptIcon />
+                </Avatar>
+                <Box>
+                  <Typography variant="h6" component="h2" sx={{ fontWeight: 800, lineHeight: 1.2 }}>
+                    Official Invoice Transaksi
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Dokumen Tagihan & Bukti Pembayaran Resmi Atasilabs
+                  </Typography>
+                </Box>
+              </Box>
+              <IconButton onClick={() => setInvoiceModal({ open: false })} size="small" sx={{ borderRadius: 2 }}>
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            </DialogTitle>
+
+            <DialogContent dividers sx={{ p: { xs: 2.5, md: 4 } }}>
+              {/* Printable Invoice Document Sheet */}
+              <Paper
+                elevation={0}
+                sx={{
+                  p: { xs: 2.5, md: 4 },
+                  borderRadius: 3,
+                  bgcolor: theme.palette.mode === 'dark' ? '#0f172a' : '#ffffff',
+                  border: `1px solid ${theme.palette.divider}`,
+                  position: 'relative',
+                  overflow: 'hidden',
+                }}
+              >
+                {/* Header Letterhead */}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2, mb: 4, borderBottom: `2px solid ${theme.palette.divider}`, pb: 3 }}>
+                  <Box>
+                    <Typography variant="h5" sx={{ fontWeight: 900, color: 'primary.main', letterSpacing: -0.5 }}>
+                      ATASILABS
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" display="block" sx={{ fontWeight: 700 }}>
+                      PT ATASILABS DIGITAL INDONESIA
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" display="block">
+                      Software Development & Digital Technology Partner
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" display="block">
+                      Email: support@atasilabs.com | Web: atasilabs.com
+                    </Typography>
+                  </Box>
+                  <Box sx={{ textAlign: { xs: 'left', sm: 'right' } }}>
+                    <Chip label="OFFICIAL INVOICE" color="primary" sx={{ fontWeight: 900, letterSpacing: 1, mb: 1 }} />
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800, fontFamily: 'monospace' }}>
+                      #INV-ATL-2026-{invoiceModal.payment.id.replace('pay-', '')}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" display="block">
+                      Tanggal: <strong>{invoiceModal.payment.date}</strong>
+                    </Typography>
+                  </Box>
+                </Box>
+
+                {/* Bill To & Project Info */}
+                <Grid container spacing={3} sx={{ mb: 4 }}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800, letterSpacing: 0.5, textTransform: 'uppercase', display: 'block', mb: 0.5 }}>
+                      DITUJUKAN KEPADA (BILL TO):
+                    </Typography>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
+                      {invoiceModal.payment.clientName || selectedProject?.clientName || 'Klien Atasilabs'}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Proyek: <strong>{invoiceModal.payment.projectTitle || selectedProject?.title || 'Pengembangan Perangkat Lunak'}</strong>
+                    </Typography>
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }} textAlign={{ sm: 'right' }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800, letterSpacing: 0.5, textTransform: 'uppercase', display: 'block', mb: 0.5 }}>
+                      STATUS PEMBAYARAN:
+                    </Typography>
+                    <Chip
+                      label={
+                        invoiceModal.payment.status === 'VERIFIED'
+                          ? 'PAID / TERVERIFIKASI ✅'
+                          : invoiceModal.payment.status === 'FAILED'
+                          ? 'CANCELLED / DITOLAK ❌'
+                          : 'PENDING APPROVAL ⏳'
+                      }
+                      color={
+                        invoiceModal.payment.status === 'VERIFIED'
+                          ? 'success'
+                          : invoiceModal.payment.status === 'FAILED'
+                          ? 'error'
+                          : 'warning'
+                      }
+                      sx={{ fontWeight: 900, px: 1 }}
+                    />
+                  </Grid>
+                </Grid>
+
+                {/* Itemized Table */}
+                <TableContainer component={Box} sx={{ border: `1px solid ${theme.palette.divider}`, borderRadius: 2, mb: 3 }}>
+                  <Table>
+                    <TableHead>
+                      <TableRow sx={{ bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : '#f8fafc' }}>
+                        <TableCell sx={{ fontWeight: 800 }}>Deskripsi Item / Termin</TableCell>
+                        <TableCell sx={{ fontWeight: 800 }}>Tanggal Pembayaran</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 800 }}>Jumlah (IDR)</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+                            {invoiceModal.payment.stage}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            Ref: {invoiceModal.payment.notes || 'Pembayaran Termin Proyek'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 700 }}>{invoiceModal.payment.date}</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 900, color: '#10b981', fontSize: '1rem' }}>
+                          {formatRupiah(invoiceModal.payment.amount)}
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+
+                {/* Total Summary */}
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 4 }}>
+                  <Box sx={{ width: { xs: '100%', sm: 300 } }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.8, borderBottom: `1px solid ${theme.palette.divider}` }}>
+                      <Typography variant="body2" color="text.secondary">Subtotal:</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 800 }}>{formatRupiah(invoiceModal.payment.amount)}</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.8, borderBottom: `1px solid ${theme.palette.divider}` }}>
+                      <Typography variant="body2" color="text.secondary">Pajak / Biaya Layanan:</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 800 }}>Rp 0</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1.2 }}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 900 }}>Total Ditagihkan:</Typography>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 900, color: 'primary.main' }}>{formatRupiah(invoiceModal.payment.amount)}</Typography>
+                    </Box>
+                  </Box>
+                </Box>
+
+                {/* Footer Stamp & Notes */}
+                <Box sx={{ pt: 3, borderTop: `1px dashed ${theme.palette.divider}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" display="block">
+                      Terima kasih atas kepercayaan Anda bermitra dengan Atasilabs.
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" display="block">
+                      Dokumen ini diterbitkan secara otomatis dan sah tanpa tanda tangan basah.
+                    </Typography>
+                  </Box>
+                  <Chip
+                    icon={<SecurityIcon sx={{ fontSize: '14px !important' }} />}
+                    label="VERIFIED DIGITAL STAMP - PT ATASILABS"
+                    variant="outlined"
+                    color="success"
+                    size="small"
+                    sx={{ fontWeight: 800, fontSize: '0.68rem' }}
+                  />
+                </Box>
+              </Paper>
+            </DialogContent>
+
+            <DialogActions sx={{ p: 2.5, px: 3, gap: 1.5 }}>
+              <Button onClick={() => setInvoiceModal({ open: false })} variant="outlined" color="inherit" sx={{ fontWeight: 700, borderRadius: 2.5, px: 2.5, textTransform: 'none' }}>
+                Tutup
+              </Button>
+              <Button
+                variant="contained"
+                color="secondary"
+                startIcon={<PrintIcon />}
+                onClick={() => {
+                  if (typeof window !== 'undefined') window.print();
+                }}
+                sx={{ fontWeight: 800, borderRadius: 2.5, px: 3, py: 1, textTransform: 'none' }}
+              >
+                Cetak / Unduh Invoice PDF
               </Button>
             </DialogActions>
           </>

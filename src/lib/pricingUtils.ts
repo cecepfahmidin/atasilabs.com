@@ -86,19 +86,6 @@ export function getPriceForTier(
 }
 
 export function getDynamicHppMatrix(): HPPItem[] {
-  if (typeof window !== 'undefined') {
-    try {
-      const saved = localStorage.getItem('atasilabs_hpp_matrix_custom');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
-        }
-      }
-    } catch (e) {
-      console.error('Error reading custom HPP matrix from localStorage', e);
-    }
-  }
   return INITIAL_HPP_MATRIX;
 }
 
