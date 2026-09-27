@@ -28,14 +28,14 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, name, role, avatarUrl, company, phone, status, password, bio, tagline, titleBadge } = body;
+    const { email, name, role, avatarUrl, company, phone, status, password, bio, tagline, titleBadge, roleTitle, showOnLanding, order } = body;
 
     if (!email || !name) {
       return NextResponse.json({ success: false, error: 'Email and name are required' }, { status: 400 });
     }
 
     const newUserData = {
-      id: `usr-${Date.now()}`,
+      id: body.id || `usr-${Date.now()}`,
       email: email.trim(),
       name: name.trim(),
       role: role || 'ADMIN',
@@ -47,6 +47,9 @@ export async function POST(request: Request) {
       bio: bio || '',
       tagline: tagline || '',
       titleBadge: titleBadge || '',
+      roleTitle: roleTitle || '',
+      showOnLanding: showOnLanding !== undefined ? Boolean(showOnLanding) : true,
+      order: order !== undefined ? Number(order) : 0,
       createdAt: new Date().toISOString(),
     };
 
