@@ -18,10 +18,14 @@ export const metadata: Metadata = {
   authors: [{ name: 'ATASILABS', url: 'https://www.atasilabs.com' }],
   publisher: 'ATASILABS',
   manifest: '/site.webmanifest',
+  alternates: {
+    canonical: 'https://www.atasilabs.com',
+  },
   icons: {
     icon: [
       { url: '/favicon-48x48.png', type: 'image/png', sizes: '48x48' },
       { url: '/favicon-96x96.png', type: 'image/png', sizes: '96x96' },
+      { url: '/atasilabs-logo.svg', type: 'image/svg+xml' },
       { url: '/favicon.ico', sizes: 'any' },
       { url: '/android-chrome-192x192.png', type: 'image/png', sizes: '192x192' },
       { url: '/android-chrome-512x512.png', type: 'image/png', sizes: '512x512' },
@@ -80,6 +84,11 @@ export default function RootLayout({
   return (
     <html lang="id">
       <head>
+        <link rel="icon" href="/favicon-48x48.png" sizes="48x48" type="image/png" />
+        <link rel="icon" href="/favicon-96x96.png" sizes="96x96" type="image/png" />
+        <link rel="icon" href="/atasilabs-logo.svg" type="image/svg+xml" />
+        <link rel="shortcut icon" href="/favicon.ico" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link

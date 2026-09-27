@@ -4,11 +4,17 @@ export default function robots(): MetadataRoute.Robots {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.atasilabs.com';
 
   return {
-    rules: {
-      userAgent: '*',
-      allow: '/',
-      disallow: ['/dashboard/'],
-    },
+    rules: [
+      {
+        userAgent: '*',
+        allow: '/',
+        disallow: ['/dashboard/'],
+      },
+      {
+        userAgent: 'Googlebot-Image',
+        allow: '/',
+      },
+    ],
     sitemap: `${baseUrl}/sitemap.xml`,
   };
 }
