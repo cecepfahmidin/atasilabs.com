@@ -16,6 +16,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Drawer,
   TextField,
   MenuItem,
   Stack,
@@ -337,33 +338,31 @@ export const PortfolioCMSView: React.FC = () => {
         ))}
       </Grid>
 
-      {/* Add / Edit Portfolio Dialog */}
-      <Dialog
+      {/* Add / Edit Portfolio Drawer */}
+      <Drawer
+        anchor="right"
         open={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
-        maxWidth="md"
-        fullWidth
-        slotProps={{
-          paper: {
-            sx: {
-              borderRadius: 3.5,
-              p: 1,
-              backgroundColor: theme.palette.background.paper,
-            },
+        PaperProps={{
+          sx: {
+            width: { xs: '100%', sm: 560, md: 660 },
+            boxSizing: 'border-box',
+            display: 'flex',
+            flexDirection: 'column',
           },
         }}
       >
-        <Box component="form" onSubmit={handleSave}>
-          <DialogTitle component="div" sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box component="form" onSubmit={handleSave} sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+          <Box sx={{ p: 2.5, px: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${theme.palette.divider}` }}>
             <Typography variant="h6" component="h2" sx={{ fontWeight: 700 }}>
               {editingItem ? 'Edit Data Portofolio' : 'Tambah Portofolio Baru'}
             </Typography>
             <IconButton size="small" onClick={() => setIsDialogOpen(false)}>
               <CloseIcon />
             </IconButton>
-          </DialogTitle>
+          </Box>
 
-          <DialogContent dividers>
+          <Box sx={{ flexGrow: 1, overflowY: 'auto', p: 3 }}>
             {formError && (
               <Alert severity="error" sx={{ mb: 2.5, borderRadius: 2 }}>
                 {formError}
@@ -579,9 +578,9 @@ export const PortfolioCMSView: React.FC = () => {
                 />
               </Grid>
             </Grid>
-          </DialogContent>
+          </Box>
 
-          <DialogActions sx={{ p: 2.5, justifyContent: 'space-between' }}>
+          <Box sx={{ p: 2, px: 3, borderTop: `1px solid ${theme.palette.divider}`, display: 'flex', justifyContent: 'flex-end', gap: 1.5, bgcolor: theme.palette.background.paper }}>
             <Button onClick={() => setIsDialogOpen(false)} color="inherit">
               Batal
             </Button>
@@ -593,9 +592,9 @@ export const PortfolioCMSView: React.FC = () => {
             >
               {editingItem ? 'Simpan Perubahan' : 'Terbitkan Portofolio'}
             </Button>
-          </DialogActions>
+          </Box>
         </Box>
-      </Dialog>
+      </Drawer>
 
       {/* Delete Confirmation Dialog */}
       <Dialog

@@ -17,6 +17,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Drawer,
   Avatar,
   Tooltip,
   Alert,
@@ -35,6 +36,7 @@ import {
   Search as SearchIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
+  Close as CloseIcon,
   RateReview as TestimonialIcon,
   FormatQuote as QuoteIcon,
   Star as StarIcon,
@@ -410,19 +412,33 @@ export const TestimonialsCMSView: React.FC = () => {
         )}
       </Grid>
 
-      {/* Add / Edit Dialog */}
-      <Dialog
+      {/* Add / Edit Drawer */}
+      <Drawer
+        anchor="right"
         open={openDialog}
         onClose={() => setOpenDialog(false)}
-        maxWidth="md"
-        fullWidth
-        PaperProps={{ sx: { borderRadius: 3 } }}
+        PaperProps={{
+          sx: {
+            width: { xs: '100%', sm: 600, md: 720 },
+            boxSizing: 'border-box',
+            display: 'flex',
+            flexDirection: 'column',
+          },
+        }}
       >
-        <DialogTitle sx={{ fontWeight: 800, display: 'flex', alignItems: 'center', gap: 1 }}>
-          <QuoteIcon sx={{ color: '#FFD600' }} />
-          {editingTesti ? 'Edit Data Testimoni Klien' : 'Tambah Testimoni Klien Baru'}
-        </DialogTitle>
-        <DialogContent dividers>
+        <Box sx={{ p: 2.5, px: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: (t) => `1px solid ${t.palette.divider}` }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <QuoteIcon sx={{ color: '#FFD600' }} />
+            <Typography variant="h6" sx={{ fontWeight: 800 }}>
+              {editingTesti ? 'Edit Data Testimoni Klien' : 'Tambah Testimoni Klien Baru'}
+            </Typography>
+          </Box>
+          <IconButton size="small" onClick={() => setOpenDialog(false)}>
+            <CloseIcon />
+          </IconButton>
+        </Box>
+
+        <Box sx={{ flexGrow: 1, overflowY: 'auto', p: 3 }}>
           <Grid container spacing={3} sx={{ pt: 1 }}>
             {/* Left Column: Form Fields */}
             <Grid item xs={12} md={7}>
@@ -659,9 +675,9 @@ export const TestimonialsCMSView: React.FC = () => {
               </Box>
             </Grid>
           </Grid>
-        </DialogContent>
+        </Box>
 
-        <DialogActions sx={{ p: 2.5 }}>
+        <Box sx={{ p: 2, px: 3, borderTop: (t) => `1px solid ${t.palette.divider}`, display: 'flex', justifyContent: 'flex-end', gap: 1.5, bgcolor: 'background.paper' }}>
           <Button onClick={() => setOpenDialog(false)} color="inherit" sx={{ fontWeight: 700 }}>
             Batal
           </Button>
@@ -679,8 +695,8 @@ export const TestimonialsCMSView: React.FC = () => {
           >
             {editingTesti ? 'Simpan Perubahan' : 'Tambah Testimoni'}
           </Button>
-        </DialogActions>
-      </Dialog>
+        </Box>
+      </Drawer>
     </Box>
   );
 };

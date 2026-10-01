@@ -33,7 +33,7 @@ export const ContactSection: React.FC = () => {
   }, [selectedServiceForInquiry]);
 
   const defaultOptions = [
-    ...pricingTiers.map((t) => `Paket Tier ${t.tierNumber}: ${t.name}`),
+    ...pricingTiers.filter((t) => t.active !== false).map((t) => `Paket Tier ${t.tierNumber}: ${t.name}`),
     'Full-Stack Web App (Next.js & Supabase)',
     'SaaS & Enterprise Dashboard UI (Material UI)',
     'E-Commerce Storefront & Payment Gateway',

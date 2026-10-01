@@ -27,6 +27,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Drawer,
   IconButton,
   Tooltip,
   Stack,
@@ -929,24 +930,33 @@ export const HPPCalculatorView: React.FC = () => {
         </Grid>
       </Paper>
 
-      {/* Edit HPP Component Dialog */}
-      <Dialog
+      {/* Edit HPP Component Drawer */}
+      <Drawer
+        anchor="right"
         open={Boolean(editingTier)}
         onClose={() => setEditingTier(null)}
-        maxWidth="md"
-        fullWidth
-        PaperProps={{ sx: { borderRadius: 3 } }}
+        PaperProps={{
+          sx: {
+            width: { xs: '100%', sm: 600, md: 720 },
+            boxSizing: 'border-box',
+            display: 'flex',
+            flexDirection: 'column',
+          },
+        }}
       >
-        <DialogTitle sx={{ fontWeight: 800, pb: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box sx={{ p: 2.5, px: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: (t) => `1px solid ${t.palette.divider}` }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <EditIcon color="primary" /> Edit Komponen HPP & Harga Jual — {editingTier?.tierName}
+            <EditIcon color="primary" />
+            <Typography variant="h6" sx={{ fontWeight: 800 }}>
+              Edit Komponen HPP & Harga Jual — {editingTier?.tierName}
+            </Typography>
           </Box>
           <IconButton size="small" onClick={() => setEditingTier(null)}>
             <CloseIcon fontSize="small" />
           </IconButton>
-        </DialogTitle>
+        </Box>
 
-        <DialogContent dividers sx={{ py: 2.5 }}>
+        <Box sx={{ flexGrow: 1, overflowY: 'auto', p: 3 }}>
           <Grid container spacing={2}>
             {/* Harga Jual Pricelist */}
             <Grid item xs={12} sm={6}>
@@ -1088,9 +1098,9 @@ export const HPPCalculatorView: React.FC = () => {
               </Grid>
             </Grid>
           </Box>
-        </DialogContent>
+        </Box>
 
-        <DialogActions sx={{ px: 3, py: 2 }}>
+        <Box sx={{ p: 2, px: 3, borderTop: (t) => `1px solid ${t.palette.divider}`, display: 'flex', justifyContent: 'flex-end', gap: 1.5, bgcolor: 'background.paper' }}>
           <Button onClick={() => setEditingTier(null)} sx={{ color: 'text.secondary', fontWeight: 600 }}>
             Batal
           </Button>
@@ -1103,8 +1113,8 @@ export const HPPCalculatorView: React.FC = () => {
           >
             Simpan Perubahan HPP & Update Pricelist
           </Button>
-        </DialogActions>
-      </Dialog>
+        </Box>
+      </Drawer>
     </Box>
   );
 };

@@ -22,6 +22,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Drawer,
   FormControl,
   InputLabel,
   Select,
@@ -42,6 +43,7 @@ import {
   Search as SearchIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
+  Close as CloseIcon,
   Person as PersonIcon,
   Shield as ShieldIcon,
   SupervisorAccount as CLevelIcon,
@@ -685,12 +687,30 @@ export const UsersView: React.FC = () => {
         </Card>
       )}
 
-      {/* Add / Edit User Dialog */}
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
-        <DialogTitle sx={{ fontWeight: 800 }}>
-          {editingUser ? 'Edit Data Pengguna & Role RBAC' : 'Tambah Pengguna Sistem Baru'}
-        </DialogTitle>
-        <DialogContent dividers>
+      {/* Add / Edit User Drawer */}
+      <Drawer
+        anchor="right"
+        open={openDialog}
+        onClose={() => setOpenDialog(false)}
+        PaperProps={{
+          sx: {
+            width: { xs: '100%', sm: 500, md: 580 },
+            boxSizing: 'border-box',
+            display: 'flex',
+            flexDirection: 'column',
+          },
+        }}
+      >
+        <Box sx={{ p: 2.5, px: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: (t) => `1px solid ${t.palette.divider}` }}>
+          <Typography variant="h6" sx={{ fontWeight: 800 }}>
+            {editingUser ? 'Edit Data Pengguna & Role RBAC' : 'Tambah Pengguna Sistem Baru'}
+          </Typography>
+          <IconButton size="small" onClick={() => setOpenDialog(false)}>
+            <CloseIcon />
+          </IconButton>
+        </Box>
+
+        <Box sx={{ flexGrow: 1, overflowY: 'auto', p: 3 }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 1 }}>
             {/* Avatar Photo Management Section */}
             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', p: 2, bgcolor: 'action.hover', borderRadius: 2.5, border: '1px dashed', borderColor: 'divider' }}>
@@ -872,16 +892,16 @@ export const UsersView: React.FC = () => {
               </Select>
             </FormControl>
           </Box>
-        </DialogContent>
-        <DialogActions sx={{ p: 2.5 }}>
+        </Box>
+        <Box sx={{ p: 2, px: 3, borderTop: (t) => `1px solid ${t.palette.divider}`, display: 'flex', justifyContent: 'flex-end', gap: 1.5, bgcolor: 'background.paper' }}>
           <Button onClick={() => setOpenDialog(false)} color="inherit" sx={{ fontWeight: 600 }}>
             Batal
           </Button>
           <Button variant="contained" onClick={handleSave} sx={{ fontWeight: 700, borderRadius: 2, px: 3 }}>
             {editingUser ? 'Simpan Perubahan' : 'Tambah User'}
           </Button>
-        </DialogActions>
-      </Dialog>
+        </Box>
+      </Drawer>
     </Box>
   );
 };

@@ -403,6 +403,7 @@ export interface PricingTier {
   originalPrice?: number; // in IDR (Harga Normal yang Dicoret)
   priceBilling: string; // e.g., 'mulai dari' or 'per proyek' or 'sekali bayar'
   popular?: boolean;
+  active?: boolean;
   highlightBadge?: string;
   deliveryTime: string;
   revisionCount: string;

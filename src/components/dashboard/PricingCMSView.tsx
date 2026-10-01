@@ -14,6 +14,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Drawer,
   IconButton,
   Chip,
   Stack,
@@ -61,6 +62,7 @@ export const PricingCMSView: React.FC = () => {
     revisionCount: string;
     idealFor: string;
     ctaText: string;
+    active: boolean;
     features: string[];
     specs: PricingSpecItem[];
   }>({
@@ -70,6 +72,7 @@ export const PricingCMSView: React.FC = () => {
     originalPrice: 0,
     priceBilling: 'per proyek',
     popular: false,
+    active: true,
     highlightBadge: '',
     deliveryTime: '',
     revisionCount: '',
@@ -100,6 +103,7 @@ export const PricingCMSView: React.FC = () => {
       originalPrice: tier.originalPrice || 0,
       priceBilling: tier.priceBilling || 'per proyek',
       popular: !!tier.popular,
+      active: tier.active !== false,
       highlightBadge: tier.highlightBadge || '',
       deliveryTime: tier.deliveryTime,
       revisionCount: tier.revisionCount,
@@ -112,6 +116,24 @@ export const PricingCMSView: React.FC = () => {
     setNewSpecLabel('');
     setNewSpecValue('');
     setIsEditDialogOpen(true);
+  };
+
+  const handleToggleActive = async (tier: PricingTier, explicitChecked?: boolean | React.ChangeEvent<HTMLInputElement>) => {
+    const currentActive = tier.active !== false;
+    let newActiveState: boolean;
+    if (typeof explicitChecked === 'boolean') {
+      newActiveState = explicitChecked;
+    } else if (explicitChecked && 'target' in explicitChecked && typeof explicitChecked.target.checked === 'boolean') {
+      newActiveState = explicitChecked.target.checked;
+    } else {
+      newActiveState = !currentActive;
+    }
+
+    await updatePricingTier(tier.id, { active: newActiveState });
+    showNotification(
+      `Status Paket ${tier.name} disimpan ke DB: ${newActiveState ? 'ON (Aktif di Landing Page)' : 'OFF (Disembunyikan)'}`,
+      newActiveState ? 'success' : 'info'
+    );
   };
 
   const handleAddFeature = () => {
@@ -155,9 +177,9 @@ export const PricingCMSView: React.FC = () => {
     }));
   };
 
-  const handleSaveTier = () => {
+  const handleSaveTier = async () => {
     if (!selectedTier) return;
-    updatePricingTier(selectedTier.id, {
+    await updatePricingTier(selectedTier.id, {
       ...formData,
       price: Number(formData.price) || 0,
       originalPrice: Number(formData.originalPrice) || 0,
@@ -292,20 +314,62 @@ export const PricingCMSView: React.FC = () => {
                           }}
                         />
                       )}
+                      <Tooltip title={`Klik untuk mengubah status paket ke ${tier.active !== false ? 'OFF' : 'ON'}`}>
+                        <Chip
+                          label={tier.active !== false ? "STATUS: ON" : "STATUS: OFF"}
+                          size="small"
+                          color={tier.active !== false ? "success" : "default"}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleActive(tier, !(tier.active !== false));
+                          }}
+                          sx={{
+                            fontWeight: 900,
+                            fontSize: '0.65rem',
+                            height: 22,
+                            cursor: 'pointer',
+                            '&:hover': {
+                              opacity: 0.85,
+                            },
+                          }}
+                        />
+                      </Tooltip>
                     </Stack>
                     <Typography variant="h5" sx={{ fontWeight: 800, color: theme.palette.text.primary }}>
                       {tier.name}
                     </Typography>
                   </Box>
 
-                  {tier.highlightBadge && (
-                    <Chip
-                      label={tier.highlightBadge}
-                      size="small"
-                      variant="outlined"
-                      sx={{ fontWeight: 700, fontSize: '0.72rem', borderColor: theme.palette.divider }}
-                    />
-                  )}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Tooltip title={tier.active !== false ? "Status ON: Tampil di Landing Page (Klik untuk OFF)" : "Status OFF: Disembunyikan dari Landing Page (Klik untuk ON)"}>
+                      <FormControlLabel
+                        onClick={(e) => e.stopPropagation()}
+                        control={
+                          <Switch
+                            checked={tier.active !== false}
+                            onChange={(e) => handleToggleActive(tier, e.target.checked)}
+                            color="success"
+                            size="small"
+                          />
+                        }
+                        label={
+                          <Typography variant="caption" sx={{ fontWeight: 800, fontSize: '0.75rem', color: tier.active !== false ? 'success.main' : 'text.disabled' }}>
+                            {tier.active !== false ? "ON" : "OFF"}
+                          </Typography>
+                        }
+                        sx={{ m: 0, cursor: 'pointer' }}
+                      />
+                    </Tooltip>
+
+                    {tier.highlightBadge && (
+                      <Chip
+                        label={tier.highlightBadge}
+                        size="small"
+                        variant="outlined"
+                        sx={{ fontWeight: 700, fontSize: '0.72rem', borderColor: theme.palette.divider }}
+                      />
+                    )}
+                  </Box>
                 </Box>
 
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2, minHeight: 38, fontSize: '0.85rem', lineHeight: 1.5 }}>
@@ -424,22 +488,21 @@ export const PricingCMSView: React.FC = () => {
         ))}
       </Grid>
 
-      {/* Edit Tier Modal Dialog */}
-      <Dialog
+      {/* Edit Tier Drawer */}
+      <Drawer
+        anchor="right"
         open={isEditDialogOpen}
         onClose={() => setIsEditDialogOpen(false)}
-        maxWidth="md"
-        fullWidth
-        slotProps={{
-          paper: {
-            sx: {
-              borderRadius: 3.5,
-              border: `1px solid ${theme.palette.divider}`,
-            },
+        PaperProps={{
+          sx: {
+            width: { xs: '100%', sm: 600, md: 680 },
+            boxSizing: 'border-box',
+            display: 'flex',
+            flexDirection: 'column',
           },
         }}
       >
-        <DialogTitle
+        <Box
           component="div"
           sx={{
             display: 'flex',
@@ -477,9 +540,9 @@ export const PricingCMSView: React.FC = () => {
           <IconButton size="small" onClick={() => setIsEditDialogOpen(false)}>
             <CloseIcon fontSize="small" />
           </IconButton>
-        </DialogTitle>
+        </Box>
 
-        <DialogContent sx={{ pt: 3 }}>
+        <Box sx={{ flexGrow: 1, overflowY: 'auto', p: 3 }}>
           <Grid container spacing={2.5}>
             {/* Row 1: Name, Badge, & Popular Switch */}
             <Grid size={{ xs: 12, sm: 4 }}>
@@ -492,17 +555,17 @@ export const PricingCMSView: React.FC = () => {
                 helperText="Contoh: Starter, Growth, Profesional, Enterprise, Elite"
               />
             </Grid>
-            <Grid size={{ xs: 12, sm: 4 }}>
+            <Grid size={{ xs: 12, sm: 3 }}>
               <TextField
                 fullWidth
                 label="Label Promosi (Badge)"
                 value={formData.highlightBadge}
                 onChange={(e) => setFormData((prev) => ({ ...prev, highlightBadge: e.target.value }))}
                 size="small"
-                helperText="Contoh: Paling Populer ★, Solusi Bisnis, dll"
+                helperText="Contoh: Paling Populer ★, Solusi Bisnis"
               />
             </Grid>
-            <Grid size={{ xs: 12, sm: 4 }} sx={{ display: 'flex', alignItems: 'center' }}>
+            <Grid size={{ xs: 12, sm: 3 }} sx={{ display: 'flex', alignItems: 'center' }}>
               <FormControlLabel
                 control={
                   <Switch
@@ -511,7 +574,23 @@ export const PricingCMSView: React.FC = () => {
                     color="primary"
                   />
                 }
-                label="Tandai Sebagai Rekomendasi Utama"
+                label="Rekomendasi Utama"
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 3 }} sx={{ display: 'flex', alignItems: 'center' }}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={formData.active}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, active: e.target.checked }))}
+                    color="success"
+                  />
+                }
+                label={
+                  <Typography variant="body2" sx={{ fontWeight: 700, color: formData.active ? 'success.main' : 'text.secondary' }}>
+                    Status: {formData.active ? 'ON (Landing Page)' : 'OFF (Sembunyikan)'}
+                  </Typography>
+                }
               />
             </Grid>
 
@@ -726,9 +805,9 @@ export const PricingCMSView: React.FC = () => {
               </Stack>
             </Grid>
           </Grid>
-        </DialogContent>
+        </Box>
 
-        <DialogActions sx={{ p: 2.5, borderTop: `1px solid ${theme.palette.divider}` }}>
+        <Box sx={{ p: 2, px: 3, borderTop: `1px solid ${theme.palette.divider}`, display: 'flex', justifyContent: 'flex-end', gap: 1.5, bgcolor: 'background.paper' }}>
           <Button onClick={() => setIsEditDialogOpen(false)} color="inherit">
             Batal
           </Button>
@@ -750,8 +829,8 @@ export const PricingCMSView: React.FC = () => {
           >
             Simpan Perubahan Tier
           </Button>
-        </DialogActions>
-      </Dialog>
+        </Box>
+      </Drawer>
     </Box>
   );
 };

@@ -111,7 +111,6 @@ const STORAGE_KEYS = {
   PROJECTS: 'webdev_sys_projects',
   LEADS: 'webdev_sys_leads',
   PORTFOLIOS: 'webdev_sys_portfolios',
-  PRICING: 'webdev_sys_pricing_tiers',
   COMPANY_CONTACT: 'webdev_sys_company_contact',
   TESTIMONIALS: 'webdev_sys_testimonials',
 };
@@ -188,7 +187,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // View state
   const [activeView, setActiveView] = useState<'landing' | 'dashboard'>('landing');
-  const [dashboardTab, setDashboardTab] = useState<'overview' | 'pricing' | 'leads' | 'portfolio' | 'projects' | 'documents' | 'payments' | 'users' | 'hpp' | 'master-data' | 'contact' | 'testimonials' | 'team' | 'freelancer-fee'>('overview');
+  
+  type DashboardTab = 'overview' | 'pricing' | 'leads' | 'portfolio' | 'projects' | 'documents' | 'payments' | 'users' | 'hpp' | 'master-data' | 'contact' | 'testimonials' | 'team' | 'freelancer-fee';
+
+  const [dashboardTab, setDashboardTabState] = useState<DashboardTab>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const savedTab = localStorage.getItem('webdev_sys_dashboard_tab') as DashboardTab | null;
+        if (savedTab) return savedTab;
+      } catch (e) {}
+    }
+    return 'overview';
+  });
+
+  const setDashboardTab = (tab: DashboardTab) => {
+    setDashboardTabState(tab);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('webdev_sys_dashboard_tab', tab);
+      } catch (e) {}
+    }
+  };
+
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [selectedServiceForInquiry, setSelectedServiceForInquiry] = useState('');
   const [selectedDocumentProjectId, setSelectedDocumentProjectId] = useState<string>('proj-1');
@@ -197,9 +217,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Loading state
   const [isLoadingData, setIsLoadingData] = useState<boolean>(true);
 
-  // States initialized empty - loaded purely from Supabase Database
+  // States initialized - currentUser restored synchronously from localStorage to prevent logout on reload
   const [users, setUsers] = useState<User[]>([]);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('webdev_sys_auth_user');
+        if (cached) {
+          return JSON.parse(cached);
+        }
+      } catch (e) {
+        console.warn('Error reading cached auth user:', e);
+      }
+    }
+    return null;
+  });
   const [leads, setLeads] = useState<Lead[]>([]);
   const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
   const [projects, setProjects] = useState<ClientProject[]>([]);
@@ -222,11 +254,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Always fetch fresh data directly from Database APIs on mount
   useEffect(() => {
+    // Ensure no stale pricing data remains in localStorage - purely database-driven
+    try {
+      localStorage.removeItem('webdev_sys_pricing_tiers');
+    } catch (e) {}
+
     refreshDataFromBackend();
   }, []);
 
   const updateCurrentUserState = (user: User | null) => {
     setCurrentUser(user);
+    if (typeof window !== 'undefined') {
+      try {
+        if (user) {
+          localStorage.setItem('webdev_sys_auth_user', JSON.stringify(user));
+        } else {
+          localStorage.removeItem('webdev_sys_auth_user');
+        }
+      } catch (e) {
+        console.warn('Error syncing auth user to localStorage:', e);
+      }
+    }
   };
 
   // Synchronize Supabase Auth Session with App Context
@@ -441,11 +489,69 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           }
         }
       )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'PricingTier' },
+        (payload) => {
+          console.log('⚡ Supabase Realtime PricingTier change payload:', payload);
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            const raw = payload.new as any;
+            if (raw && raw.id) {
+              const formattedTier: PricingTier = {
+                ...raw,
+                active: raw.active !== false,
+                features: Array.isArray(raw.features)
+                  ? raw.features
+                  : typeof raw.features === 'string'
+                  ? JSON.parse(raw.features)
+                  : [],
+                specs: Array.isArray(raw.specs)
+                  ? raw.specs
+                  : typeof raw.specs === 'string'
+                  ? JSON.parse(raw.specs)
+                  : [],
+              };
+
+              savePricingTiers((prev) => {
+                const index = prev.findIndex((t) => t.id === formattedTier.id);
+                if (index >= 0) {
+                  const copy = [...prev];
+                  copy[index] = { ...copy[index], ...formattedTier };
+                  return copy;
+                }
+                return [...prev, formattedTier].sort((a, b) => a.tierNumber - b.tierNumber);
+              });
+            }
+          } else if (payload.eventType === 'DELETE') {
+            if (payload.old && payload.old.id) {
+              savePricingTiers((prev) => prev.filter((t) => t.id !== payload.old.id));
+            }
+          }
+        }
+      )
+      .on(
+        'broadcast',
+        { event: 'PRICING_UPDATE' },
+        ({ payload }) => {
+          console.log('⚡ Broadcast PRICING_UPDATE received:', payload);
+          if (payload && payload.id) {
+            savePricingTiers((prev) => {
+              const index = prev.findIndex((t) => t.id === payload.id);
+              if (index >= 0) {
+                const copy = [...prev];
+                copy[index] = { ...copy[index], ...payload, active: payload.active !== false };
+                return copy;
+              }
+              return [...prev, { ...payload, active: payload.active !== false }].sort((a, b) => a.tierNumber - b.tierNumber);
+            });
+          }
+        }
+      )
       .subscribe((status) => {
         console.log('📡 Supabase Realtime Connection Status:', status);
       });
 
-    // Real-time listener for cross-tab or local project storage changes
+    // Real-time listener for cross-tab or local storage changes
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === STORAGE_KEYS.PROJECTS && e.newValue) {
         try {
@@ -464,13 +570,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     };
 
+    const handleCustomPricingUpdate = (e: Event) => {
+      const customEvt = e as CustomEvent;
+      if (customEvt.detail && Array.isArray(customEvt.detail)) {
+        setPricingTiers(customEvt.detail);
+      }
+    };
+
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('atasilabs_projects_updated', handleCustomProjectUpdate);
+    window.addEventListener('atasilabs_pricing_updated', handleCustomPricingUpdate);
 
     return () => {
       supabase.removeChannel(realtimeChannel);
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('atasilabs_projects_updated', handleCustomProjectUpdate);
+      window.removeEventListener('atasilabs_pricing_updated', handleCustomPricingUpdate);
     };
   }, []);
 
@@ -596,7 +711,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const savePricingTiers = (next: PricingTier[] | ((prev: PricingTier[]) => PricingTier[])) => {
-    setPricingTiers((prev) => (typeof next === 'function' ? next(prev) : next));
+    setPricingTiers((prev) => {
+      const updated = typeof next === 'function' ? next(prev) : next;
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('atasilabs_pricing_updated', { detail: updated }));
+      }
+      return updated;
+    });
   };
 
   const saveCompanyContact = (next: CompanyContact | ((prev: CompanyContact) => CompanyContact)) => {
@@ -656,6 +777,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const logout = () => {
     updateCurrentUserState(null);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem('webdev_sys_auth_user');
+        localStorage.removeItem('webdev_sys_last_dashboard_path');
+        localStorage.removeItem('webdev_sys_dashboard_tab');
+      } catch (e) {}
+    }
     try {
       supabase.auth.signOut();
     } catch (e) {
@@ -730,54 +858,91 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Fetch initial data from Next.js API Routes (unconditionally from DB)
   const refreshDataFromBackend = async () => {
     setIsLoadingData(true);
-    try {
-      const [leadsRes, portRes, projRes, pricingRes, usersRes, testiRes, contactRes, rbacRes] = await Promise.all([
-        fetch('/api/leads').then((res) => res.json()).catch(() => null),
-        fetch('/api/portfolio').then((res) => res.json()).catch(() => null),
-        fetch('/api/projects').then((res) => res.json()).catch(() => null),
-        fetch('/api/pricing').then((res) => res.json()).catch(() => null),
-        fetch('/api/users').then((res) => res.json()).catch(() => null),
-        fetch('/api/testimonials').then((res) => res.json()).catch(() => null),
-        fetch('/api/contact').then((res) => res.json()).catch(() => null),
-        fetch('/api/rbac').then((res) => res.json()).catch(() => null),
-      ]);
 
-      if (usersRes?.success && Array.isArray(usersRes.data)) {
-        saveUsers(usersRes.data);
-      }
+    // Fetch each independently so fast APIs like /api/pricing render immediately
+    const fetchPricing = fetch('/api/pricing', { cache: 'no-store' })
+      .then((res) => res.json())
+      .then((res) => {
+        if (res?.success && Array.isArray(res.data)) {
+          savePricingTiers(res.data);
+        }
+      })
+      .catch((err) => console.warn('Pricing fetch error:', err))
+      .finally(() => setIsLoadingData(false));
 
-      if (leadsRes?.success && Array.isArray(leadsRes.data)) {
-        saveLeads(leadsRes.data);
-      }
+    const fetchLeads = fetch('/api/leads')
+      .then((res) => res.json())
+      .then((res) => {
+        if (res?.success && Array.isArray(res.data)) {
+          saveLeads(res.data);
+        }
+      })
+      .catch((err) => console.warn('Leads fetch error:', err));
 
-      if (portRes?.success && Array.isArray(portRes.data)) {
-        savePortfolios(portRes.data);
-      }
+    const fetchUsers = fetch('/api/users')
+      .then((res) => res.json())
+      .then((res) => {
+        if (res?.success && Array.isArray(res.data)) {
+          saveUsers(res.data);
+        }
+      })
+      .catch((err) => console.warn('Users fetch error:', err));
 
-      if (projRes?.success && Array.isArray(projRes.data)) {
-        saveProjects(projRes.data);
-      }
+    const fetchProjects = fetch('/api/projects')
+      .then((res) => res.json())
+      .then((res) => {
+        if (res?.success && Array.isArray(res.data)) {
+          saveProjects(res.data);
+        }
+      })
+      .catch((err) => console.warn('Projects fetch error:', err));
 
-      if (pricingRes?.success && Array.isArray(pricingRes.data)) {
-        savePricingTiers(pricingRes.data);
-      }
+    const fetchContact = fetch('/api/contact')
+      .then((res) => res.json())
+      .then((res) => {
+        if (res?.success && res.data) {
+          setCompanyContact(res.data);
+        }
+      })
+      .catch((err) => console.warn('Contact fetch error:', err));
 
-      if (testiRes?.success && Array.isArray(testiRes.data)) {
-        setTestimonials(testiRes.data);
-      }
+    const fetchTestimonials = fetch('/api/testimonials')
+      .then((res) => res.json())
+      .then((res) => {
+        if (res?.success && Array.isArray(res.data)) {
+          setTestimonials(res.data);
+        }
+      })
+      .catch((err) => console.warn('Testimonials fetch error:', err));
 
-      if (contactRes?.success && contactRes.data) {
-        setCompanyContact(contactRes.data);
-      }
+    const fetchPortfolios = fetch('/api/portfolio')
+      .then((res) => res.json())
+      .then((res) => {
+        if (res?.success && Array.isArray(res.data)) {
+          savePortfolios(res.data);
+        }
+      })
+      .catch((err) => console.warn('Portfolios fetch error:', err));
 
-      if (rbacRes?.success && rbacRes.data) {
-        setRolePermissions(rbacRes.data);
-      }
-    } catch (err) {
-      console.warn('Could not fetch from backend APIs:', err);
-    } finally {
-      setIsLoadingData(false);
-    }
+    const fetchRbac = fetch('/api/rbac')
+      .then((res) => res.json())
+      .then((res) => {
+        if (res?.success && res.data) {
+          setRolePermissions(res.data);
+        }
+      })
+      .catch((err) => console.warn('RBAC fetch error:', err));
+
+    await Promise.allSettled([
+      fetchPricing,
+      fetchLeads,
+      fetchUsers,
+      fetchProjects,
+      fetchContact,
+      fetchTestimonials,
+      fetchPortfolios,
+      fetchRbac,
+    ]);
   };
 
   // Leads CRUD
@@ -1139,27 +1304,62 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Pricing Tiers CRUD
   const updatePricingTier = async (id: string, updatedFields: Partial<PricingTier>) => {
-    savePricingTiers(
-      pricingTiers.map((tier) =>
-        tier.id === id
-          ? {
-              ...tier,
-              ...updatedFields,
-              updatedAt: new Date().toISOString(),
-            }
-          : tier
-      )
-    );
+    let updatedTier: PricingTier | null = null;
+    savePricingTiers((prev) => {
+      return prev.map((tier) => {
+        if (tier.id === id) {
+          const merged = {
+            ...tier,
+            ...updatedFields,
+            updatedAt: new Date().toISOString(),
+          };
+          updatedTier = merged;
+          return merged;
+        }
+        return tier;
+      });
+    });
+
+    // 1. Broadcast immediately to any other active tabs or windows via Supabase Realtime channel
+    try {
+      supabase.channel('public_realtime_db_changes').send({
+        type: 'broadcast',
+        event: 'PRICING_UPDATE',
+        payload: updatedTier || { id, ...updatedFields },
+      });
+    } catch (e) {
+      console.error('Supabase broadcast pricing error:', e);
+    }
+
+    // 2. Direct Supabase DB update (immediate write directly to Postgres from client)
+    try {
+      supabase
+        .from('PricingTier')
+        .update({
+          ...updatedFields,
+          updatedAt: new Date().toISOString(),
+        })
+        .eq('id', id)
+        .then(({ error: sbErr }) => {
+          if (sbErr) console.warn('Direct client Supabase pricing update notice:', sbErr);
+        });
+    } catch (sbEx) {
+      console.warn('Direct client Supabase pricing exception:', sbEx);
+    }
+
+    // 3. Persist to Backend API / Database (Server-side admin update & Prisma sync)
     try {
       await fetch('/api/pricing', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, ...updatedFields }),
+        cache: 'no-store',
       });
     } catch (e) {
-      console.error(e);
+      console.error('Database update pricing error:', e);
     }
-    showNotification('Paket harga & spesifikasi diperbarui!', 'success');
+
+    showNotification('Paket harga & spesifikasi diperbarui di database!', 'success');
   };
 
   const resetPricingTiersToDefault = async () => {

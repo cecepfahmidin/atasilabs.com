@@ -17,7 +17,12 @@ const links = [
 
 function scrollTo(id: string) {
   const el = document.getElementById(id);
-  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (id === 'pricing' && typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('reset-pricing-carousel'));
+    }
+  }
 }
 
 export const LandingNavbar: React.FC = () => {
@@ -25,7 +30,12 @@ export const LandingNavbar: React.FC = () => {
   const [scrolled, setScrolled] = useState(false);
   const [active, setActive] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const { setActiveView, currentUser, setIsLoginModalOpen } = useApp();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -81,7 +91,7 @@ export const LandingNavbar: React.FC = () => {
               <button
                 key={label}
                 onClick={() => scrollTo(section)}
-                className="relative font-ibm-mono text-[11px] tracking-[1.5px] transition-colors duration-150 bg-transparent border-none cursor-pointer"
+                className="relative font-ibm-mono text-[11px] font-bold tracking-[1.5px] transition-colors duration-150 bg-transparent border-none cursor-pointer"
                 style={{ color: isActive ? '#FFD600' : '#888888' }}
                 onMouseEnter={(e) => {
                   if (!isActive) (e.currentTarget as HTMLButtonElement).style.color = '#F5F5F0';
@@ -114,7 +124,7 @@ export const LandingNavbar: React.FC = () => {
             className="flex items-center gap-2 h-[38px] px-5 bg-[#FFD600] hover:bg-[#e6c200] text-[#0A0A0A] font-grotesk text-[11px] font-bold tracking-[1.5px] transition-all cursor-pointer border-none"
           >
             <span className="w-2 h-2 rounded-full bg-[#0A0A0A] animate-pulse" />
-            {currentUser ? 'DASHBOARD' : 'LOGIN'}
+            {mounted && currentUser ? 'DASHBOARD' : 'LOGIN'}
           </button>
         </div>
 
@@ -140,7 +150,7 @@ export const LandingNavbar: React.FC = () => {
                 scrollTo(section);
                 setMenuOpen(false);
               }}
-              className="text-left font-ibm-mono text-[12px] text-[#F5F5F0] tracking-[2px] py-2 border-b border-[#1A1A1A] bg-transparent"
+              className="text-left font-ibm-mono text-[12px] font-bold text-[#F5F5F0] tracking-[2px] py-2 border-b border-[#1A1A1A] bg-transparent"
             >
               // {label}
             </button>
@@ -157,7 +167,7 @@ export const LandingNavbar: React.FC = () => {
             }}
             className="mt-2 h-[44px] bg-[#FFD600] text-[#0A0A0A] font-grotesk text-[12px] font-bold tracking-[2px] border-none cursor-pointer"
           >
-            {currentUser ? 'DASHBOARD' : 'LOGIN'}
+            {mounted && currentUser ? 'DASHBOARD' : 'LOGIN'}
           </button>
         </div>
       )}

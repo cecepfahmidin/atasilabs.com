@@ -19,6 +19,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Drawer,
   TextField,
   MenuItem,
   Stack,
@@ -68,6 +69,7 @@ export const PaymentsView: React.FC = () => {
     currentUser,
     updateProject,
     showNotification,
+    companyContact,
   } = useApp();
 
   const isClientRole = currentUser?.role === 'CLIENT';
@@ -1491,25 +1493,22 @@ export const PaymentsView: React.FC = () => {
         </form>
       </Dialog>
 
-      {/* Form Dialog Modal Input Pembayaran (Style LeadsView) */}
-      <Dialog
+      {/* Form Drawer Input Pembayaran */}
+      <Drawer
+        anchor="right"
         open={paymentDialogOpen}
         onClose={() => setPaymentDialogOpen(false)}
-        maxWidth="md"
-        fullWidth
-        slotProps={{
-          paper: {
-            sx: {
-              borderRadius: 4,
-              p: 1,
-              backgroundColor: theme.palette.background.paper,
-              backgroundImage: 'none',
-              boxShadow: '0 24px 48px rgba(0,0,0,0.2)',
-            },
+        PaperProps={{
+          sx: {
+            width: { xs: '100%', sm: 540, md: 640 },
+            boxSizing: 'border-box',
+            display: 'flex',
+            flexDirection: 'column',
+            backgroundColor: theme.palette.background.paper,
           },
         }}
       >
-        <DialogTitle component="div" sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box sx={{ p: 2.5, px: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${theme.palette.divider}` }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Avatar
               sx={{
@@ -1533,9 +1532,9 @@ export const PaymentsView: React.FC = () => {
           <IconButton onClick={() => setPaymentDialogOpen(false)} size="small" sx={{ borderRadius: 2 }}>
             <CloseIcon fontSize="small" />
           </IconButton>
-        </DialogTitle>
+        </Box>
 
-        <DialogContent dividers sx={{ p: 3 }}>
+        <Box sx={{ flexGrow: 1, overflowY: 'auto', p: 3 }}>
           <Alert severity="info" sx={{ mb: 3, borderRadius: 2.5, fontSize: '0.84rem' }}>
             {isClientRole ? (
               <>Upload bukti transfer pembayaran untuk proyek <strong>{selectedProject?.title}</strong>. Pembayaran akan diverifikasi & di-approve oleh Tim Admin Atasilabs.</>
@@ -1680,17 +1679,17 @@ export const PaymentsView: React.FC = () => {
               />
             </Grid>
           </Grid>
-        </DialogContent>
+        </Box>
 
-        <DialogActions sx={{ p: 2.5, px: 3, gap: 1.5 }}>
+        <Box sx={{ p: 2, px: 3, borderTop: `1px solid ${theme.palette.divider}`, display: 'flex', justifyContent: 'flex-end', gap: 1.5, bgcolor: theme.palette.background.paper }}>
           <Button onClick={() => setPaymentDialogOpen(false)} variant="outlined" color="inherit" sx={{ fontWeight: 700, borderRadius: 2.5, px: 2.5, textTransform: 'none' }}>
             Batal
           </Button>
           <Button variant="contained" color="primary" onClick={handleSavePaymentRecord} sx={{ fontWeight: 800, borderRadius: 2.5, px: 3.5, py: 1, textTransform: 'none' }}>
             {isClientRole ? 'Kirim Bukti Pembayaran' : 'Simpan Pembayaran'}
           </Button>
-        </DialogActions>
-      </Dialog>
+        </Box>
+      </Drawer>
 
       {/* Rincian & Resi Pembayaran Modal (Exact LeadsView Detail Modal Layout) */}
       <Dialog
@@ -2089,27 +2088,66 @@ export const PaymentsView: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Official Printable Invoice Modal */}
-      <Dialog
+      {/* Official Printable Invoice Modal / Drawer */}
+      <Drawer
+        anchor="right"
         open={invoiceModal.open}
         onClose={() => setInvoiceModal({ open: false })}
-        maxWidth="md"
-        fullWidth
-        slotProps={{
-          paper: {
-            sx: {
-              borderRadius: 4,
-              p: 1,
-              backgroundColor: theme.palette.background.paper,
-              backgroundImage: 'none',
-              boxShadow: '0 24px 48px rgba(0,0,0,0.2)',
-            },
+        PaperProps={{
+          sx: {
+            width: { xs: '100%', sm: 600, md: 720 },
+            boxSizing: 'border-box',
+            backgroundColor: theme.palette.background.paper,
+            backgroundImage: 'none',
+            display: 'flex',
+            flexDirection: 'column',
           },
         }}
       >
         {invoiceModal.payment && (
           <>
-            <DialogTitle component="div" sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <style>{`
+              @media print {
+                @page {
+                  size: A4 portrait;
+                  margin: 10mm;
+                }
+                body {
+                  background: #ffffff !important;
+                  color: #0f172a !important;
+                  -webkit-print-color-adjust: exact !important;
+                  print-color-adjust: exact !important;
+                }
+                /* Hide all page content during print */
+                body * {
+                  visibility: hidden !important;
+                }
+                /* Expose ONLY the printable invoice sheet */
+                #printable-invoice-sheet, #printable-invoice-sheet * {
+                  visibility: visible !important;
+                }
+                #printable-invoice-sheet {
+                  position: fixed !important;
+                  left: 0 !important;
+                  top: 0 !important;
+                  width: 100% !important;
+                  margin: 0 !important;
+                  padding: 24px !important;
+                  border: 1px solid #cbd5e1 !important;
+                  border-radius: 8px !important;
+                  background: #ffffff !important;
+                  color: #0f172a !important;
+                  box-shadow: none !important;
+                  overflow: visible !important;
+                  z-index: 999999 !important;
+                }
+                .no-print {
+                  display: none !important;
+                }
+              }
+            `}</style>
+
+            <Box className="no-print" sx={{ p: 2.5, px: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${theme.palette.divider}` }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Avatar sx={{ width: 44, height: 44, bgcolor: 'secondary.main', boxShadow: '0 4px 14px rgba(139,92,246,0.3)' }}>
                   <ReceiptIcon />
@@ -2126,155 +2164,236 @@ export const PaymentsView: React.FC = () => {
               <IconButton onClick={() => setInvoiceModal({ open: false })} size="small" sx={{ borderRadius: 2 }}>
                 <CloseIcon fontSize="small" />
               </IconButton>
-            </DialogTitle>
+            </Box>
 
-            <DialogContent dividers sx={{ p: { xs: 2.5, md: 4 } }}>
+            <Box sx={{ flexGrow: 1, overflowY: 'auto', p: { xs: 2.5, md: 3 } }}>
               {/* Printable Invoice Document Sheet */}
               <Paper
+                id="printable-invoice-sheet"
+                className="printable-document"
                 elevation={0}
                 sx={{
-                  p: { xs: 2.5, md: 4 },
+                  p: 0,
                   borderRadius: 3,
-                  bgcolor: theme.palette.mode === 'dark' ? '#0f172a' : '#ffffff',
+                  bgcolor: '#ffffff',
+                  color: '#0f172a',
                   border: `1px solid ${theme.palette.divider}`,
                   position: 'relative',
                   overflow: 'hidden',
+                  fontFamily: 'Inter, Arial, sans-serif',
                 }}
               >
-                {/* Header Letterhead */}
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2, mb: 4, borderBottom: `2px solid ${theme.palette.divider}`, pb: 3 }}>
-                  <Box>
-                    <Typography variant="h5" sx={{ fontWeight: 900, color: 'primary.main', letterSpacing: -0.5 }}>
-                      ATASILABS
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" display="block" sx={{ fontWeight: 700 }}>
-                      PT ATASILABS DIGITAL INDONESIA
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" display="block">
-                      Software Development & Digital Technology Partner
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" display="block">
-                      Email: support@atasilabs.com | Web: atasilabs.com
-                    </Typography>
-                  </Box>
-                  <Box sx={{ textAlign: { xs: 'left', sm: 'right' } }}>
-                    <Chip label="OFFICIAL INVOICE" color="primary" sx={{ fontWeight: 900, letterSpacing: 1, mb: 1 }} />
-                    <Typography variant="subtitle2" sx={{ fontWeight: 800, fontFamily: 'monospace' }}>
-                      #INV-ATL-2026-{invoiceModal.payment.id.replace('pay-', '')}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" display="block">
-                      Tanggal: <strong>{invoiceModal.payment.date}</strong>
-                    </Typography>
-                  </Box>
-                </Box>
-
-                {/* Bill To & Project Info */}
-                <Grid container spacing={3} sx={{ mb: 4 }}>
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800, letterSpacing: 0.5, textTransform: 'uppercase', display: 'block', mb: 0.5 }}>
-                      DITUJUKAN KEPADA (BILL TO):
-                    </Typography>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
-                      {invoiceModal.payment.clientName || selectedProject?.clientName || 'Klien Atasilabs'}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Proyek: <strong>{invoiceModal.payment.projectTitle || selectedProject?.title || 'Pengembangan Perangkat Lunak'}</strong>
-                    </Typography>
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 6 }} textAlign={{ sm: 'right' }}>
-                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800, letterSpacing: 0.5, textTransform: 'uppercase', display: 'block', mb: 0.5 }}>
-                      STATUS PEMBAYARAN:
-                    </Typography>
-                    <Chip
-                      label={
-                        invoiceModal.payment.status === 'VERIFIED'
-                          ? 'PAID / TERVERIFIKASI ✅'
-                          : invoiceModal.payment.status === 'FAILED'
-                          ? 'CANCELLED / DITOLAK ❌'
-                          : 'PENDING APPROVAL ⏳'
-                      }
-                      color={
-                        invoiceModal.payment.status === 'VERIFIED'
-                          ? 'success'
-                          : invoiceModal.payment.status === 'FAILED'
-                          ? 'error'
-                          : 'warning'
-                      }
-                      sx={{ fontWeight: 900, px: 1 }}
-                    />
-                  </Grid>
-                </Grid>
-
-                {/* Itemized Table */}
-                <TableContainer component={Box} sx={{ border: `1px solid ${theme.palette.divider}`, borderRadius: 2, mb: 3 }}>
-                  <Table>
-                    <TableHead>
-                      <TableRow sx={{ bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : '#f8fafc' }}>
-                        <TableCell sx={{ fontWeight: 800 }}>Deskripsi Item / Termin</TableCell>
-                        <TableCell sx={{ fontWeight: 800 }}>Tanggal Pembayaran</TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 800 }}>Jumlah (IDR)</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      <TableRow>
-                        <TableCell>
-                          <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
-                            {invoiceModal.payment.stage}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            Ref: {invoiceModal.payment.notes || 'Pembayaran Termin Proyek'}
-                          </Typography>
-                        </TableCell>
-                        <TableCell sx={{ fontWeight: 700 }}>{invoiceModal.payment.date}</TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 900, color: '#10b981', fontSize: '1rem' }}>
-                          {formatRupiah(invoiceModal.payment.amount)}
-                        </TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-
-                {/* Total Summary */}
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 4 }}>
-                  <Box sx={{ width: { xs: '100%', sm: 300 } }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.8, borderBottom: `1px solid ${theme.palette.divider}` }}>
-                      <Typography variant="body2" color="text.secondary">Subtotal:</Typography>
-                      <Typography variant="body2" sx={{ fontWeight: 800 }}>{formatRupiah(invoiceModal.payment.amount)}</Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.8, borderBottom: `1px solid ${theme.palette.divider}` }}>
-                      <Typography variant="body2" color="text.secondary">Pajak / Biaya Layanan:</Typography>
-                      <Typography variant="body2" sx={{ fontWeight: 800 }}>Rp 0</Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1.2 }}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 900 }}>Total Ditagihkan:</Typography>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 900, color: 'primary.main' }}>{formatRupiah(invoiceModal.payment.amount)}</Typography>
-                    </Box>
-                  </Box>
-                </Box>
-
-                {/* Footer Stamp & Notes */}
-                <Box sx={{ pt: 3, borderTop: `1px dashed ${theme.palette.divider}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-                  <Box>
-                    <Typography variant="caption" color="text.secondary" display="block">
-                      Terima kasih atas kepercayaan Anda bermitra dengan Atasilabs.
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" display="block">
-                      Dokumen ini diterbitkan secara otomatis dan sah tanpa tanda tangan basah.
-                    </Typography>
-                  </Box>
-                  <Chip
-                    icon={<SecurityIcon sx={{ fontSize: '14px !important' }} />}
-                    label="VERIFIED DIGITAL STAMP - PT ATASILABS"
-                    variant="outlined"
-                    color="success"
-                    size="small"
-                    sx={{ fontWeight: 800, fontSize: '0.68rem' }}
+                {/* Full-bleed Background Header SVG Banner (public/header.svg) */}
+                <Box
+                  className="repeat-page-header-bg"
+                  sx={{
+                    width: '100%',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    zIndex: 0,
+                    pointerEvents: 'none',
+                  }}
+                >
+                  <Box
+                    component="img"
+                    src="/header.svg"
+                    alt="Header Background Atasilabs"
+                    sx={{
+                      width: '100%',
+                      height: 'auto',
+                      display: 'block',
+                    }}
                   />
                 </Box>
-              </Paper>
-            </DialogContent>
 
-            <DialogActions sx={{ p: 2.5, px: 3, gap: 1.5 }}>
+                {/* Full-bleed Background Footer SVG Banner (public/footer.svg) */}
+                <Box
+                  className="repeat-page-footer-bg"
+                  sx={{
+                    width: '100%',
+                    position: 'absolute',
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    zIndex: 0,
+                    pointerEvents: 'none',
+                  }}
+                >
+                  <Box
+                    component="img"
+                    src="/footer.svg"
+                    alt="Footer Background Atasilabs"
+                    sx={{
+                      width: '100%',
+                      height: 'auto',
+                      position: 'absolute',
+                      bottom: 0,
+                      left: 0,
+                      display: 'block',
+                    }}
+                  />
+                </Box>
+
+                {/* Invoice Body Content Container */}
+                <Box
+                  sx={{
+                    position: 'relative',
+                    zIndex: 1,
+                    pt: { xs: 12, sm: 14 },
+                    pb: { xs: 10, sm: 12 },
+                    px: { xs: 2.5, md: 4 },
+                  }}
+                >
+                  {/* Header Letterhead */}
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2, mb: 4, borderBottom: `2px solid ${theme.palette.divider}`, pb: 3 }}>
+                    <Box>
+                      <Typography variant="h5" sx={{ fontWeight: 900, color: 'primary.main', letterSpacing: -0.5 }}>
+                        {companyContact?.companyName || 'ATASILABS'}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" display="block" sx={{ fontWeight: 700 }}>
+                        PT ATASILABS DIGITAL INDONESIA
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        Software Development & Digital Technology Partner
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        Email: {companyContact?.email || 'support@atasilabs.com'} | Tel: {companyContact?.phone || '0812-3456-7890'}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ textAlign: { xs: 'left', sm: 'right' } }}>
+                      <Chip label="OFFICIAL INVOICE" color="primary" sx={{ fontWeight: 900, letterSpacing: 1, mb: 1 }} />
+                      <Typography variant="subtitle2" sx={{ fontWeight: 800, fontFamily: 'monospace' }}>
+                        #INV-ATL-2026-{(invoiceModal.payment.id || '').replace('pay-', '')}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        Tanggal: <strong>{invoiceModal.payment.date}</strong>
+                      </Typography>
+                    </Box>
+                  </Box>
+
+                  {/* Bill To & Project Info */}
+                  <Grid container spacing={3} sx={{ mb: 4 }}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800, letterSpacing: 0.5, textTransform: 'uppercase', display: 'block', mb: 0.5 }}>
+                        DITUJUKAN KEPADA (BILL TO):
+                      </Typography>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
+                        {invoiceModal.payment.clientName || selectedProject?.clientName || 'Klien Atasilabs'}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Proyek: <strong>{invoiceModal.payment.projectTitle || selectedProject?.title || 'Pengembangan Perangkat Lunak'}</strong>
+                      </Typography>
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6 }} textAlign={{ sm: 'right' }}>
+                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800, letterSpacing: 0.5, textTransform: 'uppercase', display: 'block', mb: 0.5 }}>
+                        STATUS PEMBAYARAN:
+                      </Typography>
+                      <Chip
+                        label={
+                          invoiceModal.payment.status === 'VERIFIED'
+                            ? 'PAID / TERVERIFIKASI ✅'
+                            : invoiceModal.payment.status === 'FAILED'
+                            ? 'CANCELLED / DITOLAK ❌'
+                            : 'PENDING APPROVAL ⏳'
+                        }
+                        color={
+                          invoiceModal.payment.status === 'VERIFIED'
+                            ? 'success'
+                            : invoiceModal.payment.status === 'FAILED'
+                            ? 'error'
+                            : 'warning'
+                        }
+                        sx={{ fontWeight: 900, px: 1 }}
+                      />
+                    </Grid>
+                  </Grid>
+
+                  {/* Itemized Table */}
+                  <TableContainer component={Box} sx={{ border: `1px solid ${theme.palette.divider}`, borderRadius: 2, mb: 3 }}>
+                    <Table>
+                      <TableHead>
+                        <TableRow sx={{ bgcolor: '#f8fafc' }}>
+                          <TableCell sx={{ fontWeight: 800 }}>Deskripsi Item / Termin</TableCell>
+                          <TableCell sx={{ fontWeight: 800 }}>Tanggal Pembayaran</TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 800 }}>Jumlah (IDR)</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        <TableRow>
+                          <TableCell>
+                            <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+                              {invoiceModal.payment.stage}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              Ref: {invoiceModal.payment.notes || 'Pembayaran Termin Proyek'}
+                            </Typography>
+                          </TableCell>
+                          <TableCell sx={{ fontWeight: 700 }}>{invoiceModal.payment.date}</TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 900, color: '#10b981', fontSize: '1rem' }}>
+                            {formatRupiah(invoiceModal.payment.amount)}
+                          </TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+
+                  {/* Bank Account & Payment Details */}
+                  <Box sx={{ mb: 3, p: 2, borderRadius: 2, bgcolor: '#f8fafc', border: `1px solid ${theme.palette.divider}` }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', mb: 0.5 }}>
+                      METODE & REKENING PEMBAYARAN:
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                      Bank: BCA (Bank Central Asia) — No. Rek: 8830-9988-123
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Atas Nama: {companyContact?.companyName || 'PT ATASILABS DIGITAL INDONESIA'}
+                    </Typography>
+                  </Box>
+
+                  {/* Total Summary */}
+                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 4 }}>
+                    <Box sx={{ width: { xs: '100%', sm: 300 } }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.8, borderBottom: `1px solid ${theme.palette.divider}` }}>
+                        <Typography variant="body2" color="text.secondary">Subtotal:</Typography>
+                        <Typography variant="body2" sx={{ fontWeight: 800 }}>{formatRupiah(invoiceModal.payment.amount)}</Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.8, borderBottom: `1px solid ${theme.palette.divider}` }}>
+                        <Typography variant="body2" color="text.secondary">Pajak / Biaya Layanan:</Typography>
+                        <Typography variant="body2" sx={{ fontWeight: 800 }}>Rp 0</Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1.2 }}>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 900 }}>Total Ditagihkan:</Typography>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 900, color: 'primary.main' }}>{formatRupiah(invoiceModal.payment.amount)}</Typography>
+                      </Box>
+                    </Box>
+                  </Box>
+
+                  {/* Footer Stamp & Notes */}
+                  <Box sx={{ pt: 3, borderTop: `1px dashed ${theme.palette.divider}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        Terima kasih atas kepercayaan Anda bermitra dengan Atasilabs.
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        Dokumen ini diterbitkan secara otomatis dan sah tanpa tanda tangan basah.
+                      </Typography>
+                    </Box>
+                    <Chip
+                      icon={<SecurityIcon sx={{ fontSize: '14px !important' }} />}
+                      label="VERIFIED DIGITAL STAMP - PT ATASILABS"
+                      variant="outlined"
+                      color="success"
+                      size="small"
+                      sx={{ fontWeight: 800, fontSize: '0.68rem' }}
+                    />
+                  </Box>
+                </Box>
+              </Paper>
+            </Box>
+
+            <Box className="no-print" sx={{ p: 2, px: 3, gap: 1.5, borderTop: `1px solid ${theme.palette.divider}`, display: 'flex', justifyContent: 'flex-end', bgcolor: theme.palette.background.paper }}>
               <Button onClick={() => setInvoiceModal({ open: false })} variant="outlined" color="inherit" sx={{ fontWeight: 700, borderRadius: 2.5, px: 2.5, textTransform: 'none' }}>
                 Tutup
               </Button>
@@ -2289,10 +2408,10 @@ export const PaymentsView: React.FC = () => {
               >
                 Cetak / Unduh Invoice PDF
               </Button>
-            </DialogActions>
+            </Box>
           </>
         )}
-      </Dialog>
+      </Drawer>
     </Box>
   );
 };

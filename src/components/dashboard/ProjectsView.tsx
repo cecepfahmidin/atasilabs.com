@@ -12,6 +12,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Drawer,
   TextField,
   MenuItem,
   Stack,
@@ -774,25 +775,32 @@ export const ProjectsView: React.FC = () => {
       </>
       )}
 
-      {/* Add / Edit Project Dialog */}
-      <Dialog
+      {/* Add / Edit Project Drawer */}
+      <Drawer
+        anchor="right"
         open={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{ sx: { borderRadius: 3.5, p: 1 } }}
+        PaperProps={{
+          sx: {
+            width: { xs: '100%', sm: 540, md: 620 },
+            boxSizing: 'border-box',
+            display: 'flex',
+            flexDirection: 'column',
+            backgroundColor: theme.palette.background.paper,
+          },
+        }}
       >
-        <Box component="form" onSubmit={handleSave}>
-          <DialogTitle component="div" sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box component="form" onSubmit={handleSave} sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+          <Box sx={{ p: 2.5, px: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${theme.palette.divider}` }}>
             <Typography variant="h6" component="h2" sx={{ fontWeight: 800 }}>
               {editingProj ? 'Edit Proyek & Tahap IPW 6-Stage' : 'Tambah Proyek Klien Baru (6-Stage IPW)'}
             </Typography>
             <IconButton size="small" onClick={() => setIsDialogOpen(false)}>
               <CloseIcon />
             </IconButton>
-          </DialogTitle>
+          </Box>
 
-          <DialogContent dividers>
+          <Box sx={{ flexGrow: 1, overflowY: 'auto', p: 3 }}>
             {formError && (
               <Alert severity="error" sx={{ mb: 2.5, borderRadius: 2 }}>
                 {formError}
@@ -988,9 +996,9 @@ export const ProjectsView: React.FC = () => {
                 </TextField>
               </Grid>
             </Grid>
-          </DialogContent>
+          </Box>
 
-          <DialogActions sx={{ px: 3, py: 2 }}>
+          <Box sx={{ p: 2, px: 3, borderTop: `1px solid ${theme.palette.divider}`, display: 'flex', justifyContent: 'flex-end', gap: 1.5, bgcolor: theme.palette.background.paper }}>
             <Button onClick={() => setIsDialogOpen(false)} color="inherit" sx={{ fontWeight: 600 }}>
               Batal
             </Button>
@@ -1009,9 +1017,9 @@ export const ProjectsView: React.FC = () => {
             >
               {editingProj ? 'Simpan Perubahan' : 'Tambah Proyek'}
             </Button>
-          </DialogActions>
+          </Box>
         </Box>
-      </Dialog>
+      </Drawer>
 
       {/* Delete Confirmation Dialog */}
       <Dialog

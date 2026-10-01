@@ -94,17 +94,46 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
   const [isAuthChecking, setIsAuthChecking] = useState(true);
 
   useEffect(() => {
+    let hasCachedUser = false;
+    if (typeof window !== 'undefined') {
+      try {
+        hasCachedUser = !!localStorage.getItem('webdev_sys_auth_user');
+      } catch (e) {}
+    }
+
+    if (currentUser || hasCachedUser) {
+      setIsAuthChecking(false);
+      return;
+    }
     const timer = setTimeout(() => {
       setIsAuthChecking(false);
-    }, 150);
+    }, 600);
     return () => clearTimeout(timer);
-  }, []);
+  }, [currentUser]);
 
   useEffect(() => {
     if (!isAuthChecking && !currentUser) {
-      router.push('/login');
+      const redirectTarget = pathname ? `/login?redirect=${encodeURIComponent(pathname)}` : '/login';
+      router.push(redirectTarget);
     }
-  }, [currentUser, isAuthChecking, router]);
+  }, [currentUser, isAuthChecking, router, pathname]);
+
+  // Persist current active path and tab across reloads
+  useEffect(() => {
+    if (pathname && pathname.startsWith('/dashboard')) {
+      try {
+        localStorage.setItem('webdev_sys_last_dashboard_path', pathname);
+      } catch (e) {}
+    }
+  }, [pathname]);
+
+  useEffect(() => {
+    if (dashboardTab) {
+      try {
+        localStorage.setItem('webdev_sys_dashboard_tab', dashboardTab);
+      } catch (e) {}
+    }
+  }, [dashboardTab]);
 
   const activeUser = users.find(
     (u) =>
@@ -254,7 +283,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
         },
         {
           id: 'pricing',
-          label: 'Atur Pricelist & Spec',
+          label: 'Manajemen Pricelist',
           href: '/dashboard/pricing',
           icon: <BoltIcon />,
           badge: 0,

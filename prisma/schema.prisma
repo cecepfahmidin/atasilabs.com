@@ -87,6 +87,7 @@ model PricingTier {
   originalPrice  Float?
   priceBilling   String
   popular        Boolean  @default(false)
+  active         Boolean? @default(true)
   highlightBadge String?
   deliveryTime   String
   revisionCount  String

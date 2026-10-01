@@ -21,6 +21,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Drawer,
   TextField,
   MenuItem,
   IconButton,
@@ -647,17 +648,31 @@ export const FreelancerFeeView: React.FC = () => {
         </TableContainer>
       </Paper>
 
-      {/* Dialog Modal: Catat Pembayaran Dev */}
-      <Dialog open={isPayModalOpen} onClose={() => setIsPayModalOpen(false)} maxWidth="sm" fullWidth slotProps={{ paper: { sx: { borderRadius: 3.5, p: 1 } } }}>
-        <DialogTitle sx={{ fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          Catat Pembayaran Fee Dev
-          <IconButton size="small" onClick={() => setIsPayModalOpen(false)}>
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
+      {/* Drawer: Catat Pembayaran Dev */}
+      <Drawer
+        anchor="right"
+        open={isPayModalOpen}
+        onClose={() => setIsPayModalOpen(false)}
+        PaperProps={{
+          sx: {
+            width: { xs: '100%', sm: 540, md: 620 },
+            boxSizing: 'border-box',
+            display: 'flex',
+            flexDirection: 'column',
+          },
+        }}
+      >
+        <form onSubmit={handleSavePaymentRecord} style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+          <Box sx={{ p: 2.5, px: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: (t) => `1px solid ${t.palette.divider}` }}>
+            <Typography variant="h6" sx={{ fontWeight: 900 }}>
+              Catat Pembayaran Fee Dev
+            </Typography>
+            <IconButton size="small" onClick={() => setIsPayModalOpen(false)}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
 
-        <form onSubmit={handleSavePaymentRecord}>
-          <DialogContent dividers>
+          <Box sx={{ flexGrow: 1, overflowY: 'auto', p: 3 }}>
             <Stack spacing={2.5}>
               {/* Select Project */}
               <TextField
@@ -812,18 +827,18 @@ export const FreelancerFeeView: React.FC = () => {
                 onChange={(e) => setPayFormData((prev) => ({ ...prev, notes: e.target.value }))}
               />
             </Stack>
-          </DialogContent>
+          </Box>
 
-          <DialogActions sx={{ p: 2 }}>
+          <Box sx={{ p: 2, px: 3, borderTop: (t) => `1px solid ${t.palette.divider}`, display: 'flex', justifyContent: 'flex-end', gap: 1.5, bgcolor: 'background.paper' }}>
             <Button onClick={() => setIsPayModalOpen(false)} sx={{ fontWeight: 700 }}>
               Batal
             </Button>
             <Button type="submit" variant="contained" color="secondary" sx={{ fontWeight: 800, borderRadius: 2, bgcolor: '#8b5cf6', '&:hover': { bgcolor: '#7c3aed' } }}>
               Simpan Transaksi Bayar
             </Button>
-          </DialogActions>
+          </Box>
         </form>
-      </Dialog>
+      </Drawer>
     </Box>
   );
 };

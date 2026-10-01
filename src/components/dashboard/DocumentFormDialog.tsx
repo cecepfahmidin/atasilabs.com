@@ -2,10 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
+  Drawer,
   Box,
   Typography,
   TextField,
@@ -325,8 +322,20 @@ export const DocumentFormDialog: React.FC<DocumentFormDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
-      <DialogTitle sx={{ m: 0, p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <Drawer
+      anchor="right"
+      open={open}
+      onClose={onClose}
+      PaperProps={{
+        sx: {
+          width: { xs: '100%', sm: 600, md: 720 },
+          boxSizing: 'border-box',
+          display: 'flex',
+          flexDirection: 'column',
+        },
+      }}
+    >
+      <Box sx={{ m: 0, p: 2.5, px: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: (t) => `1px solid ${t.palette.divider}` }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Chip label={type} color="primary" size="small" sx={{ fontWeight: 800 }} />
           <Typography variant="h6" sx={{ fontWeight: 800 }}>
@@ -336,9 +345,9 @@ export const DocumentFormDialog: React.FC<DocumentFormDialogProps> = ({
         <IconButton onClick={onClose} size="small">
           <CloseIcon />
         </IconButton>
-      </DialogTitle>
+      </Box>
 
-      <DialogContent dividers>
+      <Box sx={{ flexGrow: 1, overflowY: 'auto', p: 3 }}>
         <Box component="form" onSubmit={handleSubmit} id="doc-generator-form" sx={{ py: 1 }}>
           {/* CIF Form Fields */}
           {type === 'CIF' && (
@@ -1847,16 +1856,16 @@ export const DocumentFormDialog: React.FC<DocumentFormDialogProps> = ({
             </Grid>
           )}
         </Box>
-      </DialogContent>
+      </Box>
 
-      <DialogActions sx={{ p: 2 }}>
+      <Box sx={{ p: 2, px: 3, borderTop: (t) => `1px solid ${t.palette.divider}`, display: 'flex', justifyContent: 'flex-end', gap: 1.5, bgcolor: 'background.paper' }}>
         <Button onClick={onClose} variant="outlined" color="inherit">
           Batal
         </Button>
         <Button type="submit" form="doc-generator-form" variant="contained" color="primary" sx={{ fontWeight: 700 }}>
           Simpan & Update Dokumen {type}
         </Button>
-      </DialogActions>
-    </Dialog>
+      </Box>
+    </Drawer>
   );
 };

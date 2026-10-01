@@ -17,6 +17,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Drawer,
   Avatar,
   Tooltip,
   useTheme,
@@ -34,6 +35,7 @@ import {
   Search as SearchIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
+  Close as CloseIcon,
   SupervisorAccount as CLevelIcon,
   RestartAlt as ResetIcon,
   Launch as LaunchIcon,
@@ -648,20 +650,33 @@ export const TeamCMSView: React.FC = () => {
         })}
       </Grid>
 
-      {/* Edit / Add Dialog */}
-      <Dialog
+      {/* Edit / Add Drawer */}
+      <Drawer
+        anchor="right"
         open={openDialog}
         onClose={() => setOpenDialog(false)}
-        maxWidth="md"
-        fullWidth
-        PaperProps={{ sx: { borderRadius: 3 } }}
+        PaperProps={{
+          sx: {
+            width: { xs: '100%', sm: 600, md: 720 },
+            boxSizing: 'border-box',
+            display: 'flex',
+            flexDirection: 'column',
+          },
+        }}
       >
-        <DialogTitle sx={{ fontWeight: 800, display: 'flex', alignItems: 'center', gap: 1 }}>
-          <CLevelIcon color="primary" />
-          {editingUser ? `Edit Profil Eksekutif: ${editingUser.name}` : 'Tambah Eksekutif Baru'}
-        </DialogTitle>
+        <Box sx={{ p: 2.5, px: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: (t) => `1px solid ${t.palette.divider}` }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <CLevelIcon color="primary" />
+            <Typography variant="h6" sx={{ fontWeight: 800 }}>
+              {editingUser ? `Edit Profil Eksekutif: ${editingUser.name}` : 'Tambah Eksekutif Baru'}
+            </Typography>
+          </Box>
+          <IconButton size="small" onClick={() => setOpenDialog(false)}>
+            <CloseIcon />
+          </IconButton>
+        </Box>
 
-        <DialogContent dividers>
+        <Box sx={{ flexGrow: 1, overflowY: 'auto', p: 3 }}>
           <Grid container spacing={3} sx={{ pt: 1 }}>
             {/* Left Column: Form Controls */}
             <Grid item xs={12} md={7}>
@@ -947,9 +962,9 @@ export const TeamCMSView: React.FC = () => {
               </Box>
             </Grid>
           </Grid>
-        </DialogContent>
+        </Box>
 
-        <DialogActions sx={{ p: 2.5 }}>
+        <Box sx={{ p: 2, px: 3, borderTop: (t) => `1px solid ${t.palette.divider}`, display: 'flex', justifyContent: 'flex-end', gap: 1.5, bgcolor: 'background.paper' }}>
           <Button onClick={() => setOpenDialog(false)} color="inherit" sx={{ fontWeight: 700 }}>
             Batal
           </Button>
@@ -966,8 +981,8 @@ export const TeamCMSView: React.FC = () => {
           >
             {editingUser ? 'Simpan Perubahan' : 'Tambah Eksekutif'}
           </Button>
-        </DialogActions>
-      </Dialog>
+        </Box>
+      </Drawer>
     </Box>
   );
 };
