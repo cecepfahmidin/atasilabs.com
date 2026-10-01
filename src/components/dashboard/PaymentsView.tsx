@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Box,
   Paper,
@@ -60,6 +60,7 @@ import {
 import { useApp } from '../../context/AppContext';
 import { ClientProject, ProjectPaymentRecord } from '../../types';
 import { getFreelancerFeeForTier } from '../../lib/pricingUtils';
+import { numberToWordsIDR } from '../../lib/documentGenerator';
 
 export const PaymentsView: React.FC = () => {
   const theme = useTheme();
@@ -195,6 +196,145 @@ export const PaymentsView: React.FC = () => {
   }>({
     open: false,
   });
+  const [printAllModalInvoices, setPrintAllModalInvoices] = useState(false);
+  const [docType, setDocType] = useState<'INVOICE' | 'KWITANSI'>('KWITANSI');
+
+  // Synchronize printing-invoice class on document.body when invoice modal is open
+  useEffect(() => {
+    if (invoiceModal.open) {
+      document.body.classList.add('printing-invoice');
+    } else {
+      document.body.classList.remove('printing-invoice');
+    }
+    return () => {
+      document.body.classList.remove('printing-invoice');
+    };
+  }, [invoiceModal.open]);
+
+  // Helper to determine stage progression order (Tahap 1 = earliest, Pelunasan = latest)
+  const getPaymentStageOrder = (stage?: string): number => {
+    if (!stage) return 50;
+    const s = stage.toLowerCase();
+    if (s.includes('tahap 1') || s.includes('dp')) return 10;
+    if (s.includes('tahap 2')) return 20;
+    if (s.includes('tahap 3')) return 30;
+    if (s.includes('tahap 4')) return 40;
+    if (s.includes('tahap 5')) return 50;
+    if (s.includes('pelunasan')) return 80;
+    if (s.includes('tambahan') || s.includes('add-on')) return 90;
+    return 50;
+  };
+
+  // Sort payments chronologically ascending (first payment paid is index 0 -> INVOICE #1)
+  const sortPaymentsAscending = <T extends ProjectPaymentRecord>(payments: T[]): T[] => {
+    const indexed = payments.map((item, originalIndex) => ({ item, originalIndex }));
+
+    indexed.sort((x, y) => {
+      const a = x.item;
+      const b = y.item;
+
+      // 1. Stage lifecycle sequence (Tahap 1 / DP must be earliest)
+      const stageA = getPaymentStageOrder(a.stage);
+      const stageB = getPaymentStageOrder(b.stage);
+      if (stageA !== stageB) {
+        return stageA - stageB;
+      }
+
+      // 2. Date comparison
+      const dateA = a.date ? new Date(a.date).getTime() : 0;
+      const dateB = b.date ? new Date(b.date).getTime() : 0;
+      if (dateA !== dateB && !isNaN(dateA) && !isNaN(dateB) && dateA > 0 && dateB > 0) {
+        return dateA - dateB;
+      }
+
+      // 3. CreatedAt ISO timestamp comparison
+      const createdA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const createdB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      if (createdA !== createdB && !isNaN(createdA) && !isNaN(createdB) && createdA > 0 && createdB > 0) {
+        return createdA - createdB;
+      }
+
+      // 4. Numeric ID timestamp comparison (pay-174... vs pay-175...)
+      const numIdA = Number((a.id || '').replace(/\D/g, ''));
+      const numIdB = Number((b.id || '').replace(/\D/g, ''));
+      if (numIdA && numIdB && numIdA !== numIdB) {
+        return numIdA - numIdB;
+      }
+
+      // 5. Fallback: in prepended array [newest, ..., oldest], larger index was added earlier
+      return y.originalIndex - x.originalIndex;
+    });
+
+    return indexed.map((x) => x.item);
+  };
+
+  // Target project total payment count
+  const targetProjectPaymentCount = useMemo(() => {
+    if (!invoiceModal.payment) return 1;
+    const targetProjId = invoiceModal.payment.projectId;
+    const targetProj = availableProjects.find((p) => p.id === targetProjId) ||
+      availableProjects.find((p) => p.title === invoiceModal.payment?.projectTitle) ||
+      (selectedProjectId !== 'ALL' ? selectedProject : undefined);
+
+    return targetProj?.payments?.length || 1;
+  }, [invoiceModal.payment, availableProjects, selectedProject, selectedProjectId]);
+
+  // Computed list of payments to render in invoice modal
+  const invoicePaymentsToRender = useMemo(() => {
+    if (!invoiceModal.payment) return [];
+
+    if (printAllModalInvoices) {
+      const targetProjId = invoiceModal.payment.projectId;
+      const targetProj = availableProjects.find((p) => p.id === targetProjId) ||
+        availableProjects.find((p) => p.title === invoiceModal.payment?.projectTitle) ||
+        (selectedProjectId !== 'ALL' ? selectedProject : undefined);
+
+      if (targetProj && targetProj.payments && targetProj.payments.length > 0) {
+        const list = targetProj.payments.map((p) => ({
+          ...p,
+          projectId: targetProj.id,
+          projectTitle: targetProj.title,
+          clientName: targetProj.clientName,
+        }));
+        return sortPaymentsAscending(list);
+      }
+    }
+
+    return [invoiceModal.payment];
+  }, [invoiceModal.payment, printAllModalInvoices, availableProjects, selectedProject, selectedProjectId]);
+
+  // Target project comprehensive data for the active invoice modal
+  const targetProjectData = useMemo(() => {
+    if (!invoiceModal.payment) return null;
+    const targetProjId = invoiceModal.payment.projectId;
+    const targetProj = availableProjects.find((p) => p.id === targetProjId) ||
+      availableProjects.find((p) => p.title === invoiceModal.payment?.projectTitle) ||
+      (selectedProjectId !== 'ALL' ? selectedProject : undefined);
+
+    if (!targetProj) return null;
+
+    const rawPayments = (targetProj.payments || []).map((p) => ({
+      ...p,
+      projectId: targetProj.id,
+      projectTitle: targetProj.title,
+      clientName: targetProj.clientName,
+    }));
+    const payments = sortPaymentsAscending(rawPayments);
+
+    const totalFromPayments = payments.reduce((acc, p) => acc + (p.amount || 0), 0);
+    const totalContract = (targetProj.budget && targetProj.budget > 0) ? targetProj.budget : totalFromPayments;
+    const totalPaid = payments.filter((p) => p.status === 'VERIFIED').reduce((acc, p) => acc + (p.amount || 0), 0);
+    const remaining = Math.max(0, totalContract - totalPaid);
+
+    return {
+      project: targetProj,
+      payments,
+      totalContract,
+      totalPaid,
+      remaining,
+      totalCount: payments.length || 1,
+    };
+  }, [invoiceModal.payment, availableProjects, selectedProject, selectedProjectId]);
   // Admin Tab Switcher: Client Payments vs Freelancer Payouts
   const [mainTab, setMainTab] = useState<'CLIENT' | 'FREELANCER'>('CLIENT');
 
@@ -377,16 +517,60 @@ export const PaymentsView: React.FC = () => {
   const remainingBalance = Math.max(0, totalBudget - totalPaidAmount);
   const paymentProgressPct = totalBudget > 0 ? Math.min(100, Math.round((totalPaidAmount / totalBudget) * 100)) : 0;
 
+  // Helper to extract termin percentage from stage name (e.g. "DP Tahap 1 (30%)" -> 30)
+  const getTerminPercentage = (stageName: string): number | null => {
+    const match = stageName.match(/(\d+)%/);
+    if (match) {
+      return parseInt(match[1], 10);
+    }
+    return null;
+  };
+
+  // Helper to calculate nominal based on stage percentage and total project contract value
+  const calculateTerminAmount = (stageName: string, budget: number, remaining?: number): number => {
+    const pct = getTerminPercentage(stageName);
+    if (pct !== null && budget > 0) {
+      return Math.round((budget * pct) / 100);
+    }
+    if (remaining !== undefined && remaining > 0) {
+      return remaining;
+    }
+    return 0;
+  };
+
+  // Helper to determine the next intelligent stage based on recorded payments
+  const getNextPaymentStage = (project?: ClientProject, fallbackStage: string = 'DP Tahap 1 (30%)'): string => {
+    if (!project || !project.payments || project.payments.length === 0) {
+      return 'DP Tahap 1 (30%)';
+    }
+    const existingStages = project.payments.map((p) => p.stage);
+
+    const hasDP30 = existingStages.some((s) => s.includes('DP Tahap 1 (30%)') || s.includes('DP Tahap 1'));
+    const hasTermin2 = existingStages.some((s) => s.includes('Tahap 2') || s.includes('Termin Progress'));
+    const hasPelunasan3 = existingStages.some((s) => s.includes('Tahap 3') || s.includes('Pelunasan'));
+
+    if (!hasDP30) return 'DP Tahap 1 (30%)';
+    if (!hasTermin2) return 'Termin Progress Tahap 2 (30%)';
+    if (!hasPelunasan3) return 'Pelunasan Tahap 3 (40%)';
+
+    return 'Pembayaran Tambahan / Add-on';
+  };
+
   const handleOpenPaymentDialog = () => {
-    const targetProj = selectedProject || availableProjects[0];
+    const targetProj = (selectedProjectId !== 'ALL' ? availableProjects.find((p) => p.id === selectedProjectId) : undefined) || selectedProject || availableProjects[0];
     const targetBudget = targetProj?.budget || 15000000;
-    const defaultStage = 'DP Tahap 1 (30%)';
-    const defaultAmount = Math.round(targetBudget * 0.3);
+
+    const verifiedPayments = (targetProj?.payments || []).filter((p) => p.status === 'VERIFIED');
+    const totalPaid = verifiedPayments.reduce((acc, p) => acc + (p.amount || 0), 0);
+    const remaining = Math.max(0, targetBudget - totalPaid);
+
+    const smartStage = getNextPaymentStage(targetProj, 'DP Tahap 1 (30%)');
+    const defaultAmount = calculateTerminAmount(smartStage, targetBudget, remaining);
 
     setPaymentFormData({
       date: new Date().toISOString().split('T')[0],
       amount: defaultAmount,
-      stage: defaultStage,
+      stage: smartStage,
       notes: 'Transfer Bank BRI a.n. PT AULIA INDOLAND GRUP',
       status: isClientRole ? 'PENDING' : 'VERIFIED',
       proofUrl: '',
@@ -394,6 +578,57 @@ export const PaymentsView: React.FC = () => {
     });
     setPaymentDialogOpen(true);
   };
+
+  const handleFormStageChange = (newStage: string) => {
+    const targetId = paymentFormData.targetProjId || selectedProject?.id || availableProjects[0]?.id;
+    const targetProj = availableProjects.find((p) => p.id === targetId);
+    const targetBudget = targetProj?.budget || 0;
+
+    const verifiedPayments = (targetProj?.payments || []).filter((p) => p.status === 'VERIFIED');
+    const totalPaid = verifiedPayments.reduce((acc, p) => acc + (p.amount || 0), 0);
+    const remaining = Math.max(0, targetBudget - totalPaid);
+
+    const newAmount = calculateTerminAmount(newStage, targetBudget, remaining);
+
+    setPaymentFormData((prev) => ({
+      ...prev,
+      stage: newStage,
+      amount: newAmount,
+    }));
+  };
+
+  const handleFormTargetProjChange = (newProjId: string) => {
+    const newProj = availableProjects.find((p) => p.id === newProjId);
+    const targetBudget = newProj?.budget || 0;
+
+    const verifiedPayments = (newProj?.payments || []).filter((p) => p.status === 'VERIFIED');
+    const totalPaid = verifiedPayments.reduce((acc, p) => acc + (p.amount || 0), 0);
+    const remaining = Math.max(0, targetBudget - totalPaid);
+
+    const smartStage = getNextPaymentStage(newProj, paymentFormData.stage);
+    const newAmount = calculateTerminAmount(smartStage, targetBudget, remaining);
+
+    setPaymentFormData((prev) => ({
+      ...prev,
+      targetProjId: newProjId,
+      stage: smartStage,
+      amount: newAmount,
+    }));
+  };
+
+  const currentFormProj = useMemo(() => {
+    const pId = paymentFormData.targetProjId || selectedProject?.id || availableProjects[0]?.id;
+    return availableProjects.find((p) => p.id === pId) || selectedProject || availableProjects[0];
+  }, [paymentFormData.targetProjId, selectedProject, availableProjects]);
+
+  const formTargetBudget = currentFormProj?.budget || 0;
+  const formVerifiedPaymentsSum = useMemo(() => {
+    return (currentFormProj?.payments || [])
+      .filter((p) => p.status === 'VERIFIED')
+      .reduce((sum, p) => sum + p.amount, 0);
+  }, [currentFormProj]);
+  const formRemainingBalance = Math.max(0, formTargetBudget - formVerifiedPaymentsSum);
+  const formTerminPct = getTerminPercentage(paymentFormData.stage);
 
   const [isUploadingR2, setIsUploadingR2] = useState(false);
 
@@ -909,381 +1144,399 @@ export const PaymentsView: React.FC = () => {
 
       {/* Main Payment Container Card for Client Inbound (Active when mainTab === 'CLIENT') */}
       {(mainTab === 'CLIENT' || isClientRole) && (
-      <Paper
-        variant="outlined"
-        sx={{
-          p: { xs: 2.5, md: 3 },
-          mb: 3,
-          borderRadius: 3.5,
-          backgroundColor: theme.palette.background.paper,
-        }}
-      >
-        {/* Project Selection Banner */}
-        <Grid container spacing={2} alignItems="center" sx={{ mb: 2.5 }}>
-          <Grid size={{ xs: 12, sm: 7 }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 0.5 }}>
-              Pilih Proyek Klien (Laporan Pembayaran):
-            </Typography>
-            <TextField
-              select
-              fullWidth
-              size="small"
-              value={selectedProjectId}
-              onChange={(e) => setSelectedProjectId(e.target.value)}
-              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-            >
-              {!isClientRole && (
-                <MenuItem value="ALL">
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'primary.main' }}>
-                      🌟 Semua Proyek & Transaksi Klien ({allPaymentsCount})
-                    </Typography>
-                    {totalPendingPaymentsCount > 0 && (
-                      <Chip label={`${totalPendingPaymentsCount} PENDING`} size="small" color="warning" sx={{ fontWeight: 800, ml: 1, height: 20, fontSize: '0.65rem' }} />
-                    )}
-                  </Box>
-                </MenuItem>
-              )}
-              {availableProjects.map((p) => {
-                const pPending = (p.payments || []).filter((pay) => pay.status === 'PENDING').length;
-                return (
-                  <MenuItem key={p.id} value={p.id}>
+        <Paper
+          variant="outlined"
+          sx={{
+            p: { xs: 2.5, md: 3 },
+            mb: 3,
+            borderRadius: 3.5,
+            backgroundColor: theme.palette.background.paper,
+          }}
+        >
+          {/* Project Selection Banner */}
+          <Grid container spacing={2} alignItems="center" sx={{ mb: 2.5 }}>
+            <Grid size={{ xs: 12, sm: 7 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 0.5 }}>
+                Pilih Proyek Klien (Laporan Pembayaran):
+              </Typography>
+              <TextField
+                select
+                fullWidth
+                size="small"
+                value={selectedProjectId}
+                onChange={(e) => setSelectedProjectId(e.target.value)}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+              >
+                {!isClientRole && (
+                  <MenuItem value="ALL">
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                      <Box>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                          {p.clientName} — {p.title} ({formatRupiah(p.budget)})
-                        </Typography>
-                      </Box>
-                      {pPending > 0 && (
-                        <Chip label={`${pPending} ⏳`} size="small" color="warning" sx={{ fontWeight: 800, ml: 1, height: 18, fontSize: '0.6rem' }} />
+                      <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'primary.main' }}>
+                        🌟 Semua Proyek & Transaksi Klien ({allPaymentsCount})
+                      </Typography>
+                      {totalPendingPaymentsCount > 0 && (
+                        <Chip label={`${totalPendingPaymentsCount} PENDING`} size="small" color="warning" sx={{ fontWeight: 800, ml: 1, height: 20, fontSize: '0.65rem' }} />
                       )}
                     </Box>
                   </MenuItem>
-                );
-              })}
-            </TextField>
-          </Grid>
-
-          <Grid size={{ xs: 12, sm: 5 }} textAlign={{ sm: 'right' }}>
-            <Box sx={{ display: 'flex', gap: 1, justifyContent: { sm: 'flex-end' }, flexWrap: 'wrap', mt: { xs: 1, sm: 2.5 } }}>
-              <Button
-                variant="outlined"
-                color="info"
-                size="medium"
-                startIcon={<BankIcon />}
-                onClick={() => setBankInfoDialogOpen(true)}
-                sx={{ fontWeight: 800, borderRadius: 2.5, px: 2, py: 1, textTransform: 'none' }}
-              >
-                Info Rekening & QRIS
-              </Button>
-              <Button
-                variant="contained"
-                color="primary"
-                size="medium"
-                startIcon={<AddIcon />}
-                onClick={handleOpenPaymentDialog}
-                sx={{ fontWeight: 800, borderRadius: 2.5, px: 2.5, py: 1, textTransform: 'none' }}
-              >
-                Catat Pembayaran Baru
-              </Button>
-            </Box>
-          </Grid>
-        </Grid>
-
-        {/* Info Alert Box */}
-        <Alert severity="info" icon={<InfoIcon />} sx={{ borderRadius: 2, mb: 3, fontSize: '0.84rem' }}>
-          {isAllProjects ? (
-            <>Menampilkan gabungan laporan pembayaran untuk <strong>{availableProjects.length} Proyek Klien Aktif</strong>. Seluruh catatan transaksi & resi tersimpan permanen per proyek.</>
-          ) : (
-            <>Pembayaran saat ini untuk <strong>{selectedProject?.clientName}</strong> ({selectedProject?.title} — Budget: <strong>{formatRupiah(selectedProject?.budget || 0)}</strong>). Seluruh catatan transaksi & resi tersimpan permanen per proyek.</>
-          )}
-        </Alert>
-
-        {/* 3 Financial Summary Cards with Enhanced Progress Bar */}
-        <Grid container spacing={2.5} sx={{ mb: 3.5 }}>
-          <Grid size={{ xs: 12, sm: 4 }}>
-            <Paper
-              variant="outlined"
-              sx={{
-                p: 2.5,
-                borderRadius: 3,
-                bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : '#f8fafc',
-                border: `1px solid ${theme.palette.divider}`,
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                justify: 'space-between',
-              }}
-            >
-              <Box>
-                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800, letterSpacing: '0.05em', display: 'block', mb: 0.8 }}>
-                  {isAllProjects ? 'TOTAL KONTRAK SEMUA PROYEK' : 'TOTAL NILAI KONTRAK'}
-                </Typography>
-                <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary' }}>
-                  {formatRupiah(totalBudget)}
-                </Typography>
-              </Box>
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 1.5, fontWeight: 600 }}>
-                Nilai total kontrak yang telah disepakati
-              </Typography>
-            </Paper>
-          </Grid>
-
-          <Grid size={{ xs: 12, sm: 4 }}>
-            <Paper
-              variant="outlined"
-              sx={{
-                p: 2.5,
-                borderRadius: 3,
-                bgcolor: 'rgba(16, 185, 129, 0.08)',
-                borderColor: 'rgba(16, 185, 129, 0.3)',
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                justify: 'space-between',
-              }}
-            >
-              <Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.8 }}>
-                  <Typography variant="caption" sx={{ fontWeight: 800, letterSpacing: '0.05em', color: '#10b981' }}>
-                    TOTAL TERBAYAR
-                  </Typography>
-                  <Chip label={`${paymentProgressPct}% LUNAS`} size="small" color="success" sx={{ fontWeight: 800, height: 20, fontSize: '0.65rem' }} />
-                </Box>
-                <Typography variant="h5" sx={{ fontWeight: 800, color: '#10b981' }}>
-                  {formatRupiah(totalPaidAmount)}
-                </Typography>
-              </Box>
-              <Box sx={{ mt: 1.5 }}>
-                <LinearProgress
-                  variant="determinate"
-                  value={paymentProgressPct}
-                  sx={{
-                    height: 8,
-                    borderRadius: 4,
-                    bgcolor: 'rgba(16,185,129,0.2)',
-                    '& .MuiLinearProgress-bar': { bgcolor: '#10b981', borderRadius: 4 },
-                  }}
-                />
-              </Box>
-            </Paper>
-          </Grid>
-
-          <Grid size={{ xs: 12, sm: 4 }}>
-            <Paper
-              variant="outlined"
-              sx={{
-                p: 2.5,
-                borderRadius: 3,
-                bgcolor: remainingBalance > 0 ? 'rgba(245, 158, 11, 0.08)' : 'rgba(16, 185, 129, 0.08)',
-                borderColor: remainingBalance > 0 ? 'rgba(245, 158, 11, 0.3)' : 'rgba(16, 185, 129, 0.3)',
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                justify: 'space-between',
-              }}
-            >
-              <Box>
-                <Typography variant="caption" sx={{ fontWeight: 800, letterSpacing: '0.05em', display: 'block', mb: 0.8, color: remainingBalance > 0 ? '#f59e0b' : '#10b981' }}>
-                  SISA PELUNASAN KONTRAK
-                </Typography>
-                <Typography variant="h5" sx={{ fontWeight: 800, color: remainingBalance > 0 ? '#f59e0b' : '#10b981' }}>
-                  {remainingBalance > 0 ? formatRupiah(remainingBalance) : 'LUNAS 100% ✅'}
-                </Typography>
-              </Box>
-              <Typography variant="caption" sx={{ mt: 1.5, fontWeight: 700, color: remainingBalance > 0 ? '#f59e0b' : '#10b981' }}>
-                {remainingBalance > 0 ? 'Menunggu pembayaran termin berikutnya' : 'Seluruh kewajiban pembayaran telah selesai'}
-              </Typography>
-            </Paper>
-          </Grid>
-        </Grid>
-
-        {/* Filter Tabs & Quick Search Bar */}
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2, mb: 2.5 }}>
-          <Tabs
-            value={statusFilter}
-            onChange={(_, val) => setStatusFilter(val)}
-            sx={{
-              minHeight: 38,
-              '& .MuiTab-root': {
-                minHeight: 38,
-                fontWeight: 800,
-                fontSize: '0.8rem',
-                textTransform: 'none',
-                borderRadius: 2,
-                px: 2,
-                mr: 1,
-              },
-            }}
-          >
-            <Tab label={`Semua (${paymentsListWithProject.length})`} value="ALL" />
-            <Tab label={`Terverifikasi (${paymentsListWithProject.filter((p) => p.status === 'VERIFIED').length})`} value="VERIFIED" />
-            <Tab label={`Pending Approval (${paymentsListWithProject.filter((p) => p.status === 'PENDING').length})`} value="PENDING" />
-            <Tab label={`Ditolak (${paymentsListWithProject.filter((p) => p.status === 'FAILED').length})`} value="FAILED" />
-          </Tabs>
-
-          <TextField
-            size="small"
-            placeholder="Cari transaksi / termin / catatan..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon fontSize="small" sx={{ color: 'text.secondary' }} />
-                  </InputAdornment>
-                ),
-              },
-            }}
-            sx={{ width: { xs: '100%', sm: 280 }, '& .MuiOutlinedInput-root': { borderRadius: 2.5 } }}
-          />
-        </Box>
-
-        {/* Transactions Table */}
-        <TableContainer component={Box} sx={{ border: `1px solid ${theme.palette.divider}`, borderRadius: 2.5 }}>
-          <Table>
-            <TableHead>
-              <TableRow sx={{ bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : '#f8fafc' }}>
-                <TableCell sx={{ fontWeight: 800 }}>Tanggal</TableCell>
-                {isAllProjects && <TableCell sx={{ fontWeight: 800 }}>Proyek & Klien</TableCell>}
-                <TableCell sx={{ fontWeight: 800 }}>Tahap / Termin Pembayaran</TableCell>
-                <TableCell sx={{ fontWeight: 800 }}>Nominal (IDR)</TableCell>
-                <TableCell sx={{ fontWeight: 800 }}>Bukti Pembayaran</TableCell>
-                <TableCell sx={{ fontWeight: 800 }}>Catatan & Ref Transfer</TableCell>
-                <TableCell sx={{ fontWeight: 800 }}>Status Approval Admin</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 800 }}>Aksi / Invoice</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredPaymentsList.length > 0 ? (
-                filteredPaymentsList.map((pay) => (
-                  <TableRow key={`${pay.projectId}-${pay.id}`} hover sx={{ bgcolor: pay.status === 'PENDING' ? (theme.palette.mode === 'dark' ? 'rgba(245, 158, 11, 0.05)' : '#fffbe6') : 'transparent' }}>
-                    <TableCell sx={{ fontWeight: 700 }}>{pay.date}</TableCell>
-                    {isAllProjects && (
-                      <TableCell>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 800, fontSize: '0.84rem' }}>
-                          {pay.projectTitle}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary" display="block">
-                          {pay.clientName}
-                        </Typography>
-                      </TableCell>
-                    )}
-                    <TableCell>
-                      <Chip label={pay.stage} size="small" variant="outlined" color="primary" sx={{ fontWeight: 700, fontSize: '0.72rem' }} />
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 800, color: '#10b981', fontSize: '0.95rem' }}>
-                      {formatRupiah(pay.amount)}
-                    </TableCell>
-                    <TableCell>
-                      {pay.proofUrl ? (
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          color="info"
-                          startIcon={<VisibilityIcon sx={{ fontSize: 14 }} />}
-                          onClick={() => setProofPreviewModal({ open: true, payment: pay })}
-                          sx={{ fontSize: '0.72rem', py: 0.3, fontWeight: 700, textTransform: 'none' }}
-                        >
-                          Lihat Resi
-                        </Button>
-                      ) : (
-                        <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                          Tanpa Resi
-                        </Typography>
-                      )}
-                    </TableCell>
-                    <TableCell sx={{ fontSize: '0.85rem', color: 'text.secondary' }}>
-                      {pay.notes || '-'}
-                    </TableCell>
-                    <TableCell>
-                      {pay.status === 'VERIFIED' && (
-                        <Tooltip title={pay.approvedBy ? `Disetujui oleh ${pay.approvedBy} (${pay.approvedAt || pay.date})` : 'Disetujui Admin'}>
-                          <Chip
-                            icon={<CheckCircleIcon sx={{ fontSize: '14px !important' }} />}
-                            label="DISUTUJU ADMIN ✅"
-                            size="small"
-                            color="success"
-                            sx={{ fontWeight: 800, fontSize: '0.7rem', height: 24 }}
-                          />
-                        </Tooltip>
-                      )}
-                      {pay.status === 'PENDING' && (
-                        <Tooltip title="Menunggu verifikasi persetujuan (approval) oleh Tim Admin Atasilabs">
-                          <Chip
-                            icon={<PendingIcon sx={{ fontSize: '14px !important' }} />}
-                            label="MENUNGGU APPROVAL ⏳"
-                            size="small"
-                            color="warning"
-                            sx={{ fontWeight: 800, fontSize: '0.7rem', height: 24 }}
-                          />
-                        </Tooltip>
-                      )}
-                      {pay.status === 'FAILED' && (
-                        <Chip
-                          icon={<CancelIcon sx={{ fontSize: '14px !important' }} />}
-                          label="DITOLAK ❌"
-                          size="small"
-                          color="error"
-                          sx={{ fontWeight: 800, fontSize: '0.7rem', height: 24 }}
-                        />
-                      )}
-                    </TableCell>
-                    <TableCell align="right">
-                      <Stack direction="row" spacing={0.8} justifyContent="flex-end" alignItems="center">
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          color="secondary"
-                          startIcon={<ReceiptIcon sx={{ fontSize: 13 }} />}
-                          onClick={() => setInvoiceModal({ open: true, payment: pay })}
-                          sx={{ fontSize: '0.7rem', py: 0.3, px: 1, fontWeight: 800, textTransform: 'none' }}
-                        >
-                          Invoice
-                        </Button>
-                        {!isClientRole && pay.status === 'PENDING' && (
-                          <>
-                            <Button
-                              size="small"
-                              variant="contained"
-                              color="success"
-                              startIcon={<CheckCircleIcon sx={{ fontSize: 13 }} />}
-                              onClick={() => handleApprovePayment(pay.id, pay.projectId)}
-                              sx={{ fontSize: '0.7rem', py: 0.3, px: 1.2, fontWeight: 800 }}
-                            >
-                              Approve
-                            </Button>
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              color="error"
-                              startIcon={<CancelIcon sx={{ fontSize: 13 }} />}
-                              onClick={() => handleRejectPayment(pay.id, pay.projectId)}
-                              sx={{ fontSize: '0.7rem', py: 0.3, px: 1, fontWeight: 700 }}
-                            >
-                              Tolak
-                            </Button>
-                          </>
+                )}
+                {availableProjects.map((p) => {
+                  const pPending = (p.payments || []).filter((pay) => pay.status === 'PENDING').length;
+                  return (
+                    <MenuItem key={p.id} value={p.id}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                        <Box>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                            {p.clientName} — {p.title} ({formatRupiah(p.budget)})
+                          </Typography>
+                        </Box>
+                        {pPending > 0 && (
+                          <Chip label={`${pPending} ⏳`} size="small" color="warning" sx={{ fontWeight: 800, ml: 1, height: 18, fontSize: '0.6rem' }} />
                         )}
-                        <IconButton size="small" color="error" onClick={() => handleDeletePaymentRecord(pay.id, pay.projectId)} title="Hapus transaksi">
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Stack>
+                      </Box>
+                    </MenuItem>
+                  );
+                })}
+              </TextField>
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 5 }} textAlign={{ sm: 'right' }}>
+              <Box sx={{ display: 'flex', gap: 1, justifyContent: { sm: 'flex-end' }, flexWrap: 'wrap', mt: { xs: 1, sm: 2.5 } }}>
+                <Button
+                  variant="outlined"
+                  color="info"
+                  size="medium"
+                  startIcon={<BankIcon />}
+                  onClick={() => setBankInfoDialogOpen(true)}
+                  sx={{ fontWeight: 800, borderRadius: 2.5, px: 2, py: 1, textTransform: 'none' }}
+                >
+                  Info Rekening & QRIS
+                </Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  size="medium"
+                  startIcon={<AddIcon />}
+                  onClick={handleOpenPaymentDialog}
+                  sx={{ fontWeight: 800, borderRadius: 2.5, px: 2.5, py: 1, textTransform: 'none' }}
+                >
+                  Catat Pembayaran Baru
+                </Button>
+              </Box>
+            </Grid>
+          </Grid>
+
+          {/* Info Alert Box */}
+          <Alert severity="info" icon={<InfoIcon />} sx={{ borderRadius: 2, mb: 3, fontSize: '0.84rem' }}>
+            {isAllProjects ? (
+              <>Menampilkan gabungan laporan pembayaran untuk <strong>{availableProjects.length} Proyek Klien Aktif</strong>. Seluruh catatan transaksi & resi tersimpan permanen per proyek.</>
+            ) : (
+              <>Pembayaran saat ini untuk <strong>{selectedProject?.clientName}</strong> ({selectedProject?.title} — Budget: <strong>{formatRupiah(selectedProject?.budget || 0)}</strong>). Seluruh catatan transaksi & resi tersimpan permanen per proyek.</>
+            )}
+          </Alert>
+
+          {/* 3 Financial Summary Cards with Enhanced Progress Bar */}
+          <Grid container spacing={2.5} sx={{ mb: 3.5 }}>
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <Paper
+                variant="outlined"
+                sx={{
+                  p: 2.5,
+                  borderRadius: 3,
+                  bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : '#f8fafc',
+                  border: `1px solid ${theme.palette.divider}`,
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justify: 'space-between',
+                }}
+              >
+                <Box>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800, letterSpacing: '0.05em', display: 'block', mb: 0.8 }}>
+                    {isAllProjects ? 'TOTAL KONTRAK SEMUA PROYEK' : 'TOTAL NILAI KONTRAK'}
+                  </Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary' }}>
+                    {formatRupiah(totalBudget)}
+                  </Typography>
+                </Box>
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 1.5, fontWeight: 600 }}>
+                  Nilai total kontrak yang telah disepakati
+                </Typography>
+              </Paper>
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <Paper
+                variant="outlined"
+                sx={{
+                  p: 2.5,
+                  borderRadius: 3,
+                  bgcolor: 'rgba(16, 185, 129, 0.08)',
+                  borderColor: 'rgba(16, 185, 129, 0.3)',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justify: 'space-between',
+                }}
+              >
+                <Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.8 }}>
+                    <Typography variant="caption" sx={{ fontWeight: 800, letterSpacing: '0.05em', color: '#10b981' }}>
+                      TOTAL TERBAYAR
+                    </Typography>
+                    <Chip label={`${paymentProgressPct}% LUNAS`} size="small" color="success" sx={{ fontWeight: 800, height: 20, fontSize: '0.65rem' }} />
+                  </Box>
+                  <Typography variant="h5" sx={{ fontWeight: 800, color: '#10b981' }}>
+                    {formatRupiah(totalPaidAmount)}
+                  </Typography>
+                </Box>
+                <Box sx={{ mt: 1.5 }}>
+                  <LinearProgress
+                    variant="determinate"
+                    value={paymentProgressPct}
+                    sx={{
+                      height: 8,
+                      borderRadius: 4,
+                      bgcolor: 'rgba(16,185,129,0.2)',
+                      '& .MuiLinearProgress-bar': { bgcolor: '#10b981', borderRadius: 4 },
+                    }}
+                  />
+                </Box>
+              </Paper>
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <Paper
+                variant="outlined"
+                sx={{
+                  p: 2.5,
+                  borderRadius: 3,
+                  bgcolor: remainingBalance > 0 ? 'rgba(245, 158, 11, 0.08)' : 'rgba(16, 185, 129, 0.08)',
+                  borderColor: remainingBalance > 0 ? 'rgba(245, 158, 11, 0.3)' : 'rgba(16, 185, 129, 0.3)',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justify: 'space-between',
+                }}
+              >
+                <Box>
+                  <Typography variant="caption" sx={{ fontWeight: 800, letterSpacing: '0.05em', display: 'block', mb: 0.8, color: remainingBalance > 0 ? '#f59e0b' : '#10b981' }}>
+                    SISA PELUNASAN KONTRAK
+                  </Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 800, color: remainingBalance > 0 ? '#f59e0b' : '#10b981' }}>
+                    {remainingBalance > 0 ? formatRupiah(remainingBalance) : 'LUNAS 100% ✅'}
+                  </Typography>
+                </Box>
+                <Typography variant="caption" sx={{ mt: 1.5, fontWeight: 700, color: remainingBalance > 0 ? '#f59e0b' : '#10b981' }}>
+                  {remainingBalance > 0 ? 'Menunggu pembayaran termin berikutnya' : 'Seluruh kewajiban pembayaran telah selesai'}
+                </Typography>
+              </Paper>
+            </Grid>
+          </Grid>
+
+          {/* Filter Tabs & Quick Search Bar */}
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2, mb: 2.5 }}>
+            <Tabs
+              value={statusFilter}
+              onChange={(_, val) => setStatusFilter(val)}
+              sx={{
+                minHeight: 38,
+                '& .MuiTab-root': {
+                  minHeight: 38,
+                  fontWeight: 800,
+                  fontSize: '0.8rem',
+                  textTransform: 'none',
+                  borderRadius: 2,
+                  px: 2,
+                  mr: 1,
+                },
+              }}
+            >
+              <Tab label={`Semua (${paymentsListWithProject.length})`} value="ALL" />
+              <Tab label={`Terverifikasi (${paymentsListWithProject.filter((p) => p.status === 'VERIFIED').length})`} value="VERIFIED" />
+              <Tab label={`Pending Approval (${paymentsListWithProject.filter((p) => p.status === 'PENDING').length})`} value="PENDING" />
+              <Tab label={`Ditolak (${paymentsListWithProject.filter((p) => p.status === 'FAILED').length})`} value="FAILED" />
+            </Tabs>
+
+            <TextField
+              size="small"
+              placeholder="Cari transaksi / termin / catatan..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon fontSize="small" sx={{ color: 'text.secondary' }} />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+              sx={{ width: { xs: '100%', sm: 280 }, '& .MuiOutlinedInput-root': { borderRadius: 2.5 } }}
+            />
+          </Box>
+
+          {/* Transactions Table */}
+          <TableContainer component={Box} sx={{ border: `1px solid ${theme.palette.divider}`, borderRadius: 2.5 }}>
+            <Table>
+              <TableHead>
+                <TableRow sx={{ bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : '#f8fafc' }}>
+                  <TableCell sx={{ fontWeight: 800 }}>Tanggal</TableCell>
+                  {isAllProjects && <TableCell sx={{ fontWeight: 800 }}>Proyek & Klien</TableCell>}
+                  <TableCell sx={{ fontWeight: 800 }}>Tahap / Termin Pembayaran</TableCell>
+                  <TableCell sx={{ fontWeight: 800 }}>Nominal (IDR)</TableCell>
+                  <TableCell sx={{ fontWeight: 800 }}>Bukti Pembayaran</TableCell>
+                  <TableCell sx={{ fontWeight: 800 }}>Catatan & Ref Transfer</TableCell>
+                  <TableCell sx={{ fontWeight: 800 }}>Status Approval Admin</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 800 }}>Aksi / Invoice</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filteredPaymentsList.length > 0 ? (
+                  filteredPaymentsList.map((pay) => (
+                    <TableRow key={`${pay.projectId}-${pay.id}`} hover sx={{ bgcolor: pay.status === 'PENDING' ? (theme.palette.mode === 'dark' ? 'rgba(245, 158, 11, 0.05)' : '#fffbe6') : 'transparent' }}>
+                      <TableCell sx={{ fontWeight: 700 }}>{pay.date}</TableCell>
+                      {isAllProjects && (
+                        <TableCell>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 800, fontSize: '0.84rem' }}>
+                            {pay.projectTitle}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary" display="block">
+                            {pay.clientName}
+                          </Typography>
+                        </TableCell>
+                      )}
+                      <TableCell>
+                        <Chip label={pay.stage} size="small" variant="outlined" color="primary" sx={{ fontWeight: 700, fontSize: '0.72rem' }} />
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 800, color: '#10b981', fontSize: '0.95rem' }}>
+                        {formatRupiah(pay.amount)}
+                      </TableCell>
+                      <TableCell>
+                        {pay.proofUrl ? (
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            color="info"
+                            startIcon={<VisibilityIcon sx={{ fontSize: 14 }} />}
+                            onClick={() => setProofPreviewModal({ open: true, payment: pay })}
+                            sx={{ fontSize: '0.72rem', py: 0.3, fontWeight: 700, textTransform: 'none' }}
+                          >
+                            Lihat Resi
+                          </Button>
+                        ) : (
+                          <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                            Tanpa Resi
+                          </Typography>
+                        )}
+                      </TableCell>
+                      <TableCell sx={{ fontSize: '0.85rem', color: 'text.secondary' }}>
+                        {pay.notes || '-'}
+                      </TableCell>
+                      <TableCell>
+                        {pay.status === 'VERIFIED' && (
+                          <Tooltip title={pay.approvedBy ? `Disetujui oleh ${pay.approvedBy} (${pay.approvedAt || pay.date})` : 'Disetujui Admin'}>
+                            <Chip
+                              icon={<CheckCircleIcon sx={{ fontSize: '14px !important' }} />}
+                              label="DISUTUJU ADMIN ✅"
+                              size="small"
+                              color="success"
+                              sx={{ fontWeight: 800, fontSize: '0.7rem', height: 24 }}
+                            />
+                          </Tooltip>
+                        )}
+                        {pay.status === 'PENDING' && (
+                          <Tooltip title="Menunggu verifikasi persetujuan (approval) oleh Tim Admin Atasilabs">
+                            <Chip
+                              icon={<PendingIcon sx={{ fontSize: '14px !important' }} />}
+                              label="MENUNGGU APPROVAL ⏳"
+                              size="small"
+                              color="warning"
+                              sx={{ fontWeight: 800, fontSize: '0.7rem', height: 24 }}
+                            />
+                          </Tooltip>
+                        )}
+                        {pay.status === 'FAILED' && (
+                          <Chip
+                            icon={<CancelIcon sx={{ fontSize: '14px !important' }} />}
+                            label="DITOLAK ❌"
+                            size="small"
+                            color="error"
+                            sx={{ fontWeight: 800, fontSize: '0.7rem', height: 24 }}
+                          />
+                        )}
+                      </TableCell>
+                      <TableCell align="right">
+                        <Stack direction="row" spacing={0.8} justifyContent="flex-end" alignItems="center">
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            color="secondary"
+                            startIcon={<ReceiptIcon sx={{ fontSize: 13 }} />}
+                            onClick={() => {
+                              setDocType('INVOICE');
+                              setInvoiceModal({ open: true, payment: pay });
+                              setPrintAllModalInvoices(false);
+                            }}
+                            sx={{ fontSize: '0.7rem', py: 0.3, px: 1, fontWeight: 800, textTransform: 'none' }}
+                          >
+                            Invoice
+                          </Button>
+                          <Button
+                            size="small"
+                            variant="contained"
+                            color="primary"
+                            startIcon={<ReceiptIcon sx={{ fontSize: 13 }} />}
+                            onClick={() => {
+                              setDocType('KWITANSI');
+                              setInvoiceModal({ open: true, payment: pay });
+                              setPrintAllModalInvoices(false);
+                            }}
+                            sx={{ fontSize: '0.7rem', py: 0.3, px: 1, fontWeight: 800, textTransform: 'none' }}
+                          >
+                            Kwitansi
+                          </Button>
+                          {!isClientRole && pay.status === 'PENDING' && (
+                            <>
+                              <Button
+                                size="small"
+                                variant="contained"
+                                color="success"
+                                startIcon={<CheckCircleIcon sx={{ fontSize: 13 }} />}
+                                onClick={() => handleApprovePayment(pay.id, pay.projectId)}
+                                sx={{ fontSize: '0.7rem', py: 0.3, px: 1.2, fontWeight: 800 }}
+                              >
+                                Approve
+                              </Button>
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                color="error"
+                                startIcon={<CancelIcon sx={{ fontSize: 13 }} />}
+                                onClick={() => handleRejectPayment(pay.id, pay.projectId)}
+                                sx={{ fontSize: '0.7rem', py: 0.3, px: 1, fontWeight: 700 }}
+                              >
+                                Tolak
+                              </Button>
+                            </>
+                          )}
+                          <IconButton size="small" color="error" onClick={() => handleDeletePaymentRecord(pay.id, pay.projectId)} title="Hapus transaksi">
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Stack>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={isAllProjects ? 8 : 7} align="center" sx={{ py: 4, color: 'text.secondary', fontSize: '0.9rem' }}>
+                      Belum ada riwayat transaksi pembayaran yang dicatat. Klik <strong>"Catat Pembayaran Baru"</strong> di atas.
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={isAllProjects ? 8 : 7} align="center" sx={{ py: 4, color: 'text.secondary', fontSize: '0.9rem' }}>
-                    Belum ada riwayat transaksi pembayaran yang dicatat. Klik <strong>"Catat Pembayaran Baru"</strong> di atas.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Paper>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Paper>
       )}
 
       {/* Dialog Modal: Catat Pengeluaran Upah Freelancer (Fitur Admin) */}
@@ -1537,9 +1790,19 @@ export const PaymentsView: React.FC = () => {
         <Box sx={{ flexGrow: 1, overflowY: 'auto', p: 3 }}>
           <Alert severity="info" sx={{ mb: 3, borderRadius: 2.5, fontSize: '0.84rem' }}>
             {isClientRole ? (
-              <>Upload bukti transfer pembayaran untuk proyek <strong>{selectedProject?.title}</strong>. Pembayaran akan diverifikasi & di-approve oleh Tim Admin Atasilabs.</>
+              <>
+                Upload bukti transfer pembayaran untuk proyek <strong>{currentFormProj?.title}</strong>. Total Nilai Kontrak: <strong>{formatRupiah(formTargetBudget)}</strong>.
+                {formTerminPct && (
+                  <> Termin: <strong>{paymentFormData.stage}</strong> ({formTerminPct}% = <strong>{formatRupiah(paymentFormData.amount)}</strong>).</>
+                )}
+              </>
             ) : (
-              <>Catat pembayaran untuk proyek. Total Kontrak: <strong>{formatRupiah(totalBudget)}</strong>.</>
+              <>
+                Catat pembayaran untuk proyek <strong>{currentFormProj?.title}</strong>. Total Kontrak: <strong>{formatRupiah(formTargetBudget)}</strong>.
+                {formTerminPct && (
+                  <> Termin: <strong>{paymentFormData.stage}</strong> ({formTerminPct}% = <strong>{formatRupiah(paymentFormData.amount)}</strong>).</>
+                )}
+              </>
             )}
           </Alert>
 
@@ -1550,7 +1813,7 @@ export const PaymentsView: React.FC = () => {
                 fullWidth
                 label="Target Proyek Klien"
                 value={paymentFormData.targetProjId}
-                onChange={(e) => setPaymentFormData((prev) => ({ ...prev, targetProjId: e.target.value }))}
+                onChange={(e) => handleFormTargetProjChange(e.target.value)}
               >
                 {availableProjects.map((p) => (
                   <MenuItem key={p.id} value={p.id}>
@@ -1578,14 +1841,26 @@ export const PaymentsView: React.FC = () => {
                 fullWidth
                 label="Tahap / Termin Pembayaran"
                 value={paymentFormData.stage}
-                onChange={(e) => setPaymentFormData((prev) => ({ ...prev, stage: e.target.value }))}
+                onChange={(e) => handleFormStageChange(e.target.value)}
               >
-                <MenuItem value="DP Tahap 1 (30%)">DP Tahap 1 (30%) - Penandatanganan MoU</MenuItem>
-                <MenuItem value="Termin Progress Tahap 2 (30%)">Termin Progress Tahap 2 (30%) - Desain / Mid Dev</MenuItem>
-                <MenuItem value="Pelunasan Tahap 3 (40%)">Pelunasan Tahap 3 (40%) - Sebelum Live Deployment</MenuItem>
-                <MenuItem value="DP Tahap 1 (50%)">DP Tahap 1 (50%) - Tier 1-2</MenuItem>
-                <MenuItem value="Pelunasan Tahap 2 (50%)">Pelunasan Tahap 2 (50%) - Tier 1-2</MenuItem>
-                <MenuItem value="Pembayaran Tambahan / Add-on">Pembayaran Tambahan / Add-on</MenuItem>
+                <MenuItem value="DP Tahap 1 (30%)">
+                  DP Tahap 1 (30%) - Penandatanganan MoU {formTargetBudget > 0 ? `(${formatRupiah(Math.round(formTargetBudget * 0.3))})` : ''}
+                </MenuItem>
+                <MenuItem value="Termin Progress Tahap 2 (30%)">
+                  Termin Progress Tahap 2 (30%) - Desain / Mid Dev {formTargetBudget > 0 ? `(${formatRupiah(Math.round(formTargetBudget * 0.3))})` : ''}
+                </MenuItem>
+                <MenuItem value="Pelunasan Tahap 3 (40%)">
+                  Pelunasan Tahap 3 (40%) - Sebelum Live Deployment {formTargetBudget > 0 ? `(${formatRupiah(Math.round(formTargetBudget * 0.4))})` : ''}
+                </MenuItem>
+                <MenuItem value="DP Tahap 1 (50%)">
+                  DP Tahap 1 (50%) - Tier 1-2 {formTargetBudget > 0 ? `(${formatRupiah(Math.round(formTargetBudget * 0.5))})` : ''}
+                </MenuItem>
+                <MenuItem value="Pelunasan Tahap 2 (50%)">
+                  Pelunasan Tahap 2 (50%) - Tier 1-2 {formTargetBudget > 0 ? `(${formatRupiah(Math.round(formTargetBudget * 0.5))})` : ''}
+                </MenuItem>
+                <MenuItem value="Pembayaran Tambahan / Add-on">
+                  Pembayaran Tambahan / Add-on {formRemainingBalance > 0 ? `(Sisa: ${formatRupiah(formRemainingBalance)})` : ''}
+                </MenuItem>
               </TextField>
             </Grid>
 
@@ -1596,7 +1871,27 @@ export const PaymentsView: React.FC = () => {
                 label="Nominal Pembayaran (IDR)"
                 value={paymentFormData.amount || ''}
                 onChange={(e) => setPaymentFormData((prev) => ({ ...prev, amount: Number(e.target.value) }))}
-                helperText={`Terbilang: Rp ${(paymentFormData.amount || 0).toLocaleString('id-ID')}`}
+                helperText={
+                  formTerminPct
+                    ? `Otomatis ${formTerminPct}% dari nilai proyek ${formatRupiah(formTargetBudget)} | Terbilang: Rp ${(paymentFormData.amount || 0).toLocaleString('id-ID')}`
+                    : `Terbilang: Rp ${(paymentFormData.amount || 0).toLocaleString('id-ID')}`
+                }
+                slotProps={{
+                  input: {
+                    startAdornment: <InputAdornment position="start">Rp</InputAdornment>,
+                    endAdornment: formTerminPct ? (
+                      <InputAdornment position="end">
+                        <Chip
+                          label={`${formTerminPct}% Kontrak`}
+                          size="small"
+                          color="success"
+                          variant="outlined"
+                          sx={{ fontWeight: 800, fontSize: '0.72rem', height: 24 }}
+                        />
+                      </InputAdornment>
+                    ) : undefined,
+                  },
+                }}
                 required
               />
             </Grid>
@@ -1901,16 +2196,16 @@ export const PaymentsView: React.FC = () => {
                       proofPreviewModal.payment.status === 'VERIFIED'
                         ? 'VERIFIED / LUNAS'
                         : proofPreviewModal.payment.status === 'FAILED'
-                        ? 'GAGAL / DITOLAK'
-                        : 'PENDING VERIFIKASI'
+                          ? 'GAGAL / DITOLAK'
+                          : 'PENDING VERIFIKASI'
                     }
                     size="small"
                     color={
                       proofPreviewModal.payment.status === 'VERIFIED'
                         ? 'success'
                         : proofPreviewModal.payment.status === 'FAILED'
-                        ? 'error'
-                        : 'warning'
+                          ? 'error'
+                          : 'warning'
                     }
                     sx={{ fontWeight: 800, fontSize: '0.75rem' }}
                   />
@@ -1955,7 +2250,7 @@ export const PaymentsView: React.FC = () => {
                 Informasi Rekening Resmi & QRIS
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                Metode Pembayaran Resmi PT ATASILABS DIGITAL INDONESIA
+                Metode Pembayaran Resmi PT AULIA INDOLAND GRUP
               </Typography>
             </Box>
           </Box>
@@ -1966,117 +2261,38 @@ export const PaymentsView: React.FC = () => {
 
         <DialogContent dividers sx={{ p: 3 }}>
           <Alert severity="success" icon={<SecurityIcon />} sx={{ mb: 3, borderRadius: 2.5, fontSize: '0.84rem' }}>
-            Pastikan seluruh transfer pembayaran ditujukan ke rekening resmi atas nama <strong>PT ATASILABS DIGITAL INDONESIA</strong>.
+            Pastikan seluruh transfer pembayaran ditujukan ke rekening resmi atas nama <strong>PT AULIA INDOLAND GRUP</strong>.
           </Alert>
 
           <Stack spacing={2}>
-            {/* BRI Card */}
-            <Paper variant="outlined" sx={{ p: 2, borderRadius: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            {/* BRI Card (Satu-satunya Rekening Resmi) */}
+            <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between', bgcolor: theme.palette.mode === 'dark' ? 'rgba(99,102,241,0.05)' : '#f8fafc', border: `1.5px solid ${theme.palette.primary.main}` }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Avatar sx={{ bgcolor: 'rgba(99,102,241,0.1)', color: 'primary.main', fontWeight: 900, fontSize: '0.85rem' }}>
+                <Avatar sx={{ bgcolor: 'primary.main', color: '#ffffff', fontWeight: 900, fontSize: '0.85rem', width: 44, height: 44 }}>
                   BRI
                 </Avatar>
                 <Box>
-                  <Typography variant="caption" color="text.secondary" display="block">
-                    BANK BRI (PT ATASILABS DIGITAL INDONESIA)
+                  <Typography variant="caption" color="text.secondary" display="block" sx={{ fontWeight: 700 }}>
+                    BANK BRI (BANK RAKYAT INDONESIA)
                   </Typography>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 900, fontFamily: 'monospace', letterSpacing: 0.5 }}>
-                    1234-01-000123-53-0
+                  <Typography variant="subtitle1" sx={{ fontWeight: 900, fontFamily: 'monospace', letterSpacing: 0.5, color: 'primary.main' }}>
+                    4388-01-0000-25-56-7
                   </Typography>
-                </Box>
-              </Box>
-              <Button
-                size="small"
-                variant="outlined"
-                startIcon={<CopyIcon sx={{ fontSize: 14 }} />}
-                onClick={() => handleCopyAccount('1234-01-000123-53-0', 'BRI')}
-                sx={{ fontWeight: 800, borderRadius: 2, textTransform: 'none', fontSize: '0.75rem' }}
-              >
-                Salin
-              </Button>
-            </Paper>
-
-            {/* BCA Card */}
-            <Paper variant="outlined" sx={{ p: 2, borderRadius: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Avatar sx={{ bgcolor: 'rgba(16,185,129,0.1)', color: '#10b981', fontWeight: 900, fontSize: '0.85rem' }}>
-                  BCA
-                </Avatar>
-                <Box>
-                  <Typography variant="caption" color="text.secondary" display="block">
-                    BANK BCA (PT ATASILABS DIGITAL INDONESIA)
-                  </Typography>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 900, fontFamily: 'monospace', letterSpacing: 0.5 }}>
-                    8830-9988-12
+                  <Typography variant="caption" color="text.secondary" display="block" sx={{ fontWeight: 600 }}>
+                    Atas Nama: <strong>PT AULIA INDOLAND GRUP</strong>
                   </Typography>
                 </Box>
               </Box>
               <Button
                 size="small"
-                variant="outlined"
+                variant="contained"
+                color="primary"
                 startIcon={<CopyIcon sx={{ fontSize: 14 }} />}
-                onClick={() => handleCopyAccount('8830-9988-12', 'BCA')}
-                sx={{ fontWeight: 800, borderRadius: 2, textTransform: 'none', fontSize: '0.75rem' }}
+                onClick={() => handleCopyAccount('4388-01-0000-25-56-7', 'BRI')}
+                sx={{ fontWeight: 800, borderRadius: 2, textTransform: 'none', fontSize: '0.75rem', px: 2 }}
               >
-                Salin
+                Salin Rekening
               </Button>
-            </Paper>
-
-            {/* Mandiri Card */}
-            <Paper variant="outlined" sx={{ p: 2, borderRadius: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Avatar sx={{ bgcolor: 'rgba(245,158,11,0.1)', color: '#f59e0b', fontWeight: 900, fontSize: '0.85rem' }}>
-                  MDR
-                </Avatar>
-                <Box>
-                  <Typography variant="caption" color="text.secondary" display="block">
-                    BANK MANDIRI (PT ATASILABS DIGITAL INDONESIA)
-                  </Typography>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 900, fontFamily: 'monospace', letterSpacing: 0.5 }}>
-                    137-00-1928374-1
-                  </Typography>
-                </Box>
-              </Box>
-              <Button
-                size="small"
-                variant="outlined"
-                startIcon={<CopyIcon sx={{ fontSize: 14 }} />}
-                onClick={() => handleCopyAccount('137-00-1928374-1', 'Mandiri')}
-                sx={{ fontWeight: 800, borderRadius: 2, textTransform: 'none', fontSize: '0.75rem' }}
-              >
-                Salin
-              </Button>
-            </Paper>
-
-            {/* QRIS Container */}
-            <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 3, textAlign: 'center', bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : '#f8fafc' }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-                <QrCodeIcon color="primary" /> QRIS All Payment (GoPay / OVO / Dana / Mobile Banking)
-              </Typography>
-              <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
-                Scan QR Code berikut menggunakan aplikasi e-Wallet atau Mobile Banking yang mendukung QRIS
-              </Typography>
-              <Box
-                sx={{
-                  width: 180,
-                  height: 180,
-                  mx: 'auto',
-                  borderRadius: 3,
-                  p: 1.5,
-                  bgcolor: '#ffffff',
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexDirection: 'column',
-                  border: '1px solid #e2e8f0',
-                }}
-              >
-                <QrCodeIcon sx={{ fontSize: 110, color: '#1e293b' }} />
-                <Typography variant="caption" sx={{ fontWeight: 900, color: '#0f172a', fontSize: '0.68rem', mt: -1 }}>
-                  NMIN: ID10293847561
-                </Typography>
-              </Box>
             </Paper>
           </Stack>
         </DialogContent>
@@ -2093,7 +2309,9 @@ export const PaymentsView: React.FC = () => {
         anchor="right"
         open={invoiceModal.open}
         onClose={() => setInvoiceModal({ open: false })}
+        className="invoice-drawer-root"
         PaperProps={{
+          className: 'invoice-drawer-paper',
           sx: {
             width: { xs: '100%', sm: 600, md: 720 },
             boxSizing: 'border-box',
@@ -2106,291 +2324,477 @@ export const PaymentsView: React.FC = () => {
       >
         {invoiceModal.payment && (
           <>
-            <style>{`
-              @media print {
-                @page {
-                  size: A4 portrait;
-                  margin: 10mm;
-                }
-                body {
-                  background: #ffffff !important;
-                  color: #0f172a !important;
-                  -webkit-print-color-adjust: exact !important;
-                  print-color-adjust: exact !important;
-                }
-                /* Hide all page content during print */
-                body * {
-                  visibility: hidden !important;
-                }
-                /* Expose ONLY the printable invoice sheet */
-                #printable-invoice-sheet, #printable-invoice-sheet * {
-                  visibility: visible !important;
-                }
-                #printable-invoice-sheet {
-                  position: fixed !important;
-                  left: 0 !important;
-                  top: 0 !important;
-                  width: 100% !important;
-                  margin: 0 !important;
-                  padding: 24px !important;
-                  border: 1px solid #cbd5e1 !important;
-                  border-radius: 8px !important;
-                  background: #ffffff !important;
-                  color: #0f172a !important;
-                  box-shadow: none !important;
-                  overflow: visible !important;
-                  z-index: 999999 !important;
-                }
-                .no-print {
-                  display: none !important;
-                }
-              }
-            `}</style>
 
-            <Box className="no-print" sx={{ p: 2.5, px: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${theme.palette.divider}` }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Avatar sx={{ width: 44, height: 44, bgcolor: 'secondary.main', boxShadow: '0 4px 14px rgba(139,92,246,0.3)' }}>
-                  <ReceiptIcon />
-                </Avatar>
-                <Box>
-                  <Typography variant="h6" component="h2" sx={{ fontWeight: 800, lineHeight: 1.2 }}>
-                    Official Invoice Transaksi
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Dokumen Tagihan & Bukti Pembayaran Resmi Atasilabs
-                  </Typography>
-                </Box>
-              </Box>
-              <IconButton onClick={() => setInvoiceModal({ open: false })} size="small" sx={{ borderRadius: 2 }}>
-                <CloseIcon fontSize="small" />
-              </IconButton>
-            </Box>
 
-            <Box sx={{ flexGrow: 1, overflowY: 'auto', p: { xs: 2.5, md: 3 } }}>
-              {/* Printable Invoice Document Sheet */}
-              <Paper
-                id="printable-invoice-sheet"
-                className="printable-document"
-                elevation={0}
-                sx={{
-                  p: 0,
-                  borderRadius: 3,
-                  bgcolor: '#ffffff',
-                  color: '#0f172a',
-                  border: `1px solid ${theme.palette.divider}`,
-                  position: 'relative',
-                  overflow: 'hidden',
-                  fontFamily: 'Inter, Arial, sans-serif',
-                }}
-              >
-                {/* Full-bleed Background Header SVG Banner (public/header.svg) */}
-                <Box
-                  className="repeat-page-header-bg"
-                  sx={{
-                    width: '100%',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    zIndex: 0,
-                    pointerEvents: 'none',
-                  }}
-                >
-                  <Box
-                    component="img"
-                    src="/header.svg"
-                    alt="Header Background Atasilabs"
-                    sx={{
-                      width: '100%',
-                      height: 'auto',
-                      display: 'block',
-                    }}
-                  />
-                </Box>
-
-                {/* Full-bleed Background Footer SVG Banner (public/footer.svg) */}
-                <Box
-                  className="repeat-page-footer-bg"
-                  sx={{
-                    width: '100%',
-                    position: 'absolute',
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    zIndex: 0,
-                    pointerEvents: 'none',
-                  }}
-                >
-                  <Box
-                    component="img"
-                    src="/footer.svg"
-                    alt="Footer Background Atasilabs"
-                    sx={{
-                      width: '100%',
-                      height: 'auto',
-                      position: 'absolute',
-                      bottom: 0,
-                      left: 0,
-                      display: 'block',
-                    }}
-                  />
-                </Box>
-
-                {/* Invoice Body Content Container */}
-                <Box
-                  sx={{
-                    position: 'relative',
-                    zIndex: 1,
-                    pt: { xs: 12, sm: 14 },
-                    pb: { xs: 10, sm: 12 },
-                    px: { xs: 2.5, md: 4 },
-                  }}
-                >
-                  {/* Header Letterhead */}
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2, mb: 4, borderBottom: `2px solid ${theme.palette.divider}`, pb: 3 }}>
-                    <Box>
-                      <Typography variant="h5" sx={{ fontWeight: 900, color: 'primary.main', letterSpacing: -0.5 }}>
-                        {companyContact?.companyName || 'ATASILABS'}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary" display="block" sx={{ fontWeight: 700 }}>
-                        PT ATASILABS DIGITAL INDONESIA
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary" display="block">
-                        Software Development & Digital Technology Partner
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary" display="block">
-                        Email: {companyContact?.email || 'support@atasilabs.com'} | Tel: {companyContact?.phone || '0812-3456-7890'}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ textAlign: { xs: 'left', sm: 'right' } }}>
-                      <Chip label="OFFICIAL INVOICE" color="primary" sx={{ fontWeight: 900, letterSpacing: 1, mb: 1 }} />
-                      <Typography variant="subtitle2" sx={{ fontWeight: 800, fontFamily: 'monospace' }}>
-                        #INV-ATL-2026-{(invoiceModal.payment.id || '').replace('pay-', '')}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary" display="block">
-                        Tanggal: <strong>{invoiceModal.payment.date}</strong>
-                      </Typography>
-                    </Box>
-                  </Box>
-
-                  {/* Bill To & Project Info */}
-                  <Grid container spacing={3} sx={{ mb: 4 }}>
-                    <Grid size={{ xs: 12, sm: 6 }}>
-                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800, letterSpacing: 0.5, textTransform: 'uppercase', display: 'block', mb: 0.5 }}>
-                        DITUJUKAN KEPADA (BILL TO):
-                      </Typography>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
-                        {invoiceModal.payment.clientName || selectedProject?.clientName || 'Klien Atasilabs'}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Proyek: <strong>{invoiceModal.payment.projectTitle || selectedProject?.title || 'Pengembangan Perangkat Lunak'}</strong>
-                      </Typography>
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 6 }} textAlign={{ sm: 'right' }}>
-                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800, letterSpacing: 0.5, textTransform: 'uppercase', display: 'block', mb: 0.5 }}>
-                        STATUS PEMBAYARAN:
-                      </Typography>
-                      <Chip
-                        label={
-                          invoiceModal.payment.status === 'VERIFIED'
-                            ? 'PAID / TERVERIFIKASI ✅'
-                            : invoiceModal.payment.status === 'FAILED'
-                            ? 'CANCELLED / DITOLAK ❌'
-                            : 'PENDING APPROVAL ⏳'
-                        }
-                        color={
-                          invoiceModal.payment.status === 'VERIFIED'
-                            ? 'success'
-                            : invoiceModal.payment.status === 'FAILED'
-                            ? 'error'
-                            : 'warning'
-                        }
-                        sx={{ fontWeight: 900, px: 1 }}
-                      />
-                    </Grid>
-                  </Grid>
-
-                  {/* Itemized Table */}
-                  <TableContainer component={Box} sx={{ border: `1px solid ${theme.palette.divider}`, borderRadius: 2, mb: 3 }}>
-                    <Table>
-                      <TableHead>
-                        <TableRow sx={{ bgcolor: '#f8fafc' }}>
-                          <TableCell sx={{ fontWeight: 800 }}>Deskripsi Item / Termin</TableCell>
-                          <TableCell sx={{ fontWeight: 800 }}>Tanggal Pembayaran</TableCell>
-                          <TableCell align="right" sx={{ fontWeight: 800 }}>Jumlah (IDR)</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        <TableRow>
-                          <TableCell>
-                            <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
-                              {invoiceModal.payment.stage}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              Ref: {invoiceModal.payment.notes || 'Pembayaran Termin Proyek'}
-                            </Typography>
-                          </TableCell>
-                          <TableCell sx={{ fontWeight: 700 }}>{invoiceModal.payment.date}</TableCell>
-                          <TableCell align="right" sx={{ fontWeight: 900, color: '#10b981', fontSize: '1rem' }}>
-                            {formatRupiah(invoiceModal.payment.amount)}
-                          </TableCell>
-                        </TableRow>
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-
-                  {/* Bank Account & Payment Details */}
-                  <Box sx={{ mb: 3, p: 2, borderRadius: 2, bgcolor: '#f8fafc', border: `1px solid ${theme.palette.divider}` }}>
-                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', mb: 0.5 }}>
-                      METODE & REKENING PEMBAYARAN:
-                    </Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                      Bank: BCA (Bank Central Asia) — No. Rek: 8830-9988-123
+            <Box className="no-print" sx={{ p: 2.5, px: 3, borderBottom: `1px solid ${theme.palette.divider}` }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <Avatar sx={{ width: 44, height: 44, bgcolor: 'secondary.main', boxShadow: '0 4px 14px rgba(139,92,246,0.3)' }}>
+                    <ReceiptIcon />
+                  </Avatar>
+                  <Box>
+                    <Typography variant="h6" component="h2" sx={{ fontWeight: 800, lineHeight: 1.2 }}>
+                      {docType === 'KWITANSI' ? 'Kwitansi / Faktur Pembayaran' : 'Official Invoice Tagihan'}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      Atas Nama: {companyContact?.companyName || 'PT ATASILABS DIGITAL INDONESIA'}
+                      {docType === 'KWITANSI'
+                        ? 'Bukti Tanda Terima Pembayaran Resmi & Sah Atasilabs'
+                        : 'Dokumen Tagihan Resmi & Rincian Termin Atasilabs'}
                     </Typography>
                   </Box>
-
-                  {/* Total Summary */}
-                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 4 }}>
-                    <Box sx={{ width: { xs: '100%', sm: 300 } }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.8, borderBottom: `1px solid ${theme.palette.divider}` }}>
-                        <Typography variant="body2" color="text.secondary">Subtotal:</Typography>
-                        <Typography variant="body2" sx={{ fontWeight: 800 }}>{formatRupiah(invoiceModal.payment.amount)}</Typography>
-                      </Box>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.8, borderBottom: `1px solid ${theme.palette.divider}` }}>
-                        <Typography variant="body2" color="text.secondary">Pajak / Biaya Layanan:</Typography>
-                        <Typography variant="body2" sx={{ fontWeight: 800 }}>Rp 0</Typography>
-                      </Box>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1.2 }}>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 900 }}>Total Ditagihkan:</Typography>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 900, color: 'primary.main' }}>{formatRupiah(invoiceModal.payment.amount)}</Typography>
-                      </Box>
-                    </Box>
-                  </Box>
-
-                  {/* Footer Stamp & Notes */}
-                  <Box sx={{ pt: 3, borderTop: `1px dashed ${theme.palette.divider}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-                    <Box>
-                      <Typography variant="caption" color="text.secondary" display="block">
-                        Terima kasih atas kepercayaan Anda bermitra dengan Atasilabs.
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary" display="block">
-                        Dokumen ini diterbitkan secara otomatis dan sah tanpa tanda tangan basah.
-                      </Typography>
-                    </Box>
-                    <Chip
-                      icon={<SecurityIcon sx={{ fontSize: '14px !important' }} />}
-                      label="VERIFIED DIGITAL STAMP - PT ATASILABS"
-                      variant="outlined"
-                      color="success"
-                      size="small"
-                      sx={{ fontWeight: 800, fontSize: '0.68rem' }}
-                    />
-                  </Box>
                 </Box>
-              </Paper>
+                <IconButton onClick={() => setInvoiceModal({ open: false })} size="small" sx={{ borderRadius: 2 }}>
+                  <CloseIcon fontSize="small" />
+                </IconButton>
+              </Box>
+
+              {/* Document Type Switcher Tabs */}
+              <Tabs
+                value={docType}
+                onChange={(_, val) => setDocType(val)}
+                textColor="secondary"
+                indicatorColor="secondary"
+                sx={{ minHeight: 38, mt: 1.5, borderBottom: `1px solid ${theme.palette.divider}` }}
+              >
+                <Tab
+                  value="KWITANSI"
+                  label="🧾 Kwitansi / Faktur Pembayaran"
+                  sx={{ minHeight: 38, py: 0.5, fontWeight: 800, fontSize: '0.78rem', textTransform: 'none' }}
+                />
+                <Tab
+                  value="INVOICE"
+                  label="📄 Invoice Tagihan Proyek"
+                  sx={{ minHeight: 38, py: 0.5, fontWeight: 800, fontSize: '0.78rem', textTransform: 'none' }}
+                />
+              </Tabs>
+
+              {targetProjectPaymentCount > 1 && (
+                <Stack direction="row" spacing={1} sx={{ mt: 1.5 }}>
+                  <Button
+                    size="small"
+                    variant={!printAllModalInvoices ? 'contained' : 'outlined'}
+                    color="primary"
+                    onClick={() => setPrintAllModalInvoices(false)}
+                    sx={{ textTransform: 'none', fontWeight: 800, fontSize: '0.72rem', borderRadius: 2 }}
+                  >
+                    {docType === 'KWITANSI' ? 'Kwitansi Pembayaran Ini' : 'Invoice Pembayaran Ini'} (1 Halaman)
+                  </Button>
+                  <Button
+                    size="small"
+                    variant={printAllModalInvoices ? 'contained' : 'outlined'}
+                    color="secondary"
+                    onClick={() => setPrintAllModalInvoices(true)}
+                    sx={{ textTransform: 'none', fontWeight: 800, fontSize: '0.72rem', borderRadius: 2 }}
+                  >
+                    Semua {docType === 'KWITANSI' ? 'Kwitansi' : 'Invoice'} ({targetProjectPaymentCount} Halaman)
+                  </Button>
+                </Stack>
+              )}
+            </Box>
+
+            <Box id="invoice-scroll-area" sx={{ flexGrow: 1, overflowY: 'auto', p: { xs: 2.5, md: 3 } }}>
+              <Box id="printable-invoice-container">
+                {invoicePaymentsToRender.map((payItem, idx) => {
+                  const allChronologicalPayments = targetProjectData?.payments || [payItem];
+                  const paymentIndex = allChronologicalPayments.findIndex((p) => p.id === payItem.id);
+                  const resolvedIndex = paymentIndex >= 0 ? paymentIndex : idx;
+                  const paymentNumber = resolvedIndex + 1;
+                  const totalPaymentsCount = allChronologicalPayments.length || invoicePaymentsToRender.length || 1;
+                  const totalContractAmount = targetProjectData?.totalContract || payItem.amount;
+
+                  // Payments recorded up to this invoice (inclusive)
+                  const paymentsUpToThisInvoice = allChronologicalPayments.slice(0, resolvedIndex + 1);
+                  const cumulativePaidThisInvoice = paymentsUpToThisInvoice.reduce((acc, p) => acc + (p.amount || 0), 0);
+                  const remainingAfterThisInvoice = Math.max(0, totalContractAmount - cumulativePaidThisInvoice);
+
+                  return (
+                    <Box key={payItem.id || idx} className="printable-invoice-wrapper" sx={{ mb: idx < invoicePaymentsToRender.length - 1 ? 4 : 0 }}>
+                      {invoicePaymentsToRender.length > 1 && (
+                        <Typography className="no-print" variant="caption" sx={{ fontWeight: 800, color: 'primary.main', display: 'block', mb: 1, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                          📄 INVOICE #{paymentNumber} (Halaman {idx + 1} dari {invoicePaymentsToRender.length}) — Pembayaran ke-{paymentNumber} dari {totalPaymentsCount}: {payItem.stage} ({payItem.date})
+                        </Typography>
+                      )}
+                      {/* Printable Invoice Document Sheet */}
+                      <Paper
+                        className="printable-invoice-sheet"
+                        elevation={0}
+                        sx={{
+                          p: 0,
+                          borderRadius: 0,
+                          bgcolor: '#ffffff',
+                          color: '#0f172a',
+                          border: `1px solid ${theme.palette.divider}`,
+                          position: 'relative',
+                          overflow: 'hidden',
+                          fontFamily: 'Inter, Arial, sans-serif',
+                        }}
+                      >
+                        {/* Full-bleed Background Header SVG (absolute positioned behind content) */}
+                        <Box className="repeat-page-header-bg" sx={{ position: 'absolute', top: 0, left: 0, right: 0, width: '100%', zIndex: 0, pointerEvents: 'none' }}>
+                          <Box
+                            component="img"
+                            src="/header.svg"
+                            alt="Header Background Atasilabs"
+                            sx={{
+                              width: '100%',
+                              height: 'auto',
+                              display: 'block',
+                            }}
+                          />
+                        </Box>
+
+                        {docType === 'KWITANSI' ? (
+                          /* Kwitansi / Faktur Pembayaran Body Content */
+                          <Box
+                            className="invoice-body-content"
+                            sx={{
+                              position: 'relative',
+                              zIndex: 1,
+                              pt: { xs: '95px', sm: '110px', md: '120px' },
+                              pb: { xs: '80px', sm: '90px', md: '100px' },
+                              px: { xs: 2.5, md: 4 },
+                            }}
+                          >
+                            {/* Title & Metadata */}
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1.5, mb: 2, pb: 1.5, borderBottom: '1.5px solid #000000' }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                <Chip
+                                  label="KWITANSI PEMBAYARAN"
+                                  color="success"
+                                  sx={{ fontWeight: 900, letterSpacing: 1, fontSize: '0.82rem', height: 30 }}
+                                />
+                                <Typography variant="subtitle2" sx={{ fontWeight: 800, fontFamily: 'monospace', color: '#000000' }}>
+                                  #KW-ATL-2026-{(payItem.id || '').replace('pay-', '').replace('devpay-', '')}
+                                </Typography>
+                              </Box>
+                              <Box sx={{ textAlign: { xs: 'left', sm: 'right' } }}>
+                                <Typography variant="body2" sx={{ color: '#000000', fontWeight: 600 }}>
+                                  Tanggal: <strong>{payItem.date}</strong>
+                                </Typography>
+                              </Box>
+                            </Box>
+
+                            {/* Kwitansi Form Fields (Table-like classical style) */}
+                            <Box sx={{ border: '1px solid #000000', borderRadius: 0, bgcolor: '#ffffff', mb: 2 }}>
+                              {/* Row 1: Telah Diterima Dari */}
+                              <Box sx={{ p: 1.4, borderBottom: '1px solid #000000', display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: { sm: 'center' }, gap: 1 }}>
+                                <Typography variant="caption" sx={{ fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, color: '#000000', minWidth: 180 }}>
+                                  TELAH DITERIMA DARI:
+                                </Typography>
+                                <Typography variant="subtitle1" sx={{ fontWeight: 900, color: '#000000' }}>
+                                  {payItem.clientName || selectedProject?.clientName || 'Klien Atasilabs'}
+                                </Typography>
+                              </Box>
+
+                              {/* Row 2: Uang Sejumlah (Terbilang) */}
+                              <Box sx={{ p: 1.4, borderBottom: '1px solid #000000', bgcolor: '#f8fafc', display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: { sm: 'center' }, gap: 1 }}>
+                                <Typography variant="caption" sx={{ fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, color: '#000000', minWidth: 180 }}>
+                                  UANG SEJUMLAH:
+                                </Typography>
+                                <Typography sx={{ fontWeight: 800, fontStyle: 'italic', color: '#000000', fontSize: '0.92rem' }}>
+                                  # {numberToWordsIDR(payItem.amount)} #
+                                </Typography>
+                              </Box>
+
+                              {/* Row 3: Untuk Pembayaran */}
+                              <Box sx={{ p: 1.4, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: { sm: 'flex-start' }, gap: 1 }}>
+                                <Typography variant="caption" sx={{ fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, color: '#000000', minWidth: 180, pt: 0.2 }}>
+                                  UNTUK PEMBAYARAN:
+                                </Typography>
+                                <Box sx={{ flexGrow: 1 }}>
+                                  <Typography variant="body2" sx={{ fontWeight: 800, color: '#000000' }}>
+                                    {payItem.stage} — Pembayaran ke-{paymentNumber} dari {totalPaymentsCount}
+                                  </Typography>
+                                  <Typography variant="body2" sx={{ color: '#000000' }}>
+                                    Proyek: <strong>{payItem.projectTitle || selectedProject?.title || 'Pengembangan Perangkat Lunak'}</strong>
+                                  </Typography>
+                                  <Typography variant="caption" sx={{ color: '#000000', display: 'block', mt: 0.3 }}>
+                                    Ref / Catatan: {payItem.notes || 'Pembayaran Termin Sah Proyek'}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </Box>
+
+                            {/* Nominal Box & Status */}
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1.5, mb: 2 }}>
+                              <Box sx={{ p: 1.2, px: 2.2, border: '2px solid #000000', bgcolor: '#f1f5f9' }}>
+                                <Typography variant="caption" sx={{ fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, color: '#000000', display: 'block' }}>
+                                  TERBILANG (JUMLAH NOMINAL):
+                                </Typography>
+                                <Typography variant="h5" sx={{ fontWeight: 900, color: '#000000', fontFamily: 'monospace' }}>
+                                  {formatRupiah(payItem.amount)},-
+                                </Typography>
+                              </Box>
+                              <Box sx={{ textAlign: { xs: 'left', sm: 'right' } }}>
+                                <Typography variant="caption" sx={{ fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, color: '#000000', display: 'block', mb: 0.5 }}>
+                                  STATUS TRANSAKSI:
+                                </Typography>
+                                <Chip
+                                  label={
+                                    payItem.status === 'VERIFIED'
+                                      ? 'LUNAS / TERVERIFIKASI ✅'
+                                      : payItem.status === 'FAILED'
+                                        ? 'DITOLAK ❌'
+                                        : 'PENDING APPROVAL ⏳'
+                                  }
+                                  color={
+                                    payItem.status === 'VERIFIED'
+                                      ? 'success'
+                                      : payItem.status === 'FAILED'
+                                        ? 'error'
+                                        : 'warning'
+                                  }
+                                  sx={{ fontWeight: 900, fontSize: '0.85rem', px: 1 }}
+                                />
+                              </Box>
+                            </Box>
+
+                            {/* Table Status Rekapitulasi Kontrak Proyek */}
+                            <TableContainer component={Box} sx={{ border: '1px solid #000000', borderRadius: 0, mb: 2 }}>
+                              <Table size="small" sx={{ borderCollapse: 'collapse', width: '100%' }}>
+                                <TableHead>
+                                  <TableRow sx={{ bgcolor: '#f1f5f9' }}>
+                                    <TableCell sx={{ fontWeight: 800, color: '#000000', borderBottom: '1px solid #000000', borderRight: '1px solid #000000', py: 0.8, textTransform: 'uppercase', letterSpacing: 0.5, fontSize: '0.8rem', width: '65%' }}>
+                                      STATUS REKAPITULASI PEMBAYARAN KONTRAK
+                                    </TableCell>
+                                    <TableCell align="right" sx={{ fontWeight: 800, color: '#000000', borderBottom: '1px solid #000000', py: 0.8, textTransform: 'uppercase', letterSpacing: 0.5, fontSize: '0.8rem', width: '35%' }}>
+                                      RINCIAN NILAI (IDR)
+                                    </TableCell>
+                                  </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                  <TableRow>
+                                    <TableCell sx={{ color: '#000000', borderBottom: '1px solid #000000', borderRight: '1px solid #000000', py: 0.8, fontSize: '0.85rem' }}>
+                                      Total Keseluruhan (Harus Dibayar)
+                                    </TableCell>
+                                    <TableCell align="right" sx={{ fontWeight: 800, color: '#000000', borderBottom: '1px solid #000000', py: 0.8, fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
+                                      {formatRupiah(totalContractAmount)}
+                                    </TableCell>
+                                  </TableRow>
+                                  <TableRow>
+                                    <TableCell sx={{ color: '#000000', borderBottom: '1px solid #000000', borderRight: '1px solid #000000', py: 0.8, fontSize: '0.85rem' }}>
+                                      Total yang Sudah Dibayar (s/d Kwitansi Ini)
+                                    </TableCell>
+                                    <TableCell align="right" sx={{ fontWeight: 800, color: '#000000', borderBottom: '1px solid #000000', py: 0.8, fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
+                                      {formatRupiah(cumulativePaidThisInvoice)}
+                                    </TableCell>
+                                  </TableRow>
+                                  <TableRow>
+                                    <TableCell sx={{ color: '#000000', borderRight: '1px solid #000000', py: 0.8, fontSize: '0.85rem' }}>
+                                      Sisa yang Belum Dibayar
+                                    </TableCell>
+                                    <TableCell align="right" sx={{ fontWeight: 800, color: '#000000', py: 0.8, fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
+                                      {formatRupiah(remainingAfterThisInvoice)}
+                                    </TableCell>
+                                  </TableRow>
+                                </TableBody>
+                              </Table>
+                            </TableContainer>
+
+                            {/* Footer Stamp & Signatures */}
+                            <Box sx={{ pt: 1.5, borderTop: '1px dashed #000000', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+                              <Box>
+                                <Typography variant="caption" display="block" sx={{ color: '#000000' }}>
+                                  Kwitansi ini diterbitkan secara sah dan elektronik oleh PT Atasilabs Digital Indonesia.
+                                </Typography>
+                                <Typography variant="caption" display="block" sx={{ color: '#000000' }}>
+                                  Bukti tanda terima pembayaran resmi dan sah tanpa tanda tangan basah fisik.
+                                </Typography>
+                              </Box>
+                              <Chip
+                                icon={<SecurityIcon sx={{ fontSize: '14px !important' }} />}
+                                label="VERIFIED DIGITAL STAMP - PT ATASILABS"
+                                variant="outlined"
+                                color="success"
+                                size="small"
+                                sx={{ fontWeight: 800, fontSize: '0.68rem' }}
+                              />
+                            </Box>
+                          </Box>
+                        ) : (
+                          /* Invoice Body Content Container */
+                          <Box
+                            className="invoice-body-content"
+                            sx={{
+                              position: 'relative',
+                              zIndex: 1,
+                              pt: { xs: '95px', sm: '110px', md: '120px' },
+                              pb: { xs: '80px', sm: '90px', md: '100px' },
+                              px: { xs: 2.5, md: 4 },
+                            }}
+                          >
+                            {/* Invoice Title & Meta Bar (Clean, no redundant company block because header.svg has the logo) */}
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1.5, mb: 2.5, pb: 1.5, borderBottom: '1.5px solid #000000' }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                <Chip
+                                  label={`INVOICE #${paymentNumber}`}
+                                  color="primary"
+                                  sx={{ fontWeight: 900, letterSpacing: 1, fontSize: '0.85rem', height: 30 }}
+                                />
+                                <Typography variant="subtitle2" sx={{ fontWeight: 800, fontFamily: 'monospace', color: '#000000' }}>
+                                  #INV-ATL-2026-{(payItem.id || '').replace('pay-', '').replace('devpay-', '')}
+                                </Typography>
+                              </Box>
+                              <Box sx={{ textAlign: { xs: 'left', sm: 'right' } }}>
+                                <Typography variant="body2" sx={{ color: '#000000', fontWeight: 600 }}>
+                                  Tanggal: <strong>{payItem.date}</strong>
+                                </Typography>
+                              </Box>
+                            </Box>
+
+                            {/* Bill To & Project Info */}
+                            <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
+                              <Grid size={{ xs: 12, sm: 6 }}>
+                                <Typography variant="caption" sx={{ fontWeight: 800, letterSpacing: 0.5, textTransform: 'uppercase', display: 'block', mb: 0.5, color: '#000000' }}>
+                                  DITUJUKAN KEPADA (BILL TO):
+                                </Typography>
+                                <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#000000' }}>
+                                  {payItem.clientName || selectedProject?.clientName || 'Klien Atasilabs'}
+                                </Typography>
+                                <Typography variant="body2" sx={{ color: '#000000' }}>
+                                  Proyek: <strong>{payItem.projectTitle || selectedProject?.title || 'Pengembangan Perangkat Lunak'}</strong>
+                                </Typography>
+                              </Grid>
+                              <Grid size={{ xs: 12, sm: 6 }} textAlign={{ sm: 'right' }}>
+                                <Typography variant="caption" sx={{ fontWeight: 800, letterSpacing: 0.5, textTransform: 'uppercase', display: 'block', mb: 0.5, color: '#000000' }}>
+                                  STATUS & TAHAP PEMBAYARAN:
+                                </Typography>
+                                <Box sx={{ display: 'flex', gap: 0.8, justifyContent: { xs: 'flex-start', sm: 'flex-end' }, mb: 0.8, flexWrap: 'wrap' }}>
+                                  <Chip
+                                    label={
+                                      payItem.status === 'VERIFIED'
+                                        ? 'PAID / TERVERIFIKASI ✅'
+                                        : payItem.status === 'FAILED'
+                                          ? 'CANCELLED / DITOLAK ❌'
+                                          : 'PENDING APPROVAL ⏳'
+                                    }
+                                    color={
+                                      payItem.status === 'VERIFIED'
+                                        ? 'success'
+                                        : payItem.status === 'FAILED'
+                                          ? 'error'
+                                          : 'warning'
+                                    }
+                                    sx={{ fontWeight: 900, px: 1 }}
+                                  />
+                                </Box>
+                                <Typography variant="body2" sx={{ color: '#000000' }}>
+                                  Termin: <strong>{payItem.stage}</strong>
+                                </Typography>
+                              </Grid>
+                            </Grid>
+
+                            {/* Itemized Table */}
+                            <TableContainer component={Box} sx={{ border: '1px solid #000000', borderRadius: 0, mb: 2 }}>
+                              <Table sx={{ borderCollapse: 'collapse', width: '100%' }}>
+                                <TableHead>
+                                  <TableRow sx={{ bgcolor: '#f1f5f9' }}>
+                                    <TableCell sx={{ fontWeight: 800, color: '#000000', borderBottom: '1px solid #000000' }}>Deskripsi Item / Termin</TableCell>
+                                    <TableCell sx={{ fontWeight: 800, color: '#000000', borderBottom: '1px solid #000000' }}>Tanggal Pembayaran</TableCell>
+                                    <TableCell align="right" sx={{ fontWeight: 800, color: '#000000', borderBottom: '1px solid #000000' }}>Jumlah (IDR)</TableCell>
+                                  </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                  <TableRow>
+                                    <TableCell sx={{ color: '#000000' }}>
+                                      <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#000000' }}>
+                                        {payItem.stage} — Pembayaran ke-{paymentNumber} dari {totalPaymentsCount}
+                                      </Typography>
+                                      <Typography variant="caption" sx={{ color: '#000000' }}>
+                                        Ref: {payItem.notes || 'Pembayaran Termin Proyek'}
+                                      </Typography>
+                                    </TableCell>
+                                    <TableCell sx={{ fontWeight: 700, color: '#000000' }}>{payItem.date}</TableCell>
+                                    <TableCell align="right" sx={{ fontWeight: 900, color: '#000000', fontSize: '1rem' }}>
+                                      {formatRupiah(payItem.amount)}
+                                    </TableCell>
+                                  </TableRow>
+                                </TableBody>
+                              </Table>
+                            </TableContainer>
+
+                            {/* Project Payment Status & Financial Summary Table */}
+                            <TableContainer component={Box} sx={{ border: '1px solid #000000', borderRadius: 0, mb: 2 }}>
+                              <Table size="small" sx={{ borderCollapse: 'collapse', width: '100%' }}>
+                                <TableHead>
+                                  <TableRow sx={{ bgcolor: '#f1f5f9' }}>
+                                    <TableCell sx={{ fontWeight: 800, color: '#000000', borderBottom: '1px solid #000000', borderRight: '1px solid #000000', py: 0.8, textTransform: 'uppercase', letterSpacing: 0.5, fontSize: '0.8rem', width: '65%' }}>
+                                      STATUS PEMBAYARAN PROYEK
+                                    </TableCell>
+                                    <TableCell align="right" sx={{ fontWeight: 800, color: '#000000', borderBottom: '1px solid #000000', py: 0.8, textTransform: 'uppercase', letterSpacing: 0.5, fontSize: '0.8rem', width: '35%' }}>
+                                      RINCIAN NILAI (IDR)
+                                    </TableCell>
+                                  </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                  <TableRow>
+                                    <TableCell sx={{ color: '#000000', borderBottom: '1px solid #000000', borderRight: '1px solid #000000', py: 0.8, fontSize: '0.85rem' }}>
+                                      Total Keseluruhan (Harus Dibayar)
+                                    </TableCell>
+                                    <TableCell align="right" sx={{ fontWeight: 800, color: '#000000', borderBottom: '1px solid #000000', py: 0.8, fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
+                                      {formatRupiah(totalContractAmount)}
+                                    </TableCell>
+                                  </TableRow>
+                                  <TableRow>
+                                    <TableCell sx={{ color: '#000000', borderBottom: '1px solid #000000', borderRight: '1px solid #000000', py: 0.8, fontSize: '0.85rem' }}>
+                                      Total yang Sudah Dibayar
+                                    </TableCell>
+                                    <TableCell align="right" sx={{ fontWeight: 800, color: '#000000', borderBottom: '1px solid #000000', py: 0.8, fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
+                                      {formatRupiah(cumulativePaidThisInvoice)}
+                                    </TableCell>
+                                  </TableRow>
+                                  <TableRow>
+                                    <TableCell sx={{ color: '#000000', borderRight: '1px solid #000000', py: 0.8, fontSize: '0.85rem' }}>
+                                      Sisa yang Belum Dibayar
+                                    </TableCell>
+                                    <TableCell align="right" sx={{ fontWeight: 800, color: '#000000', py: 0.8, fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
+                                      {formatRupiah(remainingAfterThisInvoice)}
+                                    </TableCell>
+                                  </TableRow>
+                                </TableBody>
+                              </Table>
+                            </TableContainer>
+
+                            {/* Footer Stamp & Notes */}
+                            <Box sx={{ pt: 2, borderTop: '1px dashed #000000', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+                              <Box>
+                                <Typography variant="caption" display="block" sx={{ color: '#000000' }}>
+                                  Terima kasih atas kepercayaan Anda bermitra dengan Atasilabs.
+                                </Typography>
+                                <Typography variant="caption" display="block" sx={{ color: '#000000' }}>
+                                  Dokumen ini diterbitkan secara otomatis dan sah tanpa tanda tangan basah.
+                                </Typography>
+                              </Box>
+                              <Chip
+                                icon={<SecurityIcon sx={{ fontSize: '14px !important' }} />}
+                                label="VERIFIED DIGITAL STAMP - PT ATASILABS"
+                                variant="outlined"
+                                color="success"
+                                size="small"
+                                sx={{ fontWeight: 800, fontSize: '0.68rem' }}
+                              />
+                            </Box>
+                          </Box>
+                        )}
+
+                      {/* Full-bleed Background Footer SVG (absolute positioned behind content) */}
+                      <Box className="repeat-page-footer-bg" sx={{ position: 'absolute', bottom: 0, left: 0, right: 0, width: '100%', zIndex: 0, pointerEvents: 'none' }}>
+                        <Box
+                          component="img"
+                          src="/footer.svg"
+                          alt="Footer Background Atasilabs"
+                          sx={{
+                            width: '100%',
+                            height: 'auto',
+                            display: 'block',
+                          }}
+                        />
+                      </Box>
+                    </Paper>
+                  </Box>
+                );
+              })}
+              </Box>
             </Box>
 
             <Box className="no-print" sx={{ p: 2, px: 3, gap: 1.5, borderTop: `1px solid ${theme.palette.divider}`, display: 'flex', justifyContent: 'flex-end', bgcolor: theme.palette.background.paper }}>
@@ -2402,11 +2806,14 @@ export const PaymentsView: React.FC = () => {
                 color="secondary"
                 startIcon={<PrintIcon />}
                 onClick={() => {
-                  if (typeof window !== 'undefined') window.print();
+                  if (typeof window !== 'undefined') {
+                    document.body.classList.add('printing-invoice');
+                    window.print();
+                  }
                 }}
                 sx={{ fontWeight: 800, borderRadius: 2.5, px: 3, py: 1, textTransform: 'none' }}
               >
-                Cetak / Unduh Invoice PDF
+                Cetak / Unduh {docType === 'KWITANSI' ? 'Kwitansi' : 'Invoice'} PDF ({invoicePaymentsToRender.length} Halaman)
               </Button>
             </Box>
           </>

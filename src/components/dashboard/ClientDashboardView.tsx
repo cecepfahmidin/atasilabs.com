@@ -32,6 +32,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  InputAdornment,
 } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import {
@@ -166,31 +167,71 @@ export const ClientDashboardView: React.FC = () => {
   const remainingBalance = Math.max(0, totalBudget - totalPaidAmount);
   const paymentProgressPct = totalBudget > 0 ? Math.min(100, Math.round((totalPaidAmount / totalBudget) * 100)) : 0;
 
-  const handleOpenPaymentDialog = () => {
-    let defaultStage = 'DP Tahap 1 (30%)';
-    let defaultAmount = Math.round(totalBudget * 0.3);
-
-    if (totalPaidAmount > 0 && remainingBalance > 0) {
-      if (totalPaidAmount >= Math.round(totalBudget * 0.5)) {
-        defaultStage = 'Pelunasan Tahap 3 (40%)';
-        defaultAmount = remainingBalance;
-      } else {
-        defaultStage = 'Termin Progress Tahap 2 (30%)';
-        defaultAmount = Math.min(remainingBalance, Math.round(totalBudget * 0.3));
-      }
+  // Helper to extract termin percentage from stage name (e.g. "DP Tahap 1 (30%)" -> 30)
+  const getTerminPercentage = (stageName: string): number | null => {
+    const match = stageName.match(/(\d+)%/);
+    if (match) {
+      return parseInt(match[1], 10);
     }
+    return null;
+  };
+
+  // Helper to calculate nominal based on stage percentage and total project contract value
+  const calculateTerminAmount = (stageName: string, budget: number, remaining?: number): number => {
+    const pct = getTerminPercentage(stageName);
+    if (pct !== null && budget > 0) {
+      return Math.round((budget * pct) / 100);
+    }
+    if (remaining !== undefined && remaining > 0) {
+      return remaining;
+    }
+    return 0;
+  };
+
+  // Helper to determine the next intelligent stage based on recorded payments
+  const getNextPaymentStage = (project?: ClientProject, fallbackStage: string = 'DP Tahap 1 (30%)'): string => {
+    if (!project || !project.payments || project.payments.length === 0) {
+      return 'DP Tahap 1 (30%)';
+    }
+    const existingStages = project.payments.map((p) => p.stage);
+
+    const hasDP30 = existingStages.some((s) => s.includes('DP Tahap 1 (30%)') || s.includes('DP Tahap 1'));
+    const hasTermin2 = existingStages.some((s) => s.includes('Tahap 2') || s.includes('Termin Progress'));
+    const hasPelunasan3 = existingStages.some((s) => s.includes('Tahap 3') || s.includes('Pelunasan'));
+
+    if (!hasDP30) return 'DP Tahap 1 (30%)';
+    if (!hasTermin2) return 'Termin Progress Tahap 2 (30%)';
+    if (!hasPelunasan3) return 'Pelunasan Tahap 3 (40%)';
+
+    return 'Pembayaran Tambahan / Add-on';
+  };
+
+  const handleOpenPaymentDialog = () => {
+    const smartStage = getNextPaymentStage(selectedProject, 'DP Tahap 1 (30%)');
+    const defaultAmount = calculateTerminAmount(smartStage, totalBudget, remainingBalance);
 
     const initialStatus = isClientRole ? 'PENDING' : 'VERIFIED';
     setPaymentFormData({
       date: new Date().toISOString().split('T')[0],
       amount: defaultAmount,
-      stage: defaultStage,
+      stage: smartStage,
       notes: 'Transfer Bank BRI a.n. PT AULIA INDOLAND GRUP',
       status: initialStatus,
       proofUrl: '',
     });
     setPaymentDialogOpen(true);
   };
+
+  const handleFormStageChange = (newStage: string) => {
+    const newAmount = calculateTerminAmount(newStage, totalBudget, remainingBalance);
+    setPaymentFormData((prev) => ({
+      ...prev,
+      stage: newStage,
+      amount: newAmount,
+    }));
+  };
+
+  const formTerminPct = getTerminPercentage(paymentFormData.stage);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -1418,6 +1459,9 @@ export const ClientDashboardView: React.FC = () => {
         <DialogContent dividers sx={{ p: 3 }}>
           <Alert severity="info" sx={{ mb: 3, borderRadius: 2.5, fontSize: '0.84rem' }}>
             Masukkan rincian pembayaran untuk proyek <strong>{selectedProject.title}</strong> ({selectedProject.clientName}). Total Kontrak: <strong>{formatRupiah(totalBudget)}</strong>.
+            {formTerminPct && (
+              <> Termin aktif: <strong>{paymentFormData.stage}</strong> ({formTerminPct}% = <strong>{formatRupiah(paymentFormData.amount)}</strong>).</>
+            )}
           </Alert>
 
           <Grid container spacing={2.5}>
@@ -1439,14 +1483,26 @@ export const ClientDashboardView: React.FC = () => {
                 fullWidth
                 label="Tahap / Termin Pembayaran"
                 value={paymentFormData.stage}
-                onChange={(e) => setPaymentFormData((prev) => ({ ...prev, stage: e.target.value }))}
+                onChange={(e) => handleFormStageChange(e.target.value)}
               >
-                <MenuItem value="DP Tahap 1 (30%)">DP Tahap 1 (30%) - Penandatanganan MoU</MenuItem>
-                <MenuItem value="Termin Progress Tahap 2 (30%)">Termin Progress Tahap 2 (30%) - Desain / Mid Dev</MenuItem>
-                <MenuItem value="Pelunasan Tahap 3 (40%)">Pelunasan Tahap 3 (40%) - Sebelum Live Deployment</MenuItem>
-                <MenuItem value="DP Tahap 1 (50%)">DP Tahap 1 (50%) - Tier 1-2</MenuItem>
-                <MenuItem value="Pelunasan Tahap 2 (50%)">Pelunasan Tahap 2 (50%) - Tier 1-2</MenuItem>
-                <MenuItem value="Pembayaran Tambahan / Add-on">Pembayaran Tambahan / Add-on</MenuItem>
+                <MenuItem value="DP Tahap 1 (30%)">
+                  DP Tahap 1 (30%) - Penandatanganan MoU {totalBudget > 0 ? `(${formatRupiah(Math.round(totalBudget * 0.3))})` : ''}
+                </MenuItem>
+                <MenuItem value="Termin Progress Tahap 2 (30%)">
+                  Termin Progress Tahap 2 (30%) - Desain / Mid Dev {totalBudget > 0 ? `(${formatRupiah(Math.round(totalBudget * 0.3))})` : ''}
+                </MenuItem>
+                <MenuItem value="Pelunasan Tahap 3 (40%)">
+                  Pelunasan Tahap 3 (40%) - Sebelum Live Deployment {totalBudget > 0 ? `(${formatRupiah(Math.round(totalBudget * 0.4))})` : ''}
+                </MenuItem>
+                <MenuItem value="DP Tahap 1 (50%)">
+                  DP Tahap 1 (50%) - Tier 1-2 {totalBudget > 0 ? `(${formatRupiah(Math.round(totalBudget * 0.5))})` : ''}
+                </MenuItem>
+                <MenuItem value="Pelunasan Tahap 2 (50%)">
+                  Pelunasan Tahap 2 (50%) - Tier 1-2 {totalBudget > 0 ? `(${formatRupiah(Math.round(totalBudget * 0.5))})` : ''}
+                </MenuItem>
+                <MenuItem value="Pembayaran Tambahan / Add-on">
+                  Pembayaran Tambahan / Add-on {remainingBalance > 0 ? `(Sisa: ${formatRupiah(remainingBalance)})` : ''}
+                </MenuItem>
               </TextField>
             </Grid>
 
@@ -1457,7 +1513,27 @@ export const ClientDashboardView: React.FC = () => {
                 label="Nominal Pembayaran (IDR)"
                 value={paymentFormData.amount || ''}
                 onChange={(e) => setPaymentFormData((prev) => ({ ...prev, amount: Number(e.target.value) }))}
-                helperText={`Terbilang: Rp ${(paymentFormData.amount || 0).toLocaleString('id-ID')}`}
+                helperText={
+                  formTerminPct
+                    ? `Otomatis ${formTerminPct}% dari nilai proyek ${formatRupiah(totalBudget)} | Terbilang: Rp ${(paymentFormData.amount || 0).toLocaleString('id-ID')}`
+                    : `Terbilang: Rp ${(paymentFormData.amount || 0).toLocaleString('id-ID')}`
+                }
+                slotProps={{
+                  input: {
+                    startAdornment: <InputAdornment position="start">Rp</InputAdornment>,
+                    endAdornment: formTerminPct ? (
+                      <InputAdornment position="end">
+                        <Chip
+                          label={`${formTerminPct}% Kontrak`}
+                          size="small"
+                          color="success"
+                          variant="outlined"
+                          sx={{ fontWeight: 800, fontSize: '0.72rem', height: 24 }}
+                        />
+                      </InputAdornment>
+                    ) : undefined,
+                  },
+                }}
                 required
               />
             </Grid>
