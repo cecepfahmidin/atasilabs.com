@@ -464,7 +464,7 @@ export const DocumentsWorkflowView: React.FC = () => {
     <Box sx={{ width: '100%' }}>
       {/* Title Header */}
       <Box sx={{ mb: 3 }}>
-        <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary', mb: 0.5 }}>
+        <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary', mb: 0.5, fontSize: { xs: '1.1rem', sm: '1.3rem', md: '1.5rem' } }}>
           Hub Dokumen & Generator Administrasi Proyek
         </Typography>
 
@@ -484,7 +484,7 @@ export const DocumentsWorkflowView: React.FC = () => {
 
       {/* Main Document Generator Container */}
       <Box>
-        <Paper variant="outlined" sx={{ p: 2.5, mb: 3, borderRadius: 3 }}>
+        <Paper variant="outlined" sx={{ p: { xs: 1.5, sm: 2.5 }, mb: 3, borderRadius: 3 }}>
           {/* Project Selection Banner */}
           <Grid container spacing={2} alignItems="center" sx={{ mb: 2 }}>
             <Grid item xs={12} sm={5}>
@@ -511,7 +511,7 @@ export const DocumentsWorkflowView: React.FC = () => {
             </Grid>
 
             <Grid item xs={12} sm={7} textAlign={{ sm: 'right' }}>
-              <Box sx={{ display: 'flex', gap: 1, justifyContent: { sm: 'flex-end' }, flexWrap: 'wrap', mt: { xs: 1, sm: 2.5 } }}>
+              <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1, justifyContent: { xs: 'stretch', sm: 'flex-end' }, mt: { xs: 1.5, sm: 2.5 } }}>
                 {!isClientRole && !isFreelancerRole && activeDocType === 'QA' && (
                   <Button
                     variant="outlined"
@@ -519,7 +519,7 @@ export const DocumentsWorkflowView: React.FC = () => {
                     size="small"
                     startIcon={<SyncIcon />}
                     onClick={handleSyncQAFromRSD}
-                    sx={{ fontWeight: 700 }}
+                    sx={{ fontWeight: 700, width: { xs: '100%', sm: 'auto' }, py: { xs: 0.8, sm: 0.5 } }}
                   >
                     Sync RSD
                   </Button>
@@ -531,7 +531,7 @@ export const DocumentsWorkflowView: React.FC = () => {
                     size="small"
                     startIcon={<DrawIcon />}
                     onClick={() => handleOpenSignatureDialog('Pihak Pertama')}
-                    sx={{ fontWeight: 700 }}
+                    sx={{ fontWeight: 700, width: { xs: '100%', sm: 'auto' }, py: { xs: 0.8, sm: 0.5 } }}
                   >
                     {activeDocType === 'CIF' ? 'TTD Admin' : 'TTD 1 (Atasilabs)'}
                   </Button>
@@ -543,7 +543,7 @@ export const DocumentsWorkflowView: React.FC = () => {
                     size="small"
                     startIcon={<DrawIcon />}
                     onClick={() => handleOpenSignatureDialog('Pihak Kedua')}
-                    sx={{ fontWeight: 700 }}
+                    sx={{ fontWeight: 700, width: { xs: '100%', sm: 'auto' }, py: { xs: 0.8, sm: 0.5 } }}
                   >
                     {activeDocType === 'SPK' ? 'Tanda Tangan Freelancer (SPK)' : isClientRole ? `Tanda Tangan Klien (${activeDocType})` : 'TTD 2 (Klien)'}
                   </Button>
@@ -554,7 +554,7 @@ export const DocumentsWorkflowView: React.FC = () => {
                   size="small"
                   startIcon={<PrintIcon />}
                   onClick={handlePrintDocument}
-                  sx={{ fontWeight: 700 }}
+                  sx={{ fontWeight: 700, width: { xs: '100%', sm: 'auto' }, py: { xs: 0.8, sm: 0.5 } }}
                 >
                   Cetak (A4)
                 </Button>
@@ -565,7 +565,7 @@ export const DocumentsWorkflowView: React.FC = () => {
                     size="small"
                     startIcon={<EditIcon />}
                     onClick={() => setIsFormOpen(true)}
-                    sx={{ fontWeight: 700 }}
+                    sx={{ fontWeight: 700, width: { xs: '100%', sm: 'auto' }, py: { xs: 0.8, sm: 0.5 } }}
                   >
                     Edit Form ({activeDocType})
                   </Button>
@@ -583,7 +583,7 @@ export const DocumentsWorkflowView: React.FC = () => {
           <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 1 }}>
             Pilih Dokumen Administrasi Operasional:
           </Typography>
-          <Grid container spacing={1.5}>
+          <Grid container spacing={{ xs: 1, sm: 1.5 }}>
             {[
               { id: 'CIF', label: '1. CIF Intake', color: '#64748b' },
               { id: 'RSD', label: '2. RSD Spec', color: '#06b6d4' },
@@ -598,7 +598,7 @@ export const DocumentsWorkflowView: React.FC = () => {
                 return true;
               })
               .map((doc) => (
-                <Grid item xs={6} sm={2} key={doc.id}>
+                <Grid item xs={6} sm={4} md={2} key={doc.id}>
                   <Button
                     fullWidth
                     variant={activeDocType === doc.id ? 'contained' : 'outlined'}
@@ -607,9 +607,11 @@ export const DocumentsWorkflowView: React.FC = () => {
                       setSelectedDocumentType(doc.id as any);
                     }}
                     sx={{
-                      fontWeight: 700,
-                      fontSize: '0.78rem',
-                      py: 1,
+                      fontWeight: 800,
+                      fontSize: { xs: '0.72rem', sm: '0.78rem' },
+                      py: { xs: 0.8, sm: 1 },
+                      px: { xs: 0.5, sm: 1 },
+                      whiteSpace: 'nowrap',
                       borderColor: doc.color,
                       bgcolor: activeDocType === doc.id ? doc.color : 'transparent',
                       color: activeDocType === doc.id ? '#fff' : 'text.primary',
@@ -627,13 +629,24 @@ export const DocumentsWorkflowView: React.FC = () => {
         </Paper>
 
         {/* Document Preview Component */}
-        <DocumentTemplates
-          type={activeDocType}
-          data={getActiveDocData()}
-          onSignParty1={() => handleOpenSignatureDialog('Pihak Pertama')}
-          onSignParty2={() => handleOpenSignatureDialog('Pihak Kedua')}
-          onUpdateQA={(updatedQA) => handleSaveDocument('QA', updatedQA)}
-        />
+        <Box
+          className="document-paper-wrapper"
+          sx={{
+            width: '100%',
+            maxWidth: '100%',
+            overflowX: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            pb: 2,
+          }}
+        >
+          <DocumentTemplates
+            type={activeDocType}
+            data={getActiveDocData()}
+            onSignParty1={() => handleOpenSignatureDialog('Pihak Pertama')}
+            onSignParty2={() => handleOpenSignatureDialog('Pihak Kedua')}
+            onUpdateQA={(updatedQA) => handleSaveDocument('QA', updatedQA)}
+          />
+        </Box>
 
         {/* Form Dialog Generator */}
         <DocumentFormDialog

@@ -229,16 +229,6 @@ export const PricingCMSView: React.FC = () => {
             Atur nominal harga, estimasi pengerjaan, kuota revisi, dan butir spesifikasi teknis dari Tier 1 (Starter) hingga Tier 5 (Elite). Perubahan langsung tersinkronisasi ke landing page secara realtime.
           </Typography>
         </Box>
-
-        <Button
-          variant="outlined"
-          color="inherit"
-          startIcon={<ResetIcon />}
-          onClick={resetPricingTiersToDefault}
-          sx={{ borderRadius: 2, fontWeight: 700, fontSize: '0.82rem', whiteSpace: 'nowrap' }}
-        >
-          Reset ke Nilai Standar
-        </Button>
       </Box>
 
       {/* Info Alert */}
@@ -285,9 +275,10 @@ export const PricingCMSView: React.FC = () => {
             >
               <CardContent sx={{ flexGrow: 1, p: 3, display: 'flex', flexDirection: 'column' }}>
                 {/* Header */}
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
-                  <Box>
-                    <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 0.8, flexWrap: 'wrap', gap: 0.5 }}>
+                <Box sx={{ mb: 1.5 }}>
+                  {/* Top Row: Tier & Highlight Badge */}
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                    <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap', gap: 0.5 }}>
                       <Chip
                         label={`TIER ${tier.tierNumber}`}
                         size="small"
@@ -314,33 +305,41 @@ export const PricingCMSView: React.FC = () => {
                           }}
                         />
                       )}
-                      <Tooltip title={`Klik untuk mengubah status paket ke ${tier.active !== false ? 'OFF' : 'ON'}`}>
-                        <Chip
-                          label={tier.active !== false ? "STATUS: ON" : "STATUS: OFF"}
-                          size="small"
-                          color={tier.active !== false ? "success" : "default"}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleToggleActive(tier, !(tier.active !== false));
-                          }}
-                          sx={{
-                            fontWeight: 900,
-                            fontSize: '0.65rem',
-                            height: 22,
-                            cursor: 'pointer',
-                            '&:hover': {
-                              opacity: 0.85,
-                            },
-                          }}
-                        />
-                      </Tooltip>
                     </Stack>
-                    <Typography variant="h5" sx={{ fontWeight: 800, color: theme.palette.text.primary }}>
-                      {tier.name}
-                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      {tier.highlightBadge && (
+                        <Chip
+                          label={tier.highlightBadge}
+                          size="small"
+                          variant="outlined"
+                          sx={{ fontWeight: 700, fontSize: '0.72rem', borderColor: theme.palette.divider }}
+                        />
+                      )}
+                    </Box>
                   </Box>
 
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  {/* Middle Row: Status & Toggle Switch */}
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.2 }}>
+                    <Tooltip title={`Klik untuk mengubah status paket ke ${tier.active !== false ? 'OFF' : 'ON'}`}>
+                      <Chip
+                        label={tier.active !== false ? "STATUS: ON" : "STATUS: OFF"}
+                        size="small"
+                        color={tier.active !== false ? "success" : "default"}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleActive(tier, !(tier.active !== false));
+                        }}
+                        sx={{
+                          fontWeight: 900,
+                          fontSize: '0.65rem',
+                          height: 22,
+                          cursor: 'pointer',
+                          '&:hover': {
+                            opacity: 0.85,
+                          },
+                        }}
+                      />
+                    </Tooltip>
                     <Tooltip title={tier.active !== false ? "Status ON: Tampil di Landing Page (Klik untuk OFF)" : "Status OFF: Disembunyikan dari Landing Page (Klik untuk ON)"}>
                       <FormControlLabel
                         onClick={(e) => e.stopPropagation()}
@@ -360,16 +359,12 @@ export const PricingCMSView: React.FC = () => {
                         sx={{ m: 0, cursor: 'pointer' }}
                       />
                     </Tooltip>
-
-                    {tier.highlightBadge && (
-                      <Chip
-                        label={tier.highlightBadge}
-                        size="small"
-                        variant="outlined"
-                        sx={{ fontWeight: 700, fontSize: '0.72rem', borderColor: theme.palette.divider }}
-                      />
-                    )}
                   </Box>
+
+                  {/* Title */}
+                  <Typography variant="h5" sx={{ fontWeight: 800, color: theme.palette.text.primary }}>
+                    {tier.name}
+                  </Typography>
                 </Box>
 
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2, minHeight: 38, fontSize: '0.85rem', lineHeight: 1.5 }}>
@@ -456,10 +451,7 @@ export const PricingCMSView: React.FC = () => {
               </CardContent>
 
               {/* Card Actions Bottom Bar */}
-              <CardActions sx={{ p: 2, pt: 1.5, justifyContent: 'space-between', borderTop: `1px solid ${theme.palette.divider}` }}>
-                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-                  Terakhir Diperbarui
-                </Typography>
+              <CardActions sx={{ p: 2, pt: 1.5, justifyContent: 'flex-end', borderTop: `1px solid ${theme.palette.divider}` }}>
                 <Button
                   size="small"
                   variant="contained"

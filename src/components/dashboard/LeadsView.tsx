@@ -419,6 +419,7 @@ export const LeadsView: React.FC = () => {
             sx={{
               fontWeight: 800,
               mb: 0.5,
+              fontSize: { xs: '1.2rem', sm: '1.4rem', md: '1.5rem' },
               letterSpacing: '-0.02em',
               color: theme.palette.mode === 'dark' ? '#ffffff' : '#000000',
             }}
@@ -596,12 +597,15 @@ export const LeadsView: React.FC = () => {
         <Tabs
           value={filterTab}
           onChange={(e, val) => setFilterTab(val)}
+          variant="scrollable"
+          scrollButtons="auto"
+          allowScrollButtonsMobile
           sx={{
             minHeight: 40,
             '& .MuiTab-root': {
               minHeight: 40,
               py: 0.5,
-              px: 2,
+              px: { xs: 1.5, sm: 2 },
               fontWeight: 700,
               fontSize: '0.85rem',
               textTransform: 'none',
@@ -770,7 +774,12 @@ export const LeadsView: React.FC = () => {
                     </Typography>
                   </Box>
                 </Box>
-                {getStatusChip(lead.status)}
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0.5 }}>
+                  {getStatusChip(lead.status)}
+                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem', fontWeight: 600 }}>
+                    {new Date(lead.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </Typography>
+                </Box>
               </Box>
 
               <Stack
@@ -805,10 +814,7 @@ export const LeadsView: React.FC = () => {
                 </Box>
               </Stack>
 
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pt: 1, borderTop: `1px solid ${theme.palette.divider}` }}>
-                <Typography variant="caption" color="text.secondary">
-                  {new Date(lead.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
-                </Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', pt: 1, borderTop: `1px solid ${theme.palette.divider}` }}>
                 <Box sx={{ display: 'flex', gap: 1 }}>
                   <Button
                     size="small"

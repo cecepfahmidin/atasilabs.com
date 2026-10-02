@@ -290,7 +290,7 @@ export const TestimonialsCMSView: React.FC = () => {
       </Box>
 
       {/* Control Bar: Search */}
-      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <Box sx={{ mb: 3, display: 'flex', flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', md: 'center' }, gap: 2 }}>
         <TextField
           size="small"
           placeholder="Cari testimoni berdasarkan nama, jabatan, perusahaan, atau kutipan..."

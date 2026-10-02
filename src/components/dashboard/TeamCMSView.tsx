@@ -402,13 +402,13 @@ export const TeamCMSView: React.FC = () => {
               color: theme.palette.mode === 'dark' ? '#181512' : '#ffffff',
             }}
           >
-            Tambah Eksekutif Baru
+            Tambah TIm
           </Button>
         </Stack>
       </Box>
 
       {/* Search Bar */}
-      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <Box sx={{ mb: 3, display: 'flex', flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', md: 'center' }, gap: 2 }}>
         <TextField
           size="small"
           placeholder="Cari eksekutif berdasarkan nama, email, atau jabatan..."
@@ -439,12 +439,14 @@ export const TeamCMSView: React.FC = () => {
           bgcolor: theme.palette.mode === 'dark' ? 'rgba(245, 158, 11, 0.08)' : 'rgba(254, 243, 199, 0.5)',
           borderColor: 'rgba(245, 158, 11, 0.4)',
           display: 'flex',
-          alignItems: 'center',
+          flexDirection: { xs: 'column', md: 'row' },
+          alignItems: { xs: 'flex-start', md: 'center' },
           justifyContent: 'space-between',
+          gap: 1.5,
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <DragIndicatorIcon sx={{ color: '#f59e0b', fontSize: 24 }} />
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
+
           <Box>
             <Typography variant="subtitle2" sx={{ fontWeight: 800, color: theme.palette.mode === 'dark' ? '#fbbf24' : '#b45309' }}>
               Drag & Drop Kartu Eksekutif
@@ -577,8 +579,8 @@ export const TeamCMSView: React.FC = () => {
                     {item.bio || (item.role === 'CEO'
                       ? 'Memastikan seluruh operasional studio, standar layanan, dan komitmen garansi kepuasan klien berjalan dengan presisi tinggi.'
                       : item.role === 'CTO'
-                      ? 'Mengawasi arsitektur Next.js, optimasi kecepatan loading, keandalan cloud hosting, serta arsitektur sistem keamanan data.'
-                      : 'Merancang desain antarmuka (UI/UX) yang memukau, ramah pengguna, serta strategi konversi pertumbuhan bisnis.')}
+                        ? 'Mengawasi arsitektur Next.js, optimasi kecepatan loading, keandalan cloud hosting, serta arsitektur sistem keamanan data.'
+                        : 'Merancang desain antarmuka (UI/UX) yang memukau, ramah pengguna, serta strategi konversi pertumbuhan bisnis.')}
                   </Typography>
 
                   {/* Toggle Switch Tampilkan di Laman Depan */}
@@ -668,7 +670,7 @@ export const TeamCMSView: React.FC = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <CLevelIcon color="primary" />
             <Typography variant="h6" sx={{ fontWeight: 800 }}>
-              {editingUser ? `Edit Profil Eksekutif: ${editingUser.name}` : 'Tambah Eksekutif Baru'}
+              {editingUser ? `Edit Profil Eksekutif: ${editingUser.name}` : 'Tambah Tim'}
             </Typography>
           </Box>
           <IconButton size="small" onClick={() => setOpenDialog(false)}>

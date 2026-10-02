@@ -142,6 +142,8 @@ export const HPPCalculatorView: React.FC = () => {
     workingDays: '',
   });
 
+  const [searchQuery, setSearchQuery] = useState('');
+
   // Sync customPriceInput when selected tier changes or pricingTiers update
   useEffect(() => {
     const activeTier = activeHppMatrix.find((t) => t.tierNumber === selectedTierNumber);
@@ -384,7 +386,7 @@ export const HPPCalculatorView: React.FC = () => {
       <Box sx={{ mb: 3, display: 'flex', flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'space-between', alignItems: { md: 'flex-start' }, gap: 2 }}>
         <Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-            <CalcIcon color="primary" sx={{ fontSize: 28 }} />
+
             <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary' }}>
               Kalkulator HPP & Financial Matrix
             </Typography>
@@ -418,12 +420,19 @@ export const HPPCalculatorView: React.FC = () => {
 
       {/* TOP SECTION: Matriks Standar HPP per Klaster */}
       <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, mb: 4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, gap: 2, mb: 1 }}>
           <Typography variant="h6" sx={{ fontWeight: 800, display: 'flex', alignItems: 'center', gap: 1 }}>
             <CalcIcon color="primary" /> Matriks Standar HPP per Klaster
           </Typography>
 
-          <Box sx={{ display: 'flex', gap: 1 }}>
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+            <TextField
+              size="small"
+              placeholder="Cari tier atau dev role..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              sx={{ minWidth: { xs: '100%', sm: '200px' } }}
+            />
             <Button
               size="small"
               variant="outlined"
@@ -466,152 +475,164 @@ export const HPPCalculatorView: React.FC = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {activeHppMatrix.map((tier) => {
-                const isSelected = tier.tierNumber === selectedTierNumber && customHppInput === null;
-                return (
-                  <TableRow
-                    key={tier.tierNumber}
-                    hover
-                    selected={isSelected}
-                    onClick={() => {
-                      setSelectedTierNumber(tier.tierNumber);
-                      setCustomHppInput(null);
-                    }}
-                    sx={{
-                      cursor: 'pointer',
-                      bgcolor: isSelected
-                        ? theme.palette.mode === 'dark'
-                          ? 'rgba(59, 130, 246, 0.15) !important'
-                          : 'rgba(59, 130, 246, 0.08) !important'
-                        : 'inherit',
-                    }}
-                  >
-                    <TableCell sx={{ fontWeight: 700 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        {isSelected && <Chip label="Aktif di Simulasi" size="small" color="primary" sx={{ height: 18, fontSize: '0.62rem', fontWeight: 800 }} />}
-                        <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                          {tier.tierName}
-                        </Typography>
-                      </Box>
-                      <Typography variant="caption" display="block" color="text.secondary">{tier.pageRange}</Typography>
-                    </TableCell>
-                    <TableCell>
-                      Rp {tier.developerFee.toLocaleString('id-ID')}
-                      <Typography variant="caption" display="block" color="text.secondary">{tier.developerRole}</Typography>
-                    </TableCell>
-                    <TableCell>
-                      Rp {tier.domainHostingFee.toLocaleString('id-ID')}
-                      <Typography variant="caption" display="block" color="text.secondary">{tier.domainHostingSpec}</Typography>
-                    </TableCell>
-                    <TableCell>Rp {tier.qaDeploymentFee.toLocaleString('id-ID')}</TableCell>
-                    <TableCell sx={{ fontWeight: 700, color: 'error.main' }}>
-                      Rp {tier.totalHPP.toLocaleString('id-ID')}
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 700, color: 'success.main' }}>
-                      Rp {tier.sellingPrice.toLocaleString('id-ID')}
-                      <Chip label="Pricelist Sync" size="small" color="success" variant="outlined" sx={{ height: 16, fontSize: '0.6rem', ml: 0.5 }} />
-                    </TableCell>
-                    <TableCell align="center">
-                      <Tooltip title="Edit Komponen HPP & Harga Jual Tier Ini">
-                        <IconButton
-                          size="small"
-                          color="primary"
-                          onClick={(e) => handleOpenEditDialog(tier, e)}
-                        >
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
+              {activeHppMatrix
+                .filter(tier =>
+                  tier.tierName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  tier.developerRole.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  tier.domainHostingSpec.toLowerCase().includes(searchQuery.toLowerCase())
+                )
+                .map((tier) => {
+                  const isSelected = tier.tierNumber === selectedTierNumber && customHppInput === null;
+                  return (
+                    <TableRow
+                      key={tier.tierNumber}
+                      hover
+                      selected={isSelected}
+                      onClick={() => {
+                        setSelectedTierNumber(tier.tierNumber);
+                        setCustomHppInput(null);
+                      }}
+                      sx={{
+                        cursor: 'pointer',
+                        bgcolor: isSelected
+                          ? theme.palette.mode === 'dark'
+                            ? 'rgba(59, 130, 246, 0.15) !important'
+                            : 'rgba(59, 130, 246, 0.08) !important'
+                          : 'inherit',
+                      }}
+                    >
+                      <TableCell sx={{ fontWeight: 700 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          {isSelected && <Chip label="Aktif di Simulasi" size="small" color="primary" sx={{ height: 18, fontSize: '0.62rem', fontWeight: 800 }} />}
+                          <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                            {tier.tierName}
+                          </Typography>
+                        </Box>
+                        <Typography variant="caption" display="block" color="text.secondary">{tier.pageRange}</Typography>
+                      </TableCell>
+                      <TableCell>
+                        Rp {tier.developerFee.toLocaleString('id-ID')}
+                        <Typography variant="caption" display="block" color="text.secondary">{tier.developerRole}</Typography>
+                      </TableCell>
+                      <TableCell>
+                        Rp {tier.domainHostingFee.toLocaleString('id-ID')}
+                        <Typography variant="caption" display="block" color="text.secondary">{tier.domainHostingSpec}</Typography>
+                      </TableCell>
+                      <TableCell>Rp {tier.qaDeploymentFee.toLocaleString('id-ID')}</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: 'error.main' }}>
+                        Rp {tier.totalHPP.toLocaleString('id-ID')}
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: 'success.main' }}>
+                        Rp {tier.sellingPrice.toLocaleString('id-ID')}
+                        <Chip label="Pricelist Sync" size="small" color="success" variant="outlined" sx={{ height: 16, fontSize: '0.6rem', ml: 0.5 }} />
+                      </TableCell>
+                      <TableCell align="center">
+                        <Tooltip title="Edit Komponen HPP & Harga Jual Tier Ini">
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={(e) => handleOpenEditDialog(tier, e)}
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
             </TableBody>
           </Table>
         </TableContainer>
 
         {/* Mobile Card View */}
         <Stack spacing={2} sx={{ display: { xs: 'flex', md: 'none' } }}>
-          {activeHppMatrix.map((tier) => {
-            const isSelected = tier.tierNumber === selectedTierNumber && customHppInput === null;
-            return (
-              <Paper
-                key={tier.tierNumber}
-                variant="outlined"
-                onClick={() => {
-                  setSelectedTierNumber(tier.tierNumber);
-                  setCustomHppInput(null);
-                }}
-                sx={{
-                  p: 2.5,
-                  borderRadius: 3,
-                  cursor: 'pointer',
-                  borderColor: isSelected ? theme.palette.primary.main : theme.palette.divider,
-                  bgcolor: isSelected
-                    ? theme.palette.mode === 'dark'
-                      ? 'rgba(59, 130, 246, 0.12)'
-                      : 'rgba(59, 130, 246, 0.06)'
-                    : theme.palette.background.paper,
-                }}
-              >
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
-                  <Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
-                        {tier.tierName}
+          {activeHppMatrix
+            .filter(tier =>
+              tier.tierName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              tier.developerRole.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              tier.domainHostingSpec.toLowerCase().includes(searchQuery.toLowerCase())
+            )
+            .map((tier) => {
+              const isSelected = tier.tierNumber === selectedTierNumber && customHppInput === null;
+              return (
+                <Paper
+                  key={tier.tierNumber}
+                  variant="outlined"
+                  onClick={() => {
+                    setSelectedTierNumber(tier.tierNumber);
+                    setCustomHppInput(null);
+                  }}
+                  sx={{
+                    p: 2.5,
+                    borderRadius: 3,
+                    cursor: 'pointer',
+                    borderColor: isSelected ? theme.palette.primary.main : theme.palette.divider,
+                    bgcolor: isSelected
+                      ? theme.palette.mode === 'dark'
+                        ? 'rgba(59, 130, 246, 0.12)'
+                        : 'rgba(59, 130, 246, 0.06)'
+                      : theme.palette.background.paper,
+                  }}
+                >
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
+                    <Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
+                          {tier.tierName}
+                        </Typography>
+                        {isSelected && <Chip label="Aktif di Simulasi" size="small" color="primary" sx={{ height: 18, fontSize: '0.62rem', fontWeight: 800 }} />}
+                      </Box>
+                      <Typography variant="caption" color="text.secondary">
+                        {tier.pageRange} — {tier.workingDays}
                       </Typography>
-                      {isSelected && <Chip label="Aktif di Simulasi" size="small" color="primary" sx={{ height: 18, fontSize: '0.62rem', fontWeight: 800 }} />}
                     </Box>
-                    <Typography variant="caption" color="text.secondary">
-                      {tier.pageRange} — {tier.workingDays}
-                    </Typography>
+                    <Tooltip title="Edit Komponen HPP & Harga Jual Tier Ini">
+                      <IconButton size="small" color="primary" onClick={(e) => handleOpenEditDialog(tier, e)}>
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
                   </Box>
-                  <Tooltip title="Edit Komponen HPP & Harga Jual Tier Ini">
-                    <IconButton size="small" color="primary" onClick={(e) => handleOpenEditDialog(tier, e)}>
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
 
-                <Grid container spacing={1} sx={{ my: 1, p: 1.5, borderRadius: 2, bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)' }}>
-                  <Grid item xs={6}>
-                    <Typography variant="caption" color="text.secondary" display="block">
-                      Upah Dev ({tier.developerRole}):
-                    </Typography>
-                    <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                      Rp {tier.developerFee.toLocaleString('id-ID')}
-                    </Typography>
+                  <Grid container spacing={1} sx={{ my: 1, p: 1.5, borderRadius: 2, bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)' }}>
+                    <Grid item xs={6}>
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        Upah Dev ({tier.developerRole}):
+                      </Typography>
+                      <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                        Rp {tier.developerFee.toLocaleString('id-ID')}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        Server / Hosting:
+                      </Typography>
+                      <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                        Rp {tier.domainHostingFee.toLocaleString('id-ID')}
+                      </Typography>
+                    </Grid>
                   </Grid>
-                  <Grid item xs={6}>
-                    <Typography variant="caption" color="text.secondary" display="block">
-                      Server / Hosting:
-                    </Typography>
-                    <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                      Rp {tier.domainHostingFee.toLocaleString('id-ID')}
-                    </Typography>
-                  </Grid>
-                </Grid>
 
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pt: 1, borderTop: `1px solid ${theme.palette.divider}` }}>
-                  <Box>
-                    <Typography variant="caption" color="text.secondary" display="block">
-                      Total HPP Proyek:
-                    </Typography>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'error.main' }}>
-                      Rp {tier.totalHPP.toLocaleString('id-ID')}
-                    </Typography>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pt: 1, borderTop: `1px solid ${theme.palette.divider}` }}>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        Total HPP Proyek:
+                      </Typography>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'error.main' }}>
+                        Rp {tier.totalHPP.toLocaleString('id-ID')}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ textAlign: 'right' }}>
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        Harga Jual (Pricelist):
+                      </Typography>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'success.main' }}>
+                        Rp {tier.sellingPrice.toLocaleString('id-ID')}
+                      </Typography>
+                    </Box>
                   </Box>
-                  <Box sx={{ textAlign: 'right' }}>
-                    <Typography variant="caption" color="text.secondary" display="block">
-                      Harga Jual (Pricelist):
-                    </Typography>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'success.main' }}>
-                      Rp {tier.sellingPrice.toLocaleString('id-ID')}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Paper>
-            );
-          })}
+                </Paper>
+              );
+            })}
         </Stack>
 
         <Alert severity="info" icon={<InfoIcon />} sx={{ mt: 2.5, borderRadius: 2 }}>
@@ -760,7 +781,7 @@ export const HPPCalculatorView: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <TuneIcon color="primary" fontSize="small" />
                 <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
-                  Pembagian Alokasi Laba Kotor:
+                  Alokasi Laba Kotor:
                 </Typography>
                 <Chip label={`${allocationPoints.length} Point`} size="small" color="primary" variant="outlined" sx={{ fontWeight: 700, height: 20, fontSize: '0.68rem' }} />
               </Box>
@@ -790,17 +811,19 @@ export const HPPCalculatorView: React.FC = () => {
                   key={item.id}
                   sx={{
                     display: 'flex',
-                    alignItems: 'center',
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    alignItems: { xs: 'stretch', sm: 'center' },
                     justify: 'space-between',
-                    gap: 1,
-                    p: 1.2,
+                    gap: { xs: 1.5, sm: 1 },
+                    p: 1.5,
                     borderRadius: 2,
                     bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)',
                     border: `1px solid ${theme.palette.divider}`,
                   }}
                 >
-                  {/* Color Picker Indicator */}
-                  <Tooltip title="Klik untuk ubah warna point">
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexGrow: 1 }}>
+                    {/* Color Picker Indicator */}
+                    <Tooltip title="Klik untuk ubah warna point">
                     <Box
                       component="label"
                       sx={{
@@ -850,9 +873,11 @@ export const HPPCalculatorView: React.FC = () => {
                       },
                     }}
                   />
+                  </Box>
 
                   {/* Dynamic Editable Value Input (% or Rp) based on Mode */}
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: { xs: 'space-between', sm: 'flex-end' }, gap: 1, flexShrink: 0, pl: { xs: 3.5, sm: 0 } }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     {allocationMode === 'percent' ? (
                       <TextField
                         size="small"
@@ -886,6 +911,7 @@ export const HPPCalculatorView: React.FC = () => {
                         ({item.percent.toFixed(1)}%)
                       </Typography>
                     </Box>
+                    </Box>
 
                     {/* Delete Icon Button */}
                     <Tooltip title="Hapus Point Alokasi Ini">
@@ -914,16 +940,6 @@ export const HPPCalculatorView: React.FC = () => {
                 sx={{ fontSize: '0.75rem', fontWeight: 700, borderRadius: 2 }}
               >
                 Tambah Point Alokasi Profit
-              </Button>
-
-              <Button
-                size="small"
-                variant="text"
-                startIcon={<ResetIcon />}
-                onClick={handleResetToDefaultSOP}
-                sx={{ fontSize: '0.72rem', textTransform: 'none', color: 'text.secondary' }}
-              >
-                Reset ke SOP Standard
               </Button>
             </Box>
           </Grid>

@@ -271,7 +271,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
 
     return (
       <Box className="signature-block avoid-break" sx={{ mt: 5, pt: 1, mb: '1.2cm' }}>
-        <Grid container spacing={3} justifyContent={isSingleSigner ? 'flex-end' : 'space-between'}>
+        <Grid container spacing={{ xs: 1.5, sm: 3 }} justifyContent={isSingleSigner ? 'flex-end' : 'space-between'}>
           <Grid item xs={6} sm={isSingleSigner ? 5 : 6} textAlign="center">
             {isSingleSigner ? (
               <Typography variant="caption" display="block" textAlign="center" sx={{ mb: 1, color: 'text.secondary' }}>
@@ -457,6 +457,9 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
           boxShadow: '0 4px 24px rgba(0,0,0,0.15)',
           position: 'relative',
           overflow: 'hidden',
+          width: '100%',
+          maxWidth: '100%',
+          boxSizing: 'border-box',
           '& .MuiTypography-root': { color: 'inherit' },
           '& .MuiTypography-colorTextSecondary': { color: '#475569 !important' },
           '& .MuiTableCell-root': { color: '#0f172a' },
@@ -541,14 +544,15 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
                   <Box sx={{ width: '100%', display: 'block', mb: 2, clear: 'both' }}>
                     {/* 1. Judul Client Intake Form (CIF) Align Center (Baris 1 - Full Width) */}
                     <Box
+                      className="doc-title-block"
                       sx={{
                         width: '100%',
                         display: 'block',
                         textAlign: 'center',
                         clear: 'both',
                         '@media screen': {
-                          mt: '2cm',
-                          mb: 'calc(24px + 0.5cm)',
+                          mt: { xs: 1, sm: '2cm' },
+                          mb: { xs: 1.5, sm: 'calc(24px + 0.5cm)' },
                         },
                         '@media print': {
                           mt: 0,
@@ -556,14 +560,14 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
                         },
                       }}
                     >
-                      <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', fontSize: '1.35rem', lineHeight: 1.2, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', width: '100%', textAlign: 'center' }}>
+                      <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', fontSize: { xs: '1.05rem', sm: '1.35rem' }, lineHeight: 1.2, textTransform: 'uppercase', letterSpacing: { xs: '0.02em', sm: '0.05em' }, display: 'block', width: '100%', textAlign: 'center' }}>
                         Client Intake Form (CIF)
                       </Typography>
                     </Box>
 
                     {/* 2. Metadata Table Rata Kanan (Baris 2 - Di Bawah Judul dengan Jarak Jelas) */}
-                    <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mt: 2, mb: 2, clear: 'both' }}>
-                      <TableContainer component={Box} sx={{ border: '1px solid #000', borderRadius: 0, display: 'inline-block', bgcolor: 'transparent', maxWidth: '300px' }}>
+                    <Box className="doc-metadata-container" sx={{ width: '100%', display: 'flex', justifyContent: { xs: 'stretch', sm: 'flex-end' }, alignItems: 'center', mt: { xs: 1, sm: 2 }, mb: { xs: 1.5, sm: 2 }, clear: 'both' }}>
+                      <TableContainer component={Box} sx={{ border: '1px solid #000', borderRadius: 0, display: 'inline-block', bgcolor: 'transparent', width: { xs: '100%', sm: 'auto' }, maxWidth: { xs: '100%', sm: '300px' } }}>
                         <Table size="small" sx={{ width: '100%', '& .MuiTableCell-root': { py: 0.15, px: 0.8, fontSize: '0.68rem', lineHeight: 1.25, border: '1px solid #000', textAlign: 'left' } }}>
                           <TableBody>
                             <TableRow>
@@ -914,6 +918,9 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
           boxShadow: '0 4px 24px rgba(0,0,0,0.15)',
           position: 'relative',
           overflow: 'hidden',
+          width: '100%',
+          maxWidth: '100%',
+          boxSizing: 'border-box',
           '& .MuiTypography-root': { color: 'inherit' },
           '& .MuiTypography-colorTextSecondary': { color: '#475569 !important' },
           '& .MuiTableCell-root': { color: '#0f172a' },
@@ -998,14 +1005,15 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
                   <Box sx={{ width: '100%', display: 'block', mb: 2, clear: 'both' }}>
                     {/* 1. Judul Requirement Specification Document (RSD) Align Center (Baris 1 - Full Width) */}
                     <Box
+                      className="doc-title-block"
                       sx={{
                         width: '100%',
                         display: 'block',
                         textAlign: 'center',
                         clear: 'both',
                         '@media screen': {
-                          mt: '2cm',
-                          mb: 'calc(24px + 0.5cm)',
+                          mt: { xs: 1, sm: '2cm' },
+                          mb: { xs: 1.5, sm: 'calc(24px + 0.5cm)' },
                         },
                         '@media print': {
                           mt: 0,
@@ -1013,14 +1021,14 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
                         },
                       }}
                     >
-                      <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', fontSize: '1.35rem', lineHeight: 1.2, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', width: '100%', textAlign: 'center' }}>
+                      <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', fontSize: { xs: '1.05rem', sm: '1.35rem' }, lineHeight: 1.2, textTransform: 'uppercase', letterSpacing: { xs: '0.02em', sm: '0.05em' }, display: 'block', width: '100%', textAlign: 'center' }}>
                         REQUIREMENT SPECIFICATION DOCUMENT (RSD)
                       </Typography>
                     </Box>
 
                     {/* 2. Metadata Table Rata Kanan (Baris 2 - Di Bawah Judul dengan Jarak Jelas) */}
-                    <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mt: 2, mb: 2, clear: 'both' }}>
-                      <TableContainer component={Box} sx={{ border: '1px solid #000', borderRadius: 0, display: 'inline-block', bgcolor: 'transparent', maxWidth: '320px' }}>
+                    <Box className="doc-metadata-container" sx={{ width: '100%', display: 'flex', justifyContent: { xs: 'stretch', sm: 'flex-end' }, alignItems: 'center', mt: { xs: 1, sm: 2 }, mb: { xs: 1.5, sm: 2 }, clear: 'both' }}>
+                      <TableContainer component={Box} sx={{ border: '1px solid #000', borderRadius: 0, display: 'inline-block', bgcolor: 'transparent', width: { xs: '100%', sm: 'auto' }, maxWidth: { xs: '100%', sm: '320px' } }}>
                         <Table size="small" sx={{ width: '100%', '& .MuiTableCell-root': { py: 0.15, px: 0.8, fontSize: '0.68rem', lineHeight: 1.25, border: '1px solid #000', textAlign: 'left' } }}>
                           <TableBody>
                             <TableRow>
@@ -1380,6 +1388,9 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
           boxShadow: '0 4px 24px rgba(0,0,0,0.15)',
           position: 'relative',
           overflow: 'hidden',
+          width: '100%',
+          maxWidth: '100%',
+          boxSizing: 'border-box',
           '& .MuiTypography-root': { color: 'inherit' },
           '& .MuiTypography-colorTextSecondary': { color: '#475569 !important' },
           '& .MuiTableCell-root': { color: '#0f172a' },
@@ -1464,14 +1475,15 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
                   <Box sx={{ width: '100%', display: 'block', mb: 2, clear: 'both' }}>
                     {/* 1. Judul MoU Align Center */}
                     <Box
+                      className="doc-title-block"
                       sx={{
                         width: '100%',
                         display: 'block',
                         textAlign: 'center',
                         clear: 'both',
                         '@media screen': {
-                          mt: '2cm',
-                          mb: 'calc(8px + 0.5cm)',
+                          mt: { xs: 1, sm: '2cm' },
+                          mb: { xs: 1.5, sm: 'calc(8px + 0.5cm)' },
                         },
                         '@media print': {
                           mt: 0,
@@ -1479,7 +1491,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
                         },
                       }}
                     >
-                      <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', fontSize: '1.35rem', lineHeight: 1.2, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', width: '100%', textAlign: 'center' }}>
+                      <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', fontSize: { xs: '1.05rem', sm: '1.35rem' }, lineHeight: 1.2, textTransform: 'uppercase', letterSpacing: { xs: '0.02em', sm: '0.05em' }, display: 'block', width: '100%', textAlign: 'center' }}>
                         MEMORANDUM OF UNDERSTANDING (MoU)
                       </Typography>
                       <Typography variant="caption" sx={{ fontWeight: 700, color: '#334155', display: 'block', mt: 0.5, letterSpacing: '0.02em' }}>
@@ -1488,8 +1500,8 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
                     </Box>
 
                     {/* 2. Metadata Table Rata Kanan */}
-                    <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mt: 2, mb: 2, clear: 'both' }}>
-                      <TableContainer component={Box} sx={{ border: '1px solid #000', borderRadius: 0, display: 'inline-block', bgcolor: 'transparent', maxWidth: '340px' }}>
+                    <Box className="doc-metadata-container" sx={{ width: '100%', display: 'flex', justifyContent: { xs: 'stretch', sm: 'flex-end' }, alignItems: 'center', mt: { xs: 1, sm: 2 }, mb: { xs: 1.5, sm: 2 }, clear: 'both' }}>
+                      <TableContainer component={Box} sx={{ border: '1px solid #000', borderRadius: 0, display: 'inline-block', bgcolor: 'transparent', width: { xs: '100%', sm: 'auto' }, maxWidth: { xs: '100%', sm: '340px' } }}>
                         <Table size="small" sx={{ width: '100%', '& .MuiTableCell-root': { py: 0.15, px: 0.8, fontSize: '0.68rem', lineHeight: 1.25, border: '1px solid #000', textAlign: 'left' } }}>
                           <TableBody>
                             <TableRow>
@@ -1773,6 +1785,9 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
           boxShadow: '0 4px 24px rgba(0,0,0,0.15)',
           position: 'relative',
           overflow: 'hidden',
+          width: '100%',
+          maxWidth: '100%',
+          boxSizing: 'border-box',
           '& .MuiTypography-root': { color: 'inherit' },
           '& .MuiTypography-colorTextSecondary': { color: '#475569 !important' },
           '& .MuiTableCell-root': { color: '#0f172a' },
@@ -1857,14 +1872,15 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
                   <Box sx={{ width: '100%', display: 'block', mb: 2, clear: 'both' }}>
                     {/* 1. Judul SPK Align Center */}
                     <Box
+                      className="doc-title-block"
                       sx={{
                         width: '100%',
                         display: 'block',
                         textAlign: 'center',
                         clear: 'both',
                         '@media screen': {
-                          mt: '2cm',
-                          mb: 'calc(8px + 0.5cm)',
+                          mt: { xs: 1, sm: '2cm' },
+                          mb: { xs: 1.5, sm: 'calc(8px + 0.5cm)' },
                         },
                         '@media print': {
                           mt: 0,
@@ -1872,7 +1888,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
                         },
                       }}
                     >
-                      <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', fontSize: '1.35rem', lineHeight: 1.2, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', width: '100%', textAlign: 'center' }}>
+                      <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', fontSize: { xs: '1.05rem', sm: '1.35rem' }, lineHeight: 1.2, textTransform: 'uppercase', letterSpacing: { xs: '0.02em', sm: '0.05em' }, display: 'block', width: '100%', textAlign: 'center' }}>
                         SURAT PERINTAH KERJA (SPK)
                       </Typography>
                       <Typography variant="caption" sx={{ fontWeight: 700, color: '#334155', display: 'block', mt: 0.5, letterSpacing: '0.02em' }}>
@@ -1881,8 +1897,8 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
                     </Box>
 
                     {/* 2. Metadata Table Rata Kanan */}
-                    <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mt: 2, mb: 2, clear: 'both' }}>
-                      <TableContainer component={Box} sx={{ border: '1px solid #000', borderRadius: 0, display: 'inline-block', bgcolor: 'transparent', maxWidth: '340px' }}>
+                    <Box className="doc-metadata-container" sx={{ width: '100%', display: 'flex', justifyContent: { xs: 'stretch', sm: 'flex-end' }, alignItems: 'center', mt: { xs: 1, sm: 2 }, mb: { xs: 1.5, sm: 2 }, clear: 'both' }}>
+                      <TableContainer component={Box} sx={{ border: '1px solid #000', borderRadius: 0, display: 'inline-block', bgcolor: 'transparent', width: { xs: '100%', sm: 'auto' }, maxWidth: { xs: '100%', sm: '340px' } }}>
                         <Table size="small" sx={{ width: '100%', '& .MuiTableCell-root': { py: 0.15, px: 0.8, fontSize: '0.68rem', lineHeight: 1.25, border: '1px solid #000', textAlign: 'left' } }}>
                           <TableBody>
                             <TableRow>
@@ -2264,6 +2280,9 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
           boxShadow: '0 4px 24px rgba(0,0,0,0.15)',
           position: 'relative',
           overflow: 'hidden',
+          width: '100%',
+          maxWidth: '100%',
+          boxSizing: 'border-box',
           '& .MuiTypography-root': { color: 'inherit' },
           '& .MuiTypography-colorTextSecondary': { color: '#475569 !important' },
           '& .MuiTableCell-root': { color: '#0f172a' },
@@ -2348,14 +2367,15 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
                   <Box sx={{ width: '100%', display: 'block', mb: 2, clear: 'both' }}>
                     {/* 1. Judul BAST Align Center */}
                     <Box
+                      className="doc-title-block"
                       sx={{
                         width: '100%',
                         display: 'block',
                         textAlign: 'center',
                         clear: 'both',
                         '@media screen': {
-                          mt: '2cm',
-                          mb: 'calc(8px + 0.5cm)',
+                          mt: { xs: 1, sm: '2cm' },
+                          mb: { xs: 1.5, sm: 'calc(8px + 0.5cm)' },
                         },
                         '@media print': {
                           mt: 0,
@@ -2363,7 +2383,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
                         },
                       }}
                     >
-                      <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', fontSize: '1.35rem', lineHeight: 1.2, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', width: '100%', textAlign: 'center' }}>
+                      <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', fontSize: { xs: '1.05rem', sm: '1.35rem' }, lineHeight: 1.2, textTransform: 'uppercase', letterSpacing: { xs: '0.02em', sm: '0.05em' }, display: 'block', width: '100%', textAlign: 'center' }}>
                         BERITA ACARA SERAH TERIMA (BAST)
                       </Typography>
                       <Typography variant="caption" sx={{ fontWeight: 700, color: '#334155', display: 'block', mt: 0.5, letterSpacing: '0.02em' }}>
@@ -2372,8 +2392,8 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
                     </Box>
 
                     {/* 2. Metadata Table Rata Kanan */}
-                    <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mt: 2, mb: 2, clear: 'both' }}>
-                      <TableContainer component={Box} sx={{ border: '1px solid #000', borderRadius: 0, display: 'inline-block', bgcolor: 'transparent', maxWidth: '340px' }}>
+                    <Box className="doc-metadata-container" sx={{ width: '100%', display: 'flex', justifyContent: { xs: 'stretch', sm: 'flex-end' }, alignItems: 'center', mt: { xs: 1, sm: 2 }, mb: { xs: 1.5, sm: 2 }, clear: 'both' }}>
+                      <TableContainer component={Box} sx={{ border: '1px solid #000', borderRadius: 0, display: 'inline-block', bgcolor: 'transparent', width: { xs: '100%', sm: 'auto' }, maxWidth: { xs: '100%', sm: '340px' } }}>
                         <Table size="small" sx={{ width: '100%', '& .MuiTableCell-root': { py: 0.15, px: 0.8, fontSize: '0.68rem', lineHeight: 1.25, border: '1px solid #000', textAlign: 'left' } }}>
                           <TableBody>
                             <TableRow>
@@ -2559,6 +2579,9 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
           boxShadow: '0 4px 24px rgba(0,0,0,0.15)',
           position: 'relative',
           overflow: 'hidden',
+          width: '100%',
+          maxWidth: '100%',
+          boxSizing: 'border-box',
           '& .MuiTypography-root': { color: 'inherit' },
           '& .MuiTypography-colorTextSecondary': { color: '#475569 !important' },
           '& .MuiTableCell-root': { color: '#0f172a' },
@@ -2645,14 +2668,15 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
                   <Box sx={{ width: '100%', display: 'block', mb: 2, clear: 'both' }}>
                     {/* 1. Judul QA Align Center */}
                     <Box
+                      className="doc-title-block"
                       sx={{
                         width: '100%',
                         display: 'block',
                         textAlign: 'center',
                         clear: 'both',
                         '@media screen': {
-                          mt: '2cm',
-                          mb: 'calc(8px + 0.5cm)',
+                          mt: { xs: 1, sm: '2cm' },
+                          mb: { xs: 1.5, sm: 'calc(8px + 0.5cm)' },
                         },
                         '@media print': {
                           mt: 0,
@@ -2660,7 +2684,7 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
                         },
                       }}
                     >
-                      <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', fontSize: '1.35rem', lineHeight: 1.2, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', width: '100%', textAlign: 'center' }}>
+                      <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', fontSize: { xs: '1.05rem', sm: '1.35rem' }, lineHeight: 1.2, textTransform: 'uppercase', letterSpacing: { xs: '0.02em', sm: '0.05em' }, display: 'block', width: '100%', textAlign: 'center' }}>
                         QUALITY ASSURANCE & ACCEPTANCE TEST (QA)
                       </Typography>
                       <Typography variant="caption" sx={{ fontWeight: 700, color: '#334155', display: 'block', mt: 0.5, letterSpacing: '0.02em' }}>
@@ -2669,8 +2693,8 @@ export const DocumentTemplates: React.FC<DocumentTemplateProps> = ({
                     </Box>
 
                     {/* 2. Metadata Table Rata Kanan */}
-                    <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mt: 2, mb: 2, clear: 'both' }}>
-                      <TableContainer component={Box} sx={{ border: '1px solid #000', borderRadius: 0, display: 'inline-block', bgcolor: 'transparent', maxWidth: '340px' }}>
+                    <Box className="doc-metadata-container" sx={{ width: '100%', display: 'flex', justifyContent: { xs: 'stretch', sm: 'flex-end' }, alignItems: 'center', mt: { xs: 1, sm: 2 }, mb: { xs: 1.5, sm: 2 }, clear: 'both' }}>
+                      <TableContainer component={Box} sx={{ border: '1px solid #000', borderRadius: 0, display: 'inline-block', bgcolor: 'transparent', width: { xs: '100%', sm: 'auto' }, maxWidth: { xs: '100%', sm: '340px' } }}>
                         <Table size="small" sx={{ width: '100%', '& .MuiTableCell-root': { py: 0.15, px: 0.8, fontSize: '0.68rem', lineHeight: 1.25, border: '1px solid #000', textAlign: 'left' } }}>
                           <TableBody>
                             <TableRow>

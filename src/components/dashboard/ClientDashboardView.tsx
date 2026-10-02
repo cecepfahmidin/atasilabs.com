@@ -632,7 +632,7 @@ export const ClientDashboardView: React.FC = () => {
               )}
             </Stack>
 
-            <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary', mb: 0.5 }}>
+            <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary', mb: 0.5, fontSize: { xs: '1.2rem', sm: '1.4rem', md: '1.5rem' } }}>
               Selamat Datang, {currentUser?.name || selectedProject.clientName}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 720 }}>
@@ -1032,7 +1032,8 @@ export const ClientDashboardView: React.FC = () => {
               Seluruh dokumen resmi terbit secara otomatis sesuai data proyek Anda. Anda dapat mencetak PDF A4 ber-kop resmi atau menandatangani secara digital.
             </Typography>
 
-            <TableContainer>
+            {/* Desktop Table View */}
+            <TableContainer sx={{ display: { xs: 'none', md: 'block' } }}>
               <Table size="small">
                 <TableHead sx={{ bgcolor: 'action.hover' }}>
                   <TableRow>
@@ -1108,6 +1109,83 @@ export const ClientDashboardView: React.FC = () => {
                 </TableBody>
               </Table>
             </TableContainer>
+
+            {/* Mobile Card View */}
+            <Stack spacing={1.5} sx={{ display: { xs: 'flex', md: 'none' } }}>
+              {documentList.map((docItem) => (
+                <Paper
+                  key={docItem.type}
+                  variant="outlined"
+                  sx={{
+                    p: 2,
+                    borderRadius: 3,
+                    bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)',
+                    border: `1px solid ${theme.palette.divider}`,
+                  }}
+                >
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1, gap: 1 }}>
+                    <Box>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+                        {docItem.title}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        {docItem.desc}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ flexShrink: 0 }}>
+                      {docItem.party2Signed ? (
+                        <Chip
+                          icon={<CheckCircleIcon sx={{ fontSize: '12px !important' }} />}
+                          label="Ditandatangani"
+                          size="small"
+                          color="success"
+                          sx={{ height: 22, fontSize: '0.68rem', fontWeight: 800 }}
+                        />
+                      ) : docItem.requiresSignature ? (
+                        <Chip
+                          icon={<DrawIcon sx={{ fontSize: '12px !important' }} />}
+                          label="Perlu TTD"
+                          size="small"
+                          color="warning"
+                          sx={{ height: 22, fontSize: '0.68rem', fontWeight: 800 }}
+                        />
+                      ) : (
+                        <Chip
+                          label="Info / SOP"
+                          size="small"
+                          variant="outlined"
+                          sx={{ height: 22, fontSize: '0.68rem', fontWeight: 600 }}
+                        />
+                      )}
+                    </Box>
+                  </Box>
+
+                  <Box sx={{ pt: 1.5, mt: 1, borderTop: `1px solid ${theme.palette.divider}`, display: 'flex', justifyContent: 'flex-end', gap: 1, flexWrap: 'wrap' }}>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      startIcon={<VisibilityIcon sx={{ fontSize: 14 }} />}
+                      onClick={() => handleOpenDoc(docItem.type as any)}
+                      sx={{ fontSize: '0.72rem', py: 0.4, borderRadius: 2 }}
+                    >
+                      Cetak / Baca PDF
+                    </Button>
+                    {docItem.requiresSignature && (
+                      <Button
+                        size="small"
+                        variant={docItem.party2Signed ? 'outlined' : 'contained'}
+                        color={docItem.party2Signed ? 'success' : 'warning'}
+                        startIcon={<DrawIcon sx={{ fontSize: 14 }} />}
+                        onClick={() => handleSignDocument(docItem.type, docItem.title)}
+                        sx={{ fontSize: '0.72rem', py: 0.4, fontWeight: 700, borderRadius: 2 }}
+                      >
+                        {docItem.party2Signed ? 'Ubah Tanda Tangan' : 'Tanda Tangan'}
+                      </Button>
+                    )}
+                  </Box>
+                </Paper>
+              ))}
+            </Stack>
           </Paper>
 
           {/* Rincian & Input Pembayaran Proyek */}
@@ -1137,7 +1215,7 @@ export const ClientDashboardView: React.FC = () => {
                 onClick={handleOpenPaymentDialog}
                 sx={{ fontWeight: 700, borderRadius: 2.5 }}
               >
-                Catat Pembayaran Baru
+                Pembayaran Baru
               </Button>
             </Box>
 
@@ -1178,7 +1256,8 @@ export const ClientDashboardView: React.FC = () => {
             </Grid>
 
             {/* Payment Transactions Table */}
-            <TableContainer component={Box} sx={{ border: `1px solid ${theme.palette.divider}`, borderRadius: 2.5 }}>
+            {/* Desktop Table View */}
+            <TableContainer component={Box} sx={{ border: `1px solid ${theme.palette.divider}`, borderRadius: 2.5, display: { xs: 'none', md: 'block' } }}>
               <Table size="small">
                 <TableHead>
                   <TableRow sx={{ bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : '#f8fafc' }}>
@@ -1228,7 +1307,7 @@ export const ClientDashboardView: React.FC = () => {
                             <Tooltip title={pay.approvedBy ? `Disetujui oleh ${pay.approvedBy} (${pay.approvedAt || pay.date})` : 'Disetujui Admin'}>
                               <Chip
                                 icon={<CheckCircleIcon sx={{ fontSize: '13px !important' }} />}
-                                label="DISUJUJU ✅"
+                                label="DISETUJUI ✅"
                                 size="small"
                                 color="success"
                                 sx={{ fontWeight: 800, fontSize: '0.68rem', height: 22 }}
@@ -1292,13 +1371,140 @@ export const ClientDashboardView: React.FC = () => {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={7} align="center" sx={{ py: 3, color: 'text.secondary' }}>
-                        Belum ada riwayat transaksi pembayaran yang dicatat. Klik "+ Catat Pembayaran Baru" di atas.
+                        Belum ada riwayat transaksi pembayaran yang dicatat. Klik "+ Pembayaran Baru" di atas.
                       </TableCell>
                     </TableRow>
                   )}
                 </TableBody>
               </Table>
             </TableContainer>
+
+            {/* Mobile Card View */}
+            <Stack spacing={2} sx={{ display: { xs: 'flex', md: 'none' }, mt: 2 }}>
+              {paymentsList.length === 0 ? (
+                <Paper variant="outlined" sx={{ p: 3, textAlign: 'center', borderRadius: 3 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Belum ada riwayat transaksi pembayaran yang dicatat. Klik "+ Pembayaran Baru" di atas.
+                  </Typography>
+                </Paper>
+              ) : (
+                paymentsList.map((pay) => (
+                  <Paper
+                    key={pay.id}
+                    variant="outlined"
+                    sx={{
+                      p: 2,
+                      borderRadius: 3,
+                      border: `1px solid ${theme.palette.divider}`,
+                      bgcolor: pay.status === 'PENDING'
+                        ? (theme.palette.mode === 'dark' ? 'rgba(245, 158, 11, 0.06)' : '#fffbe6')
+                        : (theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)'),
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="caption" sx={{ fontWeight: 800, color: 'text.secondary' }}>
+                          {pay.date}
+                        </Typography>
+                        <Chip label={pay.stage} size="small" variant="outlined" color="primary" sx={{ fontWeight: 700, fontSize: '0.68rem', height: 20 }} />
+                      </Box>
+                      <Box>
+                        {pay.status === 'VERIFIED' && (
+                          <Chip
+                            icon={<CheckCircleIcon sx={{ fontSize: '13px !important' }} />}
+                            label="DISETUJUI ✅"
+                            size="small"
+                            color="success"
+                            sx={{ fontWeight: 800, fontSize: '0.68rem', height: 22 }}
+                          />
+                        )}
+                        {pay.status === 'PENDING' && (
+                          <Chip
+                            icon={<PendingIcon sx={{ fontSize: '13px !important' }} />}
+                            label="PENDING ⏳"
+                            size="small"
+                            color="warning"
+                            sx={{ fontWeight: 800, fontSize: '0.68rem', height: 22 }}
+                          />
+                        )}
+                        {pay.status === 'FAILED' && (
+                          <Chip
+                            icon={<CancelIcon sx={{ fontSize: '13px !important' }} />}
+                            label="DITOLAK ❌"
+                            size="small"
+                            color="error"
+                            sx={{ fontWeight: 800, fontSize: '0.68rem', height: 22 }}
+                          />
+                        )}
+                      </Box>
+                    </Box>
+
+                    <Box sx={{ my: 1.5, p: 1.5, borderRadius: 2, bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Box>
+                        <Typography variant="caption" color="text.secondary" display="block">
+                          Nominal Pembayaran:
+                        </Typography>
+                        <Typography variant="h6" sx={{ fontWeight: 900, color: '#10b981', fontSize: '1.05rem' }}>
+                          {formatRupiah(pay.amount)}
+                        </Typography>
+                      </Box>
+                      {pay.proofUrl ? (
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          color="info"
+                          startIcon={<VisibilityIcon sx={{ fontSize: 13 }} />}
+                          onClick={() => setProofPreviewModal({ open: true, payment: pay })}
+                          sx={{ fontSize: '0.72rem', py: 0.4, fontWeight: 700, borderRadius: 2 }}
+                        >
+                          Lihat Resi
+                        </Button>
+                      ) : (
+                        <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                          Tanpa Resi
+                        </Typography>
+                      )}
+                    </Box>
+
+                    {pay.notes && (
+                      <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1.5, fontStyle: 'italic' }}>
+                        Catatan: {pay.notes}
+                      </Typography>
+                    )}
+
+                    <Box sx={{ pt: 1, borderTop: `1px solid ${theme.palette.divider}`, display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 0.8 }}>
+                      {!isClientRole && pay.status === 'PENDING' && (
+                        <>
+                          <Button
+                            size="small"
+                            variant="contained"
+                            color="success"
+                            startIcon={<CheckCircleIcon sx={{ fontSize: 12 }} />}
+                            onClick={() => handleApprovePayment(pay.id)}
+                            sx={{ fontSize: '0.68rem', py: 0.3, px: 1.2, fontWeight: 800, borderRadius: 2 }}
+                          >
+                            Approve
+                          </Button>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            color="error"
+                            startIcon={<CancelIcon sx={{ fontSize: 12 }} />}
+                            onClick={() => handleRejectPayment(pay.id)}
+                            sx={{ fontSize: '0.68rem', py: 0.3, px: 1, fontWeight: 700, borderRadius: 2 }}
+                          >
+                            Tolak
+                          </Button>
+                        </>
+                      )}
+                      <IconButton size="small" color="error" onClick={() => handleDeletePaymentRecord(pay.id)} title="Hapus">
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  </Paper>
+                ))
+              )}
+            </Stack>
           </Paper>
         </Grid>
 
@@ -1838,16 +2044,16 @@ export const ClientDashboardView: React.FC = () => {
                       proofPreviewModal.payment.status === 'VERIFIED'
                         ? 'VERIFIED / LUNAS'
                         : proofPreviewModal.payment.status === 'FAILED'
-                        ? 'GAGAL / DITOLAK'
-                        : 'PENDING VERIFIKASI'
+                          ? 'GAGAL / DITOLAK'
+                          : 'PENDING VERIFIKASI'
                     }
                     size="small"
                     color={
                       proofPreviewModal.payment.status === 'VERIFIED'
                         ? 'success'
                         : proofPreviewModal.payment.status === 'FAILED'
-                        ? 'error'
-                        : 'warning'
+                          ? 'error'
+                          : 'warning'
                     }
                     sx={{ fontWeight: 800, fontSize: '0.75rem' }}
                   />

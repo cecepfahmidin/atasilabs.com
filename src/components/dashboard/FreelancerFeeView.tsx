@@ -84,6 +84,8 @@ export const FreelancerFeeView: React.FC = () => {
     }).format(num);
   };
 
+  const [searchQuery, setSearchQuery] = useState('');
+  
   // State for expanded project payment history
   const [expandedProjectId, setExpandedProjectId] = useState<string | null>(null);
 
@@ -290,7 +292,7 @@ export const FreelancerFeeView: React.FC = () => {
       <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'space-between', alignItems: { md: 'center' }, gap: 2, mb: 3 }}>
         <Box>
           <Typography variant="h5" sx={{ fontWeight: 900, color: 'text.primary', mb: 0.5, display: 'flex', alignItems: 'center', gap: 1 }}>
-            <WalletIcon color="secondary" /> Fitur Bayar & Transaksi Fee Freelancer
+            Fitur Bayar & Transaksi Fee Freelancer
           </Typography>
           <Typography variant="body2" color="text.secondary">
             Pelacakan status pembayaran fee developer: <strong>Total Fee</strong>, <strong>Yang Sudah Dibayar</strong>, <strong>Sisa Tagihan</strong>, dan <strong>Harus Dibayar Sekarang</strong>.
@@ -314,7 +316,7 @@ export const FreelancerFeeView: React.FC = () => {
               boxShadow: '0 4px 14px rgba(139, 92, 246, 0.35)',
             }}
           >
-            Catat Pembayaran Dev
+            Bayar Fee Dev
           </Button>
         )}
       </Box>
@@ -425,12 +427,22 @@ export const FreelancerFeeView: React.FC = () => {
       {/* Main Fee Breakdown & Payment History Table */}
       <Paper elevation={0} sx={{ borderRadius: 3.5, border: `1px solid ${theme.palette.divider}`, overflow: 'hidden' }}>
         <Box sx={{ p: 2.5, borderBottom: `1px solid ${theme.palette.divider}`, bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)' }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 900 }}>
-            Tabel Rincian Pembayaran Developer (Total, Sudah Dibayar, Sisa, & Harus Dibayar)
-          </Typography>
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'space-between', alignItems: { md: 'center' }, gap: 2 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 900 }}>
+              Tabel Rincian Pembayaran Developer (Total, Sudah Dibayar, Sisa, & Harus Dibayar)
+            </Typography>
+            <TextField
+              size="small"
+              placeholder="Cari proyek, klien, atau dev..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              sx={{ minWidth: { xs: '100%', md: '250px' } }}
+            />
+          </Box>
         </Box>
 
-        <TableContainer>
+        {/* Desktop Table View */}
+        <TableContainer sx={{ display: { xs: 'none', md: 'block' } }}>
           <Table>
             <TableHead sx={{ bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)' }}>
               <TableRow>
@@ -443,7 +455,11 @@ export const FreelancerFeeView: React.FC = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {feeMetrics.list.length === 0 ? (
+              {feeMetrics.list.filter(proj => 
+                proj.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                proj.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (proj.freelancerName || '').toLowerCase().includes(searchQuery.toLowerCase())
+              ).length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
                     <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
@@ -452,7 +468,11 @@ export const FreelancerFeeView: React.FC = () => {
                   </TableCell>
                 </TableRow>
               ) : (
-                feeMetrics.list.map((proj) => {
+                feeMetrics.list.filter(proj => 
+                  proj.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  proj.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  (proj.freelancerName || '').toLowerCase().includes(searchQuery.toLowerCase())
+                ).map((proj) => {
                   const tierCfg = getTierBadge(proj.tierNumber);
                   const isExpanded = expandedProjectId === proj.id;
 
@@ -646,6 +666,199 @@ export const FreelancerFeeView: React.FC = () => {
             </TableBody>
           </Table>
         </TableContainer>
+
+        {/* Mobile Card View */}
+        <Stack spacing={2} sx={{ display: { xs: 'flex', md: 'none' }, mt: 2 }}>
+          {feeMetrics.list.filter(proj => 
+            proj.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            proj.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (proj.freelancerName || '').toLowerCase().includes(searchQuery.toLowerCase())
+          ).length === 0 ? (
+            <Paper variant="outlined" sx={{ p: 3, textAlign: 'center', borderRadius: 3 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                Belum ada proyek terdaftar untuk diproses pembayarannya.
+              </Typography>
+            </Paper>
+          ) : (
+            feeMetrics.list.filter(proj => 
+              proj.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              proj.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              (proj.freelancerName || '').toLowerCase().includes(searchQuery.toLowerCase())
+            ).map((proj) => {
+              const tierCfg = getTierBadge(proj.tierNumber);
+              const isExpanded = expandedProjectId === proj.id;
+
+              return (
+                <Paper
+                  key={proj.id}
+                  variant="outlined"
+                  sx={{
+                    p: 2,
+                    borderRadius: 3,
+                    bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)',
+                    border: `1px solid ${theme.palette.divider}`,
+                  }}
+                >
+                  {/* Header: Project, Client & Tier (1 Kolom Vertikal) */}
+                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', mb: 1.5, gap: 0.6 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800, fontSize: '0.92rem' }}>
+                      {proj.title}
+                    </Typography>
+                    <Chip
+                      label={tierCfg.label}
+                      size="small"
+                      sx={{
+                        height: 20,
+                        fontSize: '0.65rem',
+                        fontWeight: 800,
+                        bgcolor: `${tierCfg.color}20`,
+                        color: tierCfg.color,
+                        my: 0.2,
+                      }}
+                    />
+                    <Box sx={{ width: '100%', mt: 0.2 }}>
+                      <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: '0.74rem', lineHeight: 1.4 }}>
+                        <strong>Klien:</strong> {proj.clientName}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: '0.74rem', lineHeight: 1.4, mt: 0.3 }}>
+                        <strong>PJ:</strong> {proj.freelancerName || 'Freelancer'}
+                      </Typography>
+                    </Box>
+                  </Box>
+
+                  {/* 2x2 Grid of Financials */}
+                  <Grid container spacing={1} sx={{ p: 1.5, borderRadius: 2, bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : '#f8fafc', mb: 1.5 }}>
+                    <Grid size={{ xs: 6 }}>
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        Total Fee Dev:
+                      </Typography>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 900, color: '#8b5cf6' }}>
+                        {formatRupiah(proj.totalFee)}
+                      </Typography>
+                    </Grid>
+                    <Grid size={{ xs: 6 }}>
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        Sudah Dibayar:
+                      </Typography>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#10b981' }}>
+                        {formatRupiah(proj.alreadyPaid)}
+                      </Typography>
+                    </Grid>
+                    <Grid size={{ xs: 6 }}>
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        Sisa Fee:
+                      </Typography>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#f59e0b' }}>
+                        {formatRupiah(proj.remainingBalance)}
+                      </Typography>
+                    </Grid>
+                    <Grid size={{ xs: 6 }}>
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        Tagihan Sekarang:
+                      </Typography>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 900, color: proj.harusDibayarNow > 0 ? '#ef4444' : 'text.secondary' }}>
+                        {formatRupiah(proj.harusDibayarNow)}
+                      </Typography>
+                    </Grid>
+                  </Grid>
+
+                  {/* Actions & Expand Toggle */}
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pt: 1, borderTop: `1px solid ${theme.palette.divider}` }}>
+                    <Button
+                      size="small"
+                      variant="text"
+                      onClick={() => setExpandedProjectId(isExpanded ? null : proj.id)}
+                      endIcon={isExpanded ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+                      sx={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'none', color: 'text.secondary', p: 0.5 }}
+                    >
+                      {isExpanded ? 'Tutup Histori' : `Histori (${proj.paymentsList.length})`}
+                    </Button>
+
+                    {canRecordPayment && proj.remainingBalance > 0 && (
+                      <Button
+                        size="small"
+                        variant="contained"
+                        color="secondary"
+                        startIcon={<MoneyIcon />}
+                        onClick={() => handleOpenPayModal(proj.id, proj.harusDibayarNow || Math.round(proj.totalFee * 0.4))}
+                        sx={{
+                          fontSize: '0.72rem',
+                          fontWeight: 800,
+                          textTransform: 'none',
+                          borderRadius: 2,
+                          py: 0.4,
+                          px: 1.5,
+                          bgcolor: '#8b5cf6',
+                          '&:hover': { bgcolor: '#7c3aed' },
+                        }}
+                      >
+                        Bayar Fee
+                      </Button>
+                    )}
+                  </Box>
+
+                  {/* Collapsible Payment History on Mobile */}
+                  <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+                    <Box sx={{ mt: 1.5, pt: 1.5, borderTop: `1px dashed ${theme.palette.divider}` }}>
+                      <Typography variant="caption" sx={{ fontWeight: 800, mb: 1, display: 'block', color: '#8b5cf6' }}>
+                        Histori Transfer Fee ({proj.title}):
+                      </Typography>
+                      {proj.paymentsList.length === 0 ? (
+                        <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic', display: 'block' }}>
+                          Belum ada catatan transfer fee untuk proyek ini.
+                        </Typography>
+                      ) : (
+                        <Stack spacing={1}>
+                          {proj.paymentsList.map((pay) => (
+                            <Paper
+                              key={pay.id}
+                              variant="outlined"
+                              sx={{ p: 1.2, borderRadius: 2, bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : '#f8fafc' }}
+                            >
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+                                <Typography variant="subtitle2" sx={{ fontWeight: 800, fontSize: '0.8rem' }}>
+                                  {formatRupiah(pay.amount)} — <span style={{ color: '#8b5cf6' }}>{pay.stage}</span>
+                                </Typography>
+                                <Chip
+                                  label={pay.status === 'VERIFIED' ? 'LUNAS' : 'PENDING'}
+                                  color={pay.status === 'VERIFIED' ? 'success' : 'warning'}
+                                  size="small"
+                                  sx={{ height: 18, fontSize: '0.62rem', fontWeight: 800 }}
+                                />
+                              </Box>
+                              <Typography variant="caption" color="text.secondary" display="block">
+                                {pay.date} | Oleh: {pay.approvedBy || 'Admin'}
+                              </Typography>
+                              {pay.notes && (
+                                <Typography variant="caption" color="text.secondary" display="block" sx={{ fontStyle: 'italic', mt: 0.3 }}>
+                                  Catatan: {pay.notes}
+                                </Typography>
+                              )}
+                              {pay.proofUrl && (
+                                <Box sx={{ mt: 0.8 }}>
+                                  <Button
+                                    size="small"
+                                    variant="outlined"
+                                    href={pay.proofUrl}
+                                    target="_blank"
+                                    startIcon={<ReceiptIcon sx={{ fontSize: 12 }} />}
+                                    sx={{ fontSize: '0.65rem', py: 0.2, fontWeight: 700 }}
+                                  >
+                                    Bukti Transfer
+                                  </Button>
+                                </Box>
+                              )}
+                            </Paper>
+                          ))}
+                        </Stack>
+                      )}
+                    </Box>
+                  </Collapse>
+                </Paper>
+              );
+            })
+          )}
+        </Stack>
       </Paper>
 
       {/* Drawer: Catat Pembayaran Dev */}

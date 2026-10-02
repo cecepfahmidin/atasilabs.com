@@ -210,7 +210,7 @@ export const UsersView: React.FC = () => {
     try {
       if (editingUser) {
         await updateUser(editingUser.id, formData);
-        
+
         // If updating current user's password in Supabase Auth session
         if (formData.password && currentUser?.email === editingUser.email) {
           const { error } = await supabase.auth.updateUser({
@@ -376,7 +376,7 @@ export const UsersView: React.FC = () => {
           sx={{ '& .MuiTab-root': { fontWeight: 700, textTransform: 'none', fontSize: '0.95rem' } }}
         >
           <Tab value="users" label={`Daftar Pengguna (${filteredUsers.length})`} />
-          <Tab value="matrix" label="Matriks Hak Akses (RBAC Matrix)" />
+          <Tab value="matrix" label="Hak Akses (RBAC)" />
         </Tabs>
       </Box>
 
@@ -552,15 +552,13 @@ export const UsersView: React.FC = () => {
                           </Typography>
                         </Box>
                       </Box>
-                      <Chip
-                        label={roleCfg.label}
-                        size="small"
-                        color={roleCfg.badgeColor as any}
-                        sx={{ fontWeight: 800, fontSize: '0.7rem' }}
-                      />
                     </Box>
 
                     <Stack spacing={0.5} sx={{ my: 1.5, p: 1.5, borderRadius: 2, bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                        <Typography variant="caption" color="text.secondary">Role:</Typography>
+                        <Chip label={roleCfg.label} size="small" color={roleCfg.badgeColor as any} sx={{ fontWeight: 800, height: 20, fontSize: '0.65rem' }} />
+                      </Box>
                       <Typography variant="caption" color="text.secondary">
                         Organisasi: <strong>{u.company || '-'}</strong>
                       </Typography>
@@ -612,16 +610,6 @@ export const UsersView: React.FC = () => {
                 Ubah hak akses masing-masing peran (CEO, CTO, CMO, Admin, Client, Freelancer) secara dinamis & real-time dengan mengeklik sakelar di bawah.
               </Typography>
             </Box>
-            <Button
-              variant="outlined"
-              color="warning"
-              size="small"
-              startIcon={<ResetIcon />}
-              onClick={resetRolePermissionsToDefault}
-              sx={{ fontWeight: 700, borderRadius: 2, textTransform: 'none', py: 0.8 }}
-            >
-              Reset ke Matriks Default
-            </Button>
           </Box>
 
           <Alert severity="warning" icon={<InfoIcon />} sx={{ mb: 3, borderRadius: 2 }}>
@@ -630,7 +618,8 @@ export const UsersView: React.FC = () => {
             </Typography>
           </Alert>
 
-          <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
+          {/* Desktop Table View */}
+          <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2, display: { xs: 'none', md: 'block' } }}>
             <Table size="small">
               <TableHead sx={{ bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }}>
                 <TableRow>
@@ -677,6 +666,65 @@ export const UsersView: React.FC = () => {
               </TableBody>
             </Table>
           </TableContainer>
+
+          {/* Mobile Card View */}
+          <Stack spacing={2} sx={{ display: { xs: 'flex', md: 'none' } }}>
+            {[
+              { key: 'overview', label: 'Dashboard Overview & Executive Metrics' },
+              { key: 'leads', label: 'Pesan Masuk & Inbound Leads (CMO / Admin)' },
+              { key: 'projects', label: 'Manajemen Proyek & Tracking Progress' },
+              { key: 'documents', label: 'Pusat Dokumen & SOP IPW (CIF, RSD, MoU, SPK, BAST)' },
+              { key: 'hppFinancials', label: 'Kalkulator HPP & Matrix Profit Margin (CEO, CTO, Admin)' },
+              { key: 'freelancerFees', label: 'Fee Pengerjaan Freelancer 40/60 (CEO, CTO, Admin, Freelancer)' },
+              { key: 'clientPricingMoU', label: 'Skema Investasi & MoU Kontrak Klien' },
+              { key: 'portfolio', label: 'CMS Portofolio & Showcases' },
+              { key: 'pricing', label: 'Pengaturan Pricelist Paket & Spec' },
+              { key: 'users', label: 'Manajemen User & Pengaturan RBAC' },
+            ].map((item) => (
+              <Paper
+                key={item.key}
+                variant="outlined"
+                sx={{
+                  p: 2,
+                  borderRadius: 3,
+                  bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)',
+                  border: `1px solid ${theme.palette.divider}`,
+                }}
+              >
+                <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 1.5 }}>
+                  {item.label}
+                </Typography>
+                <Divider sx={{ mb: 1.5 }} />
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', sm: 'repeat(3, 1fr)' }, gap: 1 }}>
+                  {(['CEO', 'CTO', 'CMO', 'ADMIN', 'CLIENT', 'FREELANCER'] as UserRole[]).map((r) => {
+                    const isAllowed = hasRolePermission(r, item.key);
+                    return (
+                      <Box
+                        key={r}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          p: 1,
+                          borderRadius: 2,
+                          bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : '#f8fafc',
+                          border: `1px solid ${theme.palette.divider}`,
+                        }}
+                      >
+                        <Chip label={r} size="small" color={ROLE_CONFIGS[r].badgeColor as any} sx={{ fontWeight: 800, height: 20, fontSize: '0.65rem' }} />
+                        <Switch
+                          size="small"
+                          checked={isAllowed}
+                          onChange={(e) => updateRolePermission(r, item.key, e.target.checked)}
+                          color={ROLE_CONFIGS[r].badgeColor === 'default' ? 'primary' : (ROLE_CONFIGS[r].badgeColor as any)}
+                        />
+                      </Box>
+                    );
+                  })}
+                </Box>
+              </Paper>
+            ))}
+          </Stack>
 
           {/* Legend Note */}
           <Alert severity="info" icon={<InfoIcon />} sx={{ mt: 3, borderRadius: 2 }}>

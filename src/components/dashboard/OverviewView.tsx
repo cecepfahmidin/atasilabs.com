@@ -74,8 +74,8 @@ export const OverviewView: React.FC = () => {
     return (
       <Box sx={{ width: '100%' }}>
         {currentUser?.role !== 'FREELANCER' && (
-          <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Alert severity="info" sx={{ flexGrow: 1, mr: 2, borderRadius: 2 }}>
+          <Box sx={{ mb: 2, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, gap: 2 }}>
+            <Alert severity="info" sx={{ flexGrow: 1, borderRadius: 2 }}>
               <strong>Mode Preview Admin:</strong> Anda sedang melihat tampilan Portal Mitra Developer / Freelancer.
             </Alert>
             <Button
@@ -98,8 +98,8 @@ export const OverviewView: React.FC = () => {
     return (
       <Box sx={{ width: '100%' }}>
         {currentUser?.role !== 'CLIENT' && (
-          <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Alert severity="info" sx={{ flexGrow: 1, mr: 2, borderRadius: 2 }}>
+          <Box sx={{ mb: 2, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, gap: 2 }}>
+            <Alert severity="info" sx={{ flexGrow: 1, borderRadius: 2 }}>
               <strong>Mode Preview Admin:</strong> Anda sedang melihat tampilan Portal Klien.
             </Alert>
             <Button
@@ -195,7 +195,7 @@ export const OverviewView: React.FC = () => {
           <Box>
             <Chip
               icon={<AutoIcon sx={{ fontSize: '14px !important' }} />}
-              label="SISTEM OPERASIONAL DOKUMEN AUTOMATED"
+              label="SISTEM OPERASIONAL & DOKUMENTASI OTOMATIS"
               size="small"
               sx={{
                 fontWeight: 800,
@@ -206,47 +206,92 @@ export const OverviewView: React.FC = () => {
               }}
             />
             <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary', mb: 0.5 }}>
-              Selamat Datang di Studio Control Center Atasilabs
+              Selamat Datang di Sistem Informasi Atasilabs
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 700 }}>
-              Pusat kendali manajemen proyek, transaksi & invoice pembayaran, otomatisasi 5 paket dokumen (CIF, RSD, MoU, SPK, BAST), dan pengelolaan prospek.
+              Pusat kendali manajemen proyek, transaksi & invoice pembayaran, otomatisasi dokumentasi, dan pengelolaan prospek.
             </Typography>
           </Box>
 
-          <Stack direction="row" spacing={1.5} flexWrap="wrap">
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={{ xs: 1, sm: 1.5 }}
+            sx={{ width: { xs: '100%', md: 'auto' }, mt: { xs: 1.5, md: 0 } }}
+            flexWrap="wrap"
+          >
             <Button
               variant="contained"
               color="primary"
-              startIcon={<PaymentsIcon />}
+              size="small"
+              startIcon={<PaymentsIcon sx={{ fontSize: { xs: '1.05rem !important', sm: '1.2rem !important' } }} />}
               onClick={() => setDashboardTab('payments')}
-              sx={{ fontWeight: 800, borderRadius: 2.5 }}
+              sx={{
+                fontWeight: 800,
+                borderRadius: { xs: 2, sm: 2.5 },
+                fontSize: { xs: '0.78rem', sm: '0.85rem' },
+                py: { xs: 0.65, sm: 0.85 },
+                px: { xs: 1.5, sm: 2 },
+                minHeight: { xs: 34, sm: 40 },
+                width: { xs: '100%', sm: 'auto' },
+                textTransform: 'none',
+              }}
             >
               Input & Status Pembayaran
             </Button>
             <Button
               variant="outlined"
               color="secondary"
-              startIcon={<DescriptionIcon />}
+              size="small"
+              startIcon={<DescriptionIcon sx={{ fontSize: { xs: '1.05rem !important', sm: '1.2rem !important' } }} />}
               onClick={() => setDashboardTab('documents')}
-              sx={{ fontWeight: 700, borderRadius: 2.5 }}
+              sx={{
+                fontWeight: 700,
+                borderRadius: { xs: 2, sm: 2.5 },
+                fontSize: { xs: '0.78rem', sm: '0.85rem' },
+                py: { xs: 0.65, sm: 0.85 },
+                px: { xs: 1.5, sm: 2 },
+                minHeight: { xs: 34, sm: 40 },
+                width: { xs: '100%', sm: 'auto' },
+                textTransform: 'none',
+              }}
             >
               Cetak Dokumen
             </Button>
             <Button
               variant="outlined"
               color="success"
-              startIcon={<VisibilityIcon />}
+              size="small"
+              startIcon={<VisibilityIcon sx={{ fontSize: { xs: '1.05rem !important', sm: '1.2rem !important' } }} />}
               onClick={() => setPreviewClientPortal(true)}
-              sx={{ fontWeight: 700, borderRadius: 2.5 }}
+              sx={{
+                fontWeight: 700,
+                borderRadius: { xs: 2, sm: 2.5 },
+                fontSize: { xs: '0.78rem', sm: '0.85rem' },
+                py: { xs: 0.65, sm: 0.85 },
+                px: { xs: 1.5, sm: 2 },
+                minHeight: { xs: 34, sm: 40 },
+                width: { xs: '100%', sm: 'auto' },
+                textTransform: 'none',
+              }}
             >
               Preview Portal Klien
             </Button>
             <Button
               variant="outlined"
               color="secondary"
-              startIcon={<CodeIcon />}
+              size="small"
+              startIcon={<CodeIcon sx={{ fontSize: { xs: '1.05rem !important', sm: '1.2rem !important' } }} />}
               onClick={() => setPreviewFreelancerPortal(true)}
-              sx={{ fontWeight: 700, borderRadius: 2.5 }}
+              sx={{
+                fontWeight: 700,
+                borderRadius: { xs: 2, sm: 2.5 },
+                fontSize: { xs: '0.78rem', sm: '0.85rem' },
+                py: { xs: 0.65, sm: 0.85 },
+                px: { xs: 1.5, sm: 2 },
+                minHeight: { xs: 34, sm: 40 },
+                width: { xs: '100%', sm: 'auto' },
+                textTransform: 'none',
+              }}
             >
               Preview Portal Dev
             </Button>
@@ -275,13 +320,13 @@ export const OverviewView: React.FC = () => {
                 },
               }}
             >
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                <Typography variant="subtitle2" color="text.secondary" sx={{ fontWeight: 700, fontSize: '0.82rem' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.6 }}>
+                <Typography variant="subtitle2" color="text.secondary" sx={{ fontWeight: 700, fontSize: { xs: '0.78rem', sm: '0.82rem' } }}>
                   {card.title}
                 </Typography>
                 <Box
                   sx={{
-                    p: 1,
+                    p: 0.8,
                     borderRadius: 2,
                     backgroundColor: `${card.color}15`,
                     display: 'flex',
@@ -292,7 +337,7 @@ export const OverviewView: React.FC = () => {
                   {card.icon}
                 </Box>
               </Box>
-              <Typography variant="h4" sx={{ fontWeight: 800, mb: 0.5, fontSize: '1.8rem' }}>
+              <Typography variant="h4" sx={{ fontWeight: 800, mb: 0.3, fontSize: { xs: '1.3rem', sm: '1.6rem', md: '1.8rem' }, lineHeight: 1.15 }}>
                 {card.value}
               </Typography>
               <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
@@ -319,9 +364,8 @@ export const OverviewView: React.FC = () => {
           >
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <AssignmentIcon color="primary" />
-                <Typography variant="h6" sx={{ fontWeight: 800, fontSize: '1.1rem' }}>
-                  Proyek Klien Aktif & Status SOP Dokumen
+                <Typography variant="h6" sx={{ fontWeight: 800, fontSize: { xs: '0.9rem', md: '1.1rem' } }}>
+                  Proyek Klien Aktif
                 </Typography>
               </Box>
               <Button

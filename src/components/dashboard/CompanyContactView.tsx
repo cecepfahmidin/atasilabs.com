@@ -106,24 +106,6 @@ export const CompanyContactView: React.FC = () => {
           <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', flexShrink: 0, flexWrap: 'wrap' }}>
             <Button
               variant="outlined"
-              startIcon={<ResetIcon />}
-              onClick={handleReset}
-              type="button"
-              sx={{
-                fontWeight: 700,
-                borderRadius: 2.5,
-                whiteSpace: 'nowrap',
-                color: theme.palette.text.primary,
-                borderColor: theme.palette.divider,
-                '&:hover': {
-                  borderColor: theme.palette.primary.main,
-                },
-              }}
-            >
-              Reset Default
-            </Button>
-            <Button
-              variant="outlined"
               startIcon={<LaunchIcon />}
               onClick={() => router.push('/')}
               type="button"
@@ -155,7 +137,12 @@ export const CompanyContactView: React.FC = () => {
                 color: theme.palette.mode === 'dark' ? '#181512' : '#ffffff',
               }}
             >
-              {saving ? 'Menyimpan...' : 'Simpan Perubahan'}
+              <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+                {saving ? 'Menyimpan...' : 'Simpan Perubahan'}
+              </Box>
+              <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>
+                {saving ? 'Menyimpan...' : 'Simpan'}
+              </Box>
             </Button>
           </Stack>
         </Box>
