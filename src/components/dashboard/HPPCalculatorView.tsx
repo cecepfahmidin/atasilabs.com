@@ -433,16 +433,7 @@ export const HPPCalculatorView: React.FC = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               sx={{ minWidth: { xs: '100%', sm: '200px' } }}
             />
-            <Button
-              size="small"
-              variant="outlined"
-              color="secondary"
-              startIcon={<ResetIcon fontSize="small" />}
-              onClick={handleResetHppMatrix}
-              sx={{ fontSize: '0.75rem', fontWeight: 700 }}
-            >
-              Reset Matriks
-            </Button>
+
             <Button
               size="small"
               variant="outlined"
@@ -502,7 +493,7 @@ export const HPPCalculatorView: React.FC = () => {
                       }}
                     >
                       <TableCell sx={{ fontWeight: 700 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 0.5 }}>
                           {isSelected && <Chip label="Aktif di Simulasi" size="small" color="primary" sx={{ height: 18, fontSize: '0.62rem', fontWeight: 800 }} />}
                           <Typography variant="body2" sx={{ fontWeight: 700 }}>
                             {tier.tierName}
@@ -576,11 +567,11 @@ export const HPPCalculatorView: React.FC = () => {
                 >
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
                     <Box>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 0.5 }}>
+                        {isSelected && <Chip label="Aktif di Simulasi" size="small" color="primary" sx={{ height: 18, fontSize: '0.62rem', fontWeight: 800 }} />}
                         <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
                           {tier.tierName}
                         </Typography>
-                        {isSelected && <Chip label="Aktif di Simulasi" size="small" color="primary" sx={{ height: 18, fontSize: '0.62rem', fontWeight: 800 }} />}
                       </Box>
                       <Typography variant="caption" color="text.secondary">
                         {tier.pageRange} — {tier.workingDays}

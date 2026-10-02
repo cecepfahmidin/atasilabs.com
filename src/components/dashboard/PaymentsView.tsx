@@ -1315,14 +1315,14 @@ export const PaymentsView: React.FC = () => {
             </Grid>
 
             <Grid size={{ xs: 12, sm: 5 }} textAlign={{ sm: 'right' }}>
-              <Box sx={{ display: 'flex', gap: 1, justifyContent: { sm: 'flex-end' }, flexWrap: 'wrap', mt: { xs: 1, sm: 2.5 } }}>
+              <Box sx={{ display: 'flex', gap: 1, justifyContent: { sm: 'flex-end' }, flexWrap: { xs: 'nowrap', sm: 'wrap' }, mt: { xs: 1, sm: 2.5 } }}>
                 <Button
                   variant="outlined"
                   color="info"
                   size="medium"
                   startIcon={<BankIcon />}
                   onClick={() => setBankInfoDialogOpen(true)}
-                  sx={{ fontWeight: 800, borderRadius: 2.5, px: 2, py: 1, textTransform: 'none' }}
+                  sx={{ fontWeight: 800, borderRadius: 2.5, px: 2, py: 1, textTransform: 'none', flex: { xs: 1, sm: 'initial' }, fontSize: { xs: '0.75rem', sm: '0.875rem' }, whiteSpace: 'nowrap' }}
                 >
                   Info Rekening
                 </Button>
@@ -1332,9 +1332,10 @@ export const PaymentsView: React.FC = () => {
                   size="medium"
                   startIcon={<AddIcon />}
                   onClick={handleOpenPaymentDialog}
-                  sx={{ fontWeight: 800, borderRadius: 2.5, px: 2.5, py: 1, textTransform: 'none' }}
+                  sx={{ fontWeight: 800, borderRadius: 2.5, px: 2.5, py: 1, textTransform: 'none', flex: { xs: 1, sm: 'initial' }, fontSize: { xs: '0.75rem', sm: '0.875rem' }, whiteSpace: 'nowrap' }}
                 >
-                  Pembayaran Baru
+                  <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>Pembayaran Baru</Box>
+                  <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>Pembayaran</Box>
                 </Button>
               </Box>
             </Grid>
@@ -1883,16 +1884,30 @@ export const PaymentsView: React.FC = () => {
       )}
 
       {/* Dialog Modal: Catat Pengeluaran Upah Freelancer (Fitur Admin) */}
-      <Dialog open={freelancerPayoutDialogOpen} onClose={() => setFreelancerPayoutDialogOpen(false)} maxWidth="xs" fullWidth slotProps={{ paper: { sx: { borderRadius: 3.5, p: 1 } } }}>
-        <DialogTitle sx={{ fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          Catat Pengeluaran Upah Freelancer
-          <IconButton size="small" onClick={() => setFreelancerPayoutDialogOpen(false)}>
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
+      <Drawer
+        anchor="right"
+        open={freelancerPayoutDialogOpen}
+        onClose={() => setFreelancerPayoutDialogOpen(false)}
+        PaperProps={{
+          sx: {
+            width: { xs: '100%', sm: 540, md: 620 },
+            boxSizing: 'border-box',
+            display: 'flex',
+            flexDirection: 'column',
+          },
+        }}
+      >
+        <form onSubmit={handleSaveFreelancerPayout} style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+          <Box sx={{ p: 2.5, px: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: (t) => `1px solid ${t.palette.divider}` }}>
+            <Typography variant="h6" sx={{ fontWeight: 900 }}>
+              Catat Pengeluaran Upah Freelancer
+            </Typography>
+            <IconButton size="small" onClick={() => setFreelancerPayoutDialogOpen(false)}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
 
-        <form onSubmit={handleSaveFreelancerPayout}>
-          <DialogContent dividers>
+          <Box sx={{ flexGrow: 1, overflowY: 'auto', p: 3 }}>
             <Stack spacing={2.5}>
               {/* Select Freelancer (Penerima Upah) */}
               <TextField
@@ -2076,18 +2091,18 @@ export const PaymentsView: React.FC = () => {
                 onChange={(e) => setFreelancerPayoutFormData((prev) => ({ ...prev, notes: e.target.value }))}
               />
             </Stack>
-          </DialogContent>
+          </Box>
 
-          <DialogActions sx={{ p: 2 }}>
+          <Box sx={{ p: 2, px: 3, borderTop: (t) => `1px solid ${t.palette.divider}`, display: 'flex', justifyContent: 'flex-end', gap: 1.5, bgcolor: 'background.paper' }}>
             <Button onClick={() => setFreelancerPayoutDialogOpen(false)} sx={{ fontWeight: 700 }}>
               Batal
             </Button>
             <Button type="submit" variant="contained" color="secondary" sx={{ fontWeight: 800, borderRadius: 2, bgcolor: '#8b5cf6', '&:hover': { bgcolor: '#7c3aed' } }}>
               Simpan Pengeluaran Upah
             </Button>
-          </DialogActions>
+          </Box>
         </form>
-      </Dialog>
+      </Drawer>
 
       {/* Form Drawer Input Pembayaran */}
       <Drawer
