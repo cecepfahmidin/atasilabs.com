@@ -3,6 +3,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import SectionHeader from './SectionHeader';
 import { useApp } from '../../context/AppContext';
+import { PricingTier } from '../../types';
 
 const formatRupiah = (amount: number) => {
   return new Intl.NumberFormat('id-ID', {
@@ -13,10 +14,11 @@ const formatRupiah = (amount: number) => {
 };
 
 export const PricingSection: React.FC = () => {
-  const { pricingTiers, setSelectedServiceForInquiry, isLoadingData } = useApp();
+  const { pricingTiers, setSelectedServiceForInquiry, isLoadingData, companyContact } = useApp();
   const sectionRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const [progress, setProgress] = useState(0);
+  const [selectedTierDetail, setSelectedTierDetail] = useState<PricingTier | null>(null);
 
   const visibleTiers = pricingTiers.filter((t) => t.active !== false);
   const cardCount = visibleTiers.length > 0 ? visibleTiers.length : 3;
@@ -28,6 +30,25 @@ export const PricingSection: React.FC = () => {
       contactElem.scrollIntoView({ behavior: 'smooth' });
     }
   };
+
+  // Lock body scroll and listen for Escape key when modal is open
+  useEffect(() => {
+    if (selectedTierDetail) {
+      document.body.style.overflow = 'hidden';
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          setSelectedTierDetail(null);
+        }
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => {
+        document.body.style.overflow = 'unset';
+        window.removeEventListener('keydown', handleKeyDown);
+      };
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+  }, [selectedTierDetail]);
 
   // The core mechanism: as user scrolls down through the tall section,
   // the sticky container stays pinned and we translate the track horizontally on desktop.
@@ -207,9 +228,10 @@ export const PricingSection: React.FC = () => {
                 return (
                   <div
                     key={tier.id}
-                    className={`flex flex-col justify-between p-5 md:p-6 w-full lg:w-[var(--card-w)] md:w-[calc((100%-24px)/2)] shrink-0 transition-all duration-300 relative rounded-lg ${isPopular
-                      ? 'bg-[#111111] border-2 border-[#FFD600] shadow-[0_0_35px_rgba(255,214,0,0.18)]'
-                      : 'bg-[#0F0F0F] border border-[#2D2D2D] hover:border-[#666666]'
+                    onClick={() => setSelectedTierDetail(tier)}
+                    className={`flex flex-col justify-between p-5 md:p-6 w-full lg:w-[var(--card-w)] md:w-[calc((100%-24px)/2)] shrink-0 transition-all duration-300 relative rounded-lg cursor-pointer group hover:scale-[1.01] ${isPopular
+                      ? 'bg-[#111111] border-2 border-[#FFD600] shadow-[0_0_35px_rgba(255,214,0,0.18)] hover:shadow-[0_0_45px_rgba(255,214,0,0.3)]'
+                      : 'bg-[#0F0F0F] border border-[#2D2D2D] hover:border-[#FFD600]/70 hover:bg-[#141414]'
                       }`}
                   >
                     <div className="flex flex-col gap-4">
@@ -235,7 +257,7 @@ export const PricingSection: React.FC = () => {
                       {/* Title & Tagline */}
                       <div className="flex flex-col gap-1">
                         <h3
-                          className={`font-grotesk text-[20px] md:text-[23px] lg:text-[25px] font-bold tracking-[0.3px] ${isPopular ? 'text-[#FFD600]' : 'text-[#F5F5F0]'
+                          className={`font-grotesk text-[20px] md:text-[23px] lg:text-[25px] font-bold tracking-[0.3px] group-hover:text-[#FFD600] transition-colors ${isPopular ? 'text-[#FFD600]' : 'text-[#F5F5F0]'
                             }`}
                         >
                           {tier.name}
@@ -297,12 +319,25 @@ export const PricingSection: React.FC = () => {
                           ))}
                         </div>
                       </div>
+
+                      {/* Clickable prompt hint */}
+                      <div className="flex items-center justify-between pt-2.5 mt-1 border-t border-[#1C1C1C] text-[10px] md:text-[11px] font-ibm-mono text-[#888888] group-hover:text-[#FFD600] transition-colors">
+                        <span className="flex items-center gap-1.5">
+                          <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#FFD600] group-hover:animate-ping" />
+                          DESKRIPSI LENGKAP
+                        </span>
+                        <span className="font-bold underline underline-offset-2">LIHAT DETAIL ↗</span>
+                      </div>
                     </div>
 
                     {/* CTA Button */}
                     <button
-                      onClick={() => handleSelectTier(tier.name, tier.tierNumber)}
-                      className={`flex items-center justify-center w-full h-[44px] md:h-[48px] mt-5 rounded font-grotesk text-[12px] md:text-[13px] font-bold tracking-[1.5px] transition-all duration-200 cursor-pointer ${isPopular
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSelectTier(tier.name, tier.tierNumber);
+                      }}
+                      className={`flex items-center justify-center w-full h-[44px] md:h-[48px] mt-4 rounded font-grotesk text-[12px] md:text-[13px] font-bold tracking-[1.5px] transition-all duration-200 cursor-pointer ${isPopular
                         ? 'bg-[#FFD600] text-[#0A0A0A] hover:bg-[#e6c200] shadow-md hover:scale-[1.01]'
                         : 'bg-[#1A1A1A] text-[#CCCCCC] border border-[#3D3D3D] hover:border-[#FFD600] hover:text-[#FFD600] hover:bg-[#222222]'
                         }`}
@@ -316,6 +351,216 @@ export const PricingSection: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* MODAL DESKRIPSI LENGKAP TIER PRICING */}
+      {selectedTierDetail && (
+        <div
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 md:p-6"
+          onClick={() => setSelectedTierDetail(null)}
+        >
+          <div
+            className="relative flex flex-col w-full max-w-2xl max-h-[90vh] bg-[#0E0E0E] border-2 border-[#FFD600] rounded-lg shadow-[0_25px_60px_rgba(0,0,0,0.95)] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header Bar */}
+            <div className="flex items-center justify-between px-5 sm:px-6 py-4 bg-[#141414] border-b border-[#242424] shrink-0">
+              <div className="flex items-center gap-2">
+                <span className="font-ibm-mono text-[11px] bg-[#FFD600] text-[#0A0A0A] px-2 py-0.5 font-bold rounded-sm">
+                  TIER 0{selectedTierDetail.tierNumber}
+                </span>
+                <span className="font-ibm-mono text-[11px] text-[#888888] tracking-[1px] uppercase">
+                  DESKRIPSI & SPESIFIKASI LENGKAP
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedTierDetail(null)}
+                className="flex items-center gap-1 font-ibm-mono text-[11px] text-[#888888] hover:text-[#FFD600] transition-colors px-2.5 py-1 bg-[#1E1E1E] hover:bg-[#2A2A2A] border border-[#333333] rounded cursor-pointer"
+                aria-label="Tutup Detail"
+              >
+                <span>✕</span>
+                <span className="hidden sm:inline">TUTUP [ESC]</span>
+              </button>
+            </div>
+
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto p-5 sm:p-7 space-y-6">
+              {/* Tier Title & Tagline */}
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <h2 className="font-grotesk text-[26px] sm:text-[32px] font-bold text-[#F5F5F0]">
+                    {selectedTierDetail.name}
+                  </h2>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {selectedTierDetail.popular && (
+                      <span className="font-ibm-mono text-[10px] font-bold text-[#FFD600] bg-[#FFD600]/10 border border-[#FFD600]/40 px-2 py-1 rounded">
+                        ★ REKOMENDASI POPULER
+                      </span>
+                    )}
+                    {selectedTierDetail.highlightBadge && (
+                      <span className="font-ibm-mono text-[10px] font-bold text-[#00E5FF] bg-[#00E5FF]/10 border border-[#00E5FF]/40 px-2 py-1 rounded">
+                        {selectedTierDetail.highlightBadge}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <p className="font-ibm-mono text-[12px] sm:text-[13px] text-[#B0B0B0] leading-relaxed">
+                  {selectedTierDetail.tagline || 'Paket Rekayasa Perangkat Lunak & Sistem Terintegrasi'}
+                </p>
+              </div>
+
+              {/* Pricing & Key Terms Card */}
+              <div className="bg-[#141414] border border-[#262626] rounded-lg p-4 sm:p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                  {selectedTierDetail.originalPrice && selectedTierDetail.originalPrice > selectedTierDetail.price ? (
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-ibm-mono text-[12px] text-[#FF4D4D] line-through font-bold">
+                        {formatRupiah(selectedTierDetail.originalPrice)}
+                      </span>
+                      <span className="font-ibm-mono text-[10px] bg-[#FF4D4D]/20 text-[#FF4D4D] px-2 py-0.5 rounded font-bold border border-[#FF4D4D]/40">
+                        DISKON SPESIAL
+                      </span>
+                    </div>
+                  ) : null}
+                  <div className="flex items-baseline gap-2">
+                    <span className="font-grotesk text-[28px] sm:text-[36px] font-bold text-[#FFD600] tracking-[-0.5px]">
+                      {formatRupiah(selectedTierDetail.price)}
+                    </span>
+                    <span className="font-ibm-mono text-[12px] text-[#888888]">
+                      /{selectedTierDetail.priceBilling || 'proyek'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap sm:flex-col gap-2 font-ibm-mono text-[11px] w-full sm:w-auto">
+                  {selectedTierDetail.deliveryTime && (
+                    <div className="flex items-center justify-between sm:justify-start gap-2 bg-[#1C1C1C] px-3 py-1.5 rounded border border-[#2D2D2D]">
+                      <span className="text-[#888888]">ESTIMASI:</span>
+                      <span className="text-[#FFD600] font-bold">{selectedTierDetail.deliveryTime}</span>
+                    </div>
+                  )}
+                  {selectedTierDetail.revisionCount && (
+                    <div className="flex items-center justify-between sm:justify-start gap-2 bg-[#1C1C1C] px-3 py-1.5 rounded border border-[#2D2D2D]">
+                      <span className="text-[#888888]">GARANSI:</span>
+                      <span className="text-[#4ADE80] font-bold">{selectedTierDetail.revisionCount}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Target Audience / Cocok Untuk */}
+              {selectedTierDetail.idealFor && (
+                <div className="bg-[#121212] border-l-4 border-[#FFD600] p-4 rounded-r-lg">
+                  <span className="font-grotesk text-[10px] font-bold text-[#FFD600] tracking-[1.5px] uppercase block mb-1">
+                    TARGET PENGGUNA & REKOMENDASI PENGGUNAAN:
+                  </span>
+                  <p className="font-ibm-mono text-[12px] sm:text-[13px] text-[#E0E0E0] leading-relaxed">
+                    {selectedTierDetail.idealFor}
+                  </p>
+                </div>
+              )}
+
+              {/* Specs Grid */}
+              {selectedTierDetail.specs && selectedTierDetail.specs.length > 0 && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between border-b border-[#242424] pb-2">
+                    <span className="font-grotesk text-[11px] font-bold text-[#F5F5F0] tracking-[1.5px]">
+                      SPESIFIKASI TEKNIS LENGKAP
+                    </span>
+                    <span className="font-ibm-mono text-[10px] text-[#888888]">
+                      {selectedTierDetail.specs.length} SPESIFIKASI
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {selectedTierDetail.specs.map((spec, idx) => (
+                      <div
+                        key={`detail-spec-${idx}`}
+                        className="flex items-center justify-between p-2.5 bg-[#141414] border border-[#222222] rounded font-ibm-mono text-[11px]"
+                      >
+                        <span className="text-[#888888] truncate mr-2">{spec.label}</span>
+                        <span className="text-[#FFD600] font-bold shrink-0">{spec.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Full Features Checklist */}
+              {selectedTierDetail.features && selectedTierDetail.features.length > 0 && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between border-b border-[#242424] pb-2">
+                    <span className="font-grotesk text-[11px] font-bold text-[#F5F5F0] tracking-[1.5px]">
+                      SELURUH FITUR & LAYANAN TERMASUK
+                    </span>
+                    <span className="font-ibm-mono text-[10px] text-[#4ADE80] font-bold">
+                      {selectedTierDetail.features.length} FITUR TERMASUK
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {selectedTierDetail.features.map((feat, idx) => (
+                      <div
+                        key={`detail-feat-${idx}`}
+                        className="flex items-start gap-2.5 p-2.5 bg-[#121212] border border-[#1E1E1E] rounded"
+                      >
+                        <span className="font-ibm-mono text-[#4ADE80] font-bold text-[13px] leading-tight shrink-0">
+                          ✓
+                        </span>
+                        <span className="font-ibm-mono text-[11px] sm:text-[12px] text-[#D0D0CA] leading-snug">
+                          {feat}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Studio Guarantee Banner */}
+              <div className="p-3.5 bg-[#111111] border border-[#262626] rounded text-[11px] font-ibm-mono text-[#888888] leading-relaxed flex items-center gap-3">
+                <span className="text-[#FFD600] text-lg font-bold">🛡</span>
+                <span>
+                  Setiap paket dikerjakan langsung oleh engineer profesional AtasiLabs. Dilengkapi jaminan garansi source code, deployment production, dan sesi onboarding/handover lengkap.
+                </span>
+              </div>
+            </div>
+
+            {/* Footer Actions */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 sm:p-5 bg-[#141414] border-t border-[#242424] shrink-0">
+              <a
+                href={`https://wa.me/${companyContact?.whatsappRaw || '628216361428'}?text=${encodeURIComponent(
+                  `Halo AtasiLabs, saya ingin konsultasi detail paket ${selectedTierDetail.name} (Tier 0${selectedTierDetail.tierNumber}).`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full sm:w-auto px-5 h-[44px] bg-[#1A1A1A] hover:bg-[#222222] border border-[#333333] hover:border-[#4ADE80] text-[#4ADE80] font-ibm-mono text-[11px] font-bold tracking-[0.5px] rounded transition-colors"
+              >
+                <span>CHAT WHATSAPP ↗</span>
+              </a>
+
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <button
+                  type="button"
+                  onClick={() => setSelectedTierDetail(null)}
+                  className="flex-1 sm:flex-none px-4 h-[44px] bg-transparent hover:bg-[#222222] border border-[#333333] text-[#888888] hover:text-[#F5F5F0] font-ibm-mono text-[11px] tracking-[1px] rounded transition-colors cursor-pointer"
+                >
+                  TUTUP
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const tierName = selectedTierDetail.name;
+                    const tierNumber = selectedTierDetail.tierNumber;
+                    setSelectedTierDetail(null);
+                    handleSelectTier(tierName, tierNumber);
+                  }}
+                  className="flex-1 sm:flex-none px-6 h-[44px] bg-[#FFD600] hover:bg-[#e6c200] text-[#0A0A0A] font-grotesk text-[12px] font-bold tracking-[1.2px] rounded transition-all shadow-md cursor-pointer hover:scale-[1.02]"
+                >
+                  PILIH PAKET INI →
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 };
