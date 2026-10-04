@@ -29,6 +29,181 @@ html, body {
   min-height: 100vh;
 }
 
+/* Slim dark scrollbar (global) */
+/* Firefox only — di Chrome 121+ properti standar ini akan menimpa ::-webkit-scrollbar */
+@supports (-moz-appearance: none) {
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: #2D2D2D transparent;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2D2D2D;
+  border-radius: 0;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--yellow);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* -------------------------------------------------------------
+ * LANDING FOOTER — GIANT BRAND REVEAL (closing effect ala TRAE.ai)
+ * Back layer : fixed yellow panel + giant typography (diam)
+ * Front layer: black footer content (bergerak ke atas saat scroll)
+ * ------------------------------------------------------------- */
+.brand-reveal {
+  --reveal: 0;
+  position: relative;
+  z-index: 0;
+  height: clamp(320px, calc(17vw + 180px), 100vh);
+  background: var(--yellow);
+  /* clip-path membuat anak `position: fixed` hanya terlihat di area wrapper */
+  clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%);
+}
+
+.brand-reveal__panel {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: clamp(28px, 5vw, 72px);
+  max-height: 100vh;
+  background: var(--yellow);
+  color: #0A0A0A;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.brand-reveal[data-active='false'] .brand-reveal__panel {
+  visibility: hidden;
+}
+
+.brand-reveal__grid {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    repeating-linear-gradient(to right, rgba(10, 10, 10, 0.07) 0 1px, transparent 1px calc(100% / 6)),
+    radial-gradient(rgba(10, 10, 10, 0.12) 1px, transparent 1px);
+  background-size: 100% 100%, 14px 14px;
+  mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.35) 100%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.35) 100%);
+}
+
+.brand-reveal__meta {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 28px 24px 20px;
+  border-bottom: 2px solid #0A0A0A;
+  margin: 0 24px;
+  padding-left: 0;
+  padding-right: 0;
+  opacity: clamp(0, calc(var(--reveal) * 2.2 - 0.7), 1);
+  transform: translate3d(0, calc((1 - var(--reveal)) * 24px), 0);
+  will-change: opacity, transform;
+}
+
+@media (min-width: 768px) {
+  .brand-reveal__meta {
+    margin: 0 48px;
+    padding-top: 40px;
+    padding-bottom: 24px;
+  }
+}
+
+.brand-reveal__top-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 2px solid #0A0A0A;
+  background: transparent;
+  color: #0A0A0A;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  cursor: pointer;
+  box-shadow: 4px 4px 0 #0A0A0A;
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
+    background-color 0.2s, color 0.2s;
+}
+
+.brand-reveal__top-btn:hover {
+  background: #0A0A0A;
+  color: var(--yellow);
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 #0A0A0A;
+}
+
+.brand-reveal__top-arrow {
+  display: inline-block;
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.brand-reveal__top-btn:hover .brand-reveal__top-arrow {
+  transform: translateY(-3px);
+}
+
+.brand-reveal__giant {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  user-select: none;
+  pointer-events: none;
+  /* rapat ke tepi bawah footer, tanpa margin & tanpa terpotong */
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
+
+.brand-reveal__svg {
+  display: block;
+  flex: none;
+  width: 102vw;
+  max-width: none;
+  height: auto;
+  /* parallax ringan: brand naik perlahan sampai posisi final saat tersingkap */
+  transform: translate3d(0, calc((1 - var(--reveal)) * 22%), 0);
+  will-change: transform;
+}
+
+.brand-reveal__shade {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: #050505;
+  opacity: calc((1 - var(--reveal)) * 0.85);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand-reveal__svg,
+  .brand-reveal__meta {
+    transform: none;
+  }
+}
+
 /* -------------------------------------------------------------
  * GLOBAL & PRINT STYLES FOR ATASILABS OFFICIAL DOCUMENT GENERATOR
  * ------------------------------------------------------------- */
