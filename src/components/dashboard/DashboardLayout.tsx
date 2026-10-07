@@ -44,6 +44,7 @@ import {
   RateReview as RateReviewIcon,
   SupervisorAccount as CLevelIcon,
   Payments as PaymentsIcon,
+  WhatsApp as WhatsAppIcon,
   ExpandLess,
   ExpandMore,
 } from '@mui/icons-material';
@@ -149,8 +150,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
   useEffect(() => {
     if (userRole === 'CLIENT' || userRole === 'FREELANCER') {
       const restrictedTabs = userRole === 'FREELANCER'
-        ? ['payments', 'hpp', 'master-data', 'users', 'team', 'portfolio', 'pricing', 'contact', 'testimonials', 'leads']
-        : ['hpp', 'master-data', 'users', 'team', 'portfolio', 'pricing', 'contact', 'testimonials', 'leads'];
+        ? ['payments', 'hpp', 'master-data', 'users', 'team', 'portfolio', 'pricing', 'contact', 'testimonials', 'leads', 'whatsapp']
+        : ['hpp', 'master-data', 'users', 'team', 'portfolio', 'pricing', 'contact', 'testimonials', 'leads', 'whatsapp'];
 
       const isRestrictedPath =
         (userRole === 'FREELANCER' && pathname?.includes('/dashboard/payments')) ||
@@ -162,7 +163,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
         pathname?.includes('/dashboard/pricing') ||
         pathname?.includes('/dashboard/contact') ||
         pathname?.includes('/dashboard/testimonials') ||
-        pathname?.includes('/dashboard/leads');
+        pathname?.includes('/dashboard/leads') ||
+        pathname?.includes('/dashboard/whatsapp');
 
       if (restrictedTabs.includes(dashboardTab) || isRestrictedPath) {
         setDashboardTab('overview');
@@ -261,6 +263,13 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
       badge: unreadLeadsCount,
     },
     {
+      id: 'whatsapp',
+      label: 'WhatsApp Gateway',
+      href: '/dashboard/whatsapp',
+      icon: <WhatsAppIcon sx={{ color: '#25D366' }} />,
+      badge: 0,
+    },
+    {
       id: 'master-data',
       label: 'Master Data',
       href: '/dashboard/master-data',
@@ -315,10 +324,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
 
   const menuItems = rawMenuItems
     .filter((item) => {
-      if (userRole === 'CLIENT' && (item.id === 'hpp' || item.id === 'master-data' || item.id === 'leads')) {
+      if (userRole === 'CLIENT' && (item.id === 'hpp' || item.id === 'master-data' || item.id === 'leads' || item.id === 'whatsapp')) {
         return false;
       }
-      if (userRole === 'FREELANCER' && (item.id === 'payments' || item.id === 'hpp' || item.id === 'master-data' || item.id === 'leads')) {
+      if (userRole === 'FREELANCER' && (item.id === 'payments' || item.id === 'hpp' || item.id === 'master-data' || item.id === 'leads' || item.id === 'whatsapp')) {
         return false;
       }
       return true;
@@ -347,6 +356,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
   else if (dashboardTab === 'master-data') activeTitle = 'Pusat Master Data';
   else if (dashboardTab === 'payments') activeTitle = 'Rincian & Input Pembayaran Proyek';
   else if (dashboardTab === 'freelancer-fee') activeTitle = 'Rincian Fee Developer & Matriks HPP Tier';
+  else if (dashboardTab === 'whatsapp') activeTitle = 'WhatsApp Web Gateway & Otomasi';
   else {
     const flat = rawMenuItems.flatMap((m) => (m.children ? [m, ...m.children] : [m]));
     const found = flat.find((m) => m.id === dashboardTab);

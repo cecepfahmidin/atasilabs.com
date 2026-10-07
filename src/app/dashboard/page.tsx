@@ -15,6 +15,7 @@ import { TestimonialsCMSView } from '@/components/dashboard/TestimonialsCMSView'
 import { TeamCMSView } from '@/components/dashboard/TeamCMSView';
 import { PaymentsView } from '@/components/dashboard/PaymentsView';
 import { FreelancerFeeView } from '@/components/dashboard/FreelancerFeeView';
+import { WhatsAppAdminView } from '@/components/dashboard/WhatsAppAdminView';
 
 export default function DashboardPage() {
   const { setActiveView, dashboardTab } = useApp();
@@ -30,6 +31,7 @@ export default function DashboardPage() {
       {dashboardTab === 'freelancer-fee' && <FreelancerFeeView />}
       {dashboardTab === 'payments' && <PaymentsView />}
       {dashboardTab === 'leads' && <LeadsView />}
+      {dashboardTab === 'whatsapp' && <WhatsAppAdminView />}
       {dashboardTab === 'users' && <UsersView />}
       {dashboardTab === 'portfolio' && <PortfolioCMSView />}
       {dashboardTab === 'projects' && <ProjectsView />}

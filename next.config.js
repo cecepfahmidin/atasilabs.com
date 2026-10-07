@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  serverExternalPackages: ['whatsapp-web.js', 'puppeteer', 'qrcode'],
   transpilePackages: [
     '@mui/material',
     '@mui/icons-material',

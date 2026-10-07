@@ -21,6 +21,7 @@ export interface RoleConfig {
     schema: boolean;
     hpp: boolean;
     masterData: boolean;
+    whatsapp: boolean;
     // Granular permissions
     hppFinancials: boolean; // Internal HPP Profit Matrix & Developer Fees
     freelancerFees: boolean; // SPK Fee Rates
@@ -52,6 +53,7 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
       schema: true,
       hpp: true,
       masterData: true,
+      whatsapp: true,
       hppFinancials: true,
       freelancerFees: true,
       clientPricingMoU: true,
@@ -80,6 +82,7 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
       schema: true,
       hpp: true,
       masterData: true,
+      whatsapp: true,
       hppFinancials: true, // Needs fee structure
       freelancerFees: true,
       clientPricingMoU: true,
@@ -108,6 +111,7 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
       schema: false,
       hpp: false,
       masterData: true,
+      whatsapp: true,
       hppFinancials: false, // Hidden from CMO
       freelancerFees: false,
       clientPricingMoU: true,
@@ -136,6 +140,7 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
       schema: true,
       hpp: true,
       masterData: true,
+      whatsapp: true,
       hppFinancials: true,
       freelancerFees: true,
       clientPricingMoU: true,
@@ -164,6 +169,7 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
       schema: false,
       hpp: false,
       masterData: false, // Strictly Hidden
+      whatsapp: false,
       hppFinancials: false, // Strictly Hidden
       freelancerFees: false, // Strictly Hidden
       clientPricingMoU: true,
@@ -192,6 +198,7 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
       schema: false,
       hpp: false,
       masterData: false, // Strictly Hidden
+      whatsapp: false,
       hppFinancials: false, // Strictly Hidden
       freelancerFees: true, // Only own SPK fee
       clientPricingMoU: false, // Hidden
@@ -220,6 +227,7 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
       schema: true,
       hpp: false,
       masterData: true,
+      whatsapp: false,
       hppFinancials: false,
       freelancerFees: true,
       clientPricingMoU: false,
@@ -243,6 +251,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, Record<string, boolean>>
 export const hasPermission = (role: UserRole, key: string, customMap?: Record<UserRole, Record<string, boolean>>): boolean => {
   if (key === 'payments' && role === 'FREELANCER') return false;
   if (key === 'payments') return true;
+  if (key === 'whatsapp') return ['ADMIN', 'CEO', 'CTO', 'CMO'].includes(role);
   if (key === 'freelancer-fee') return role === 'FREELANCER' || role === 'DEVELOPER' || role === 'CEO' || role === 'CTO' || role === 'ADMIN';
   const normKey = key === 'master-data' ? 'masterData' : key;
   if (customMap && customMap[role]) {

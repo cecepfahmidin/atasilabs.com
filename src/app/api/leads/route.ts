@@ -37,7 +37,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, email, company, serviceType, budget, message } = body;
+    const { name, email, phone, company, serviceType, budget, message } = body;
 
     if (!name || !email || !message) {
       return NextResponse.json(
@@ -52,6 +52,7 @@ export async function POST(request: Request) {
         data: {
           name,
           email,
+          phone: phone || null,
           company: company || 'Pribadi / Perorangan',
           serviceType: serviceType || 'Konsultasi Umum',
           budget: budget || 'Belum Ditentukan',
@@ -64,6 +65,7 @@ export async function POST(request: Request) {
         id: `lead-${Date.now()}`,
         name,
         email,
+        phone: phone || null,
         company: company || 'Pribadi / Perorangan',
         serviceType: serviceType || 'Konsultasi Umum',
         budget: budget || 'Belum Ditentukan',
@@ -80,6 +82,7 @@ export async function POST(request: Request) {
           id: newLead.id,
           name: newLead.name,
           email: newLead.email,
+          phone: newLead.phone || phone || null,
           company: newLead.company,
           serviceType: newLead.serviceType,
           budget: newLead.budget,
@@ -103,28 +106,38 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
   try {
     const body = await request.json();
-    const { id, status } = body;
+    const { id, status, phone, name, email, company, serviceType, budget, message } = body;
 
-    if (!id || !status) {
+    if (!id) {
       return NextResponse.json(
-        { success: false, error: 'ID and status are required' },
+        { success: false, error: 'ID is required' },
         { status: 400 }
       );
     }
+
+    const updateData: any = {};
+    if (status !== undefined) updateData.status = status;
+    if (phone !== undefined) updateData.phone = phone;
+    if (name !== undefined) updateData.name = name;
+    if (email !== undefined) updateData.email = email;
+    if (company !== undefined) updateData.company = company;
+    if (serviceType !== undefined) updateData.serviceType = serviceType;
+    if (budget !== undefined) updateData.budget = budget;
+    if (message !== undefined) updateData.message = message;
 
     let updated: any;
     try {
       updated = await prisma.lead.update({
         where: { id },
-        data: { status },
+        data: updateData,
       });
     } catch (dbErr) {
-      updated = { id, status };
+      updated = { id, ...updateData };
     }
 
     // Dual-sync to Supabase REST API
     try {
-      await supabase.from('Lead').upsert({ id, status });
+      await supabase.from('Lead').upsert({ id, ...updateData });
     } catch (sbErr) {
       console.error('Supabase Lead PATCH error:', sbErr);
     }
@@ -132,7 +145,7 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ success: true, data: updated });
   } catch (error) {
     return NextResponse.json(
-      { success: false, error: 'Failed to update lead status' },
+      { success: false, error: 'Failed to update lead' },
       { status: 500 }
     );
   }

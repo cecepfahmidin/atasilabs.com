@@ -14,6 +14,7 @@ export const ContactSection: React.FC = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    phone: '',
     company: '',
     serviceType: '',
     message: '',
@@ -62,6 +63,7 @@ export const ContactSection: React.FC = () => {
 
     const name = formData.name.trim();
     const email = formData.email.trim();
+    const phone = formData.phone.trim();
     const company = formData.company.trim();
     const serviceType = formData.serviceType || 'Konsultasi Umum';
     const message = formData.message.trim();
@@ -71,6 +73,7 @@ export const ContactSection: React.FC = () => {
       const created = await addLead({
         name,
         email,
+        phone: phone || undefined,
         company: company || 'Pribadi / Perorangan',
         serviceType,
         budget: budgetInfo.text,
@@ -82,6 +85,7 @@ export const ContactSection: React.FC = () => {
       const waText = `Halo ${companyContact.companyName || 'Atasilabs'}, saya ingin mengirim inquiry proyek:\n\n` +
         `• Nama: ${name}\n` +
         `• Email: ${email}\n` +
+        (phone ? `• No. WhatsApp: ${phone}\n` : '') +
         (company ? `• Perusahaan: ${company}\n` : '') +
         `• Layanan: ${serviceType}\n` +
         `• Estimasi Paket: ${budgetInfo.text}\n` +
@@ -93,6 +97,7 @@ export const ContactSection: React.FC = () => {
       setFormData({
         name: '',
         email: '',
+        phone: '',
         company: '',
         serviceType: '',
         message: '',
@@ -245,6 +250,20 @@ export const ContactSection: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* WhatsApp */}
+                <div className="flex flex-col gap-2">
+                  <label className="font-ibm-mono text-[11px] md:text-[12px] text-[#888888] tracking-[1.5px] font-bold uppercase flex items-center gap-1.5">
+                    <span className="text-[#25D366]"></span> NO. WHATSAPP AKTIF
+                  </label>
+                  <input
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    placeholder="0812-3456-7890"
+                    className="w-full h-12 bg-[#0A0A0A] border border-[#2D2D2D] focus:border-[#25D366] px-4 font-ibm-mono text-[13px] md:text-[14px] text-[#F5F5F0] outline-none transition-colors"
+                  />
+                </div>
+
                 {/* Company */}
                 <div className="flex flex-col gap-2">
                   <label className="font-ibm-mono text-[11px] md:text-[12px] text-[#888888] tracking-[1.5px] font-bold uppercase">
@@ -254,29 +273,29 @@ export const ContactSection: React.FC = () => {
                     type="text"
                     value={formData.company}
                     onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                    placeholder="PT Tech Innovation"
+                    placeholder="PT Tech Innovation (Opsional)"
                     className="w-full h-12 bg-[#0A0A0A] border border-[#2D2D2D] focus:border-[#FFD600] px-4 font-ibm-mono text-[13px] md:text-[14px] text-[#F5F5F0] outline-none transition-colors"
                   />
                 </div>
+              </div>
 
-                {/* Service Type */}
-                <div className="flex flex-col gap-2">
-                  <label className="font-ibm-mono text-[11px] md:text-[12px] text-[#888888] tracking-[1.5px] font-bold uppercase">
-                    JENIS LAYANAN / PAKET
-                  </label>
-                  <select
-                    value={formData.serviceType}
-                    onChange={(e) => setFormData({ ...formData, serviceType: e.target.value })}
-                    className="w-full h-12 bg-[#0A0A0A] border border-[#2D2D2D] focus:border-[#FFD600] px-4 font-ibm-mono text-[13px] md:text-[14px] text-[#F5F5F0] outline-none transition-colors"
-                  >
-                    <option value="">-- Pilih Layanan --</option>
-                    {serviceOptions.map((opt) => (
-                      <option key={opt} value={opt} className="bg-[#0A0A0A] text-[#F5F5F0]">
-                        {opt}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              {/* Service Type */}
+              <div className="flex flex-col gap-2">
+                <label className="font-ibm-mono text-[11px] md:text-[12px] text-[#888888] tracking-[1.5px] font-bold uppercase">
+                  JENIS LAYANAN / PAKET
+                </label>
+                <select
+                  value={formData.serviceType}
+                  onChange={(e) => setFormData({ ...formData, serviceType: e.target.value })}
+                  className="w-full h-12 bg-[#0A0A0A] border border-[#2D2D2D] focus:border-[#FFD600] px-4 font-ibm-mono text-[13px] md:text-[14px] text-[#F5F5F0] outline-none transition-colors"
+                >
+                  <option value="">-- Pilih Layanan / Paket --</option>
+                  {serviceOptions.map((opt) => (
+                    <option key={opt} value={opt} className="bg-[#0A0A0A] text-[#F5F5F0]">
+                      {opt}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {/* Message */}

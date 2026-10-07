@@ -57,6 +57,7 @@ import {
   Visibility as VisibilityIcon,
   VisibilityOff as VisibilityOffIcon,
   Key as KeyIcon,
+  WhatsApp as WhatsAppIcon,
 } from '@mui/icons-material';
 import { useApp } from '../../context/AppContext';
 import { User, UserRole } from '../../types';
@@ -482,9 +483,34 @@ export const UsersView: React.FC = () => {
                         </TableCell>
 
                         <TableCell>
-                          <Typography variant="body2" color="text.secondary">
-                            {u.phone || '-'}
-                          </Typography>
+                          {u.phone ? (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                {u.phone}
+                              </Typography>
+                              <Tooltip title="Hubungi via WhatsApp" arrow>
+                                <IconButton
+                                  size="small"
+                                  component="a"
+                                  href={`https://wa.me/${u.phone.replace(/\D/g, '').startsWith('0') ? '62' + u.phone.replace(/\D/g, '').slice(1) : u.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Halo ${u.name}...`)}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  sx={{
+                                    p: 0.5,
+                                    color: '#25D366',
+                                    bgcolor: 'rgba(37, 211, 102, 0.08)',
+                                    '&:hover': { bgcolor: 'rgba(37, 211, 102, 0.2)' },
+                                  }}
+                                >
+                                  <WhatsAppIcon sx={{ fontSize: 16 }} />
+                                </IconButton>
+                              </Tooltip>
+                            </Box>
+                          ) : (
+                            <Typography variant="body2" color="text.secondary">
+                              -
+                            </Typography>
+                          )}
                         </TableCell>
 
                         <TableCell>
@@ -562,9 +588,24 @@ export const UsersView: React.FC = () => {
                       <Typography variant="caption" color="text.secondary">
                         Organisasi: <strong>{u.company || '-'}</strong>
                       </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Telepon/WA: <strong>{u.phone || '-'}</strong>
-                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <Typography variant="caption" color="text.secondary">
+                          Telepon/WA: <strong>{u.phone || '-'}</strong>
+                        </Typography>
+                        {u.phone && (
+                          <IconButton
+                            size="small"
+                            component="a"
+                            href={`https://wa.me/${u.phone.replace(/\D/g, '').startsWith('0') ? '62' + u.phone.replace(/\D/g, '').slice(1) : u.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Halo ${u.name}...`)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            sx={{ p: 0.4, color: '#25D366' }}
+                            title="Chat WhatsApp"
+                          >
+                            <WhatsAppIcon sx={{ fontSize: 16 }} />
+                          </IconButton>
+                        )}
+                      </Box>
                       <Typography variant="caption" color="text.secondary">
                         Status: <strong style={{ color: u.status === 'ACTIVE' ? '#10b981' : '#64748b' }}>{u.status === 'ACTIVE' ? 'Aktif' : 'Nonaktif'}</strong>
                       </Typography>

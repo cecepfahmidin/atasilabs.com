@@ -19,8 +19,8 @@ interface AppContextType {
   toggleTheme: () => void;
   activeView: 'landing' | 'dashboard';
   setActiveView: (view: 'landing' | 'dashboard') => void;
-  dashboardTab: 'overview' | 'leads' | 'portfolio' | 'projects' | 'pricing' | 'documents' | 'payments' | 'users' | 'hpp' | 'master-data' | 'contact' | 'testimonials' | 'team' | 'freelancer-fee';
-  setDashboardTab: (tab: 'overview' | 'leads' | 'portfolio' | 'projects' | 'pricing' | 'documents' | 'payments' | 'users' | 'hpp' | 'master-data' | 'contact' | 'testimonials' | 'team' | 'freelancer-fee') => void;
+  dashboardTab: 'overview' | 'leads' | 'portfolio' | 'projects' | 'pricing' | 'documents' | 'payments' | 'users' | 'hpp' | 'master-data' | 'contact' | 'testimonials' | 'team' | 'freelancer-fee' | 'whatsapp';
+  setDashboardTab: (tab: 'overview' | 'leads' | 'portfolio' | 'projects' | 'pricing' | 'documents' | 'payments' | 'users' | 'hpp' | 'master-data' | 'contact' | 'testimonials' | 'team' | 'freelancer-fee' | 'whatsapp') => void;
   
   // Data Loading Status
   isLoadingData: boolean;
@@ -46,6 +46,7 @@ interface AppContextType {
   // Leads
   leads: Lead[];
   addLead: (lead: Omit<Lead, 'id' | 'createdAt' | 'status'>) => Promise<Lead>;
+  updateLead: (id: string, updates: Partial<Lead>) => Promise<void>;
   updateLeadStatus: (id: string, status: LeadStatus) => Promise<void>;
   deleteLead: (id: string) => Promise<void>;
   markAllLeadsRead: () => Promise<void>;
@@ -188,7 +189,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // View state
   const [activeView, setActiveView] = useState<'landing' | 'dashboard'>('landing');
   
-  type DashboardTab = 'overview' | 'pricing' | 'leads' | 'portfolio' | 'projects' | 'documents' | 'payments' | 'users' | 'hpp' | 'master-data' | 'contact' | 'testimonials' | 'team' | 'freelancer-fee';
+  type DashboardTab = 'overview' | 'pricing' | 'leads' | 'portfolio' | 'projects' | 'documents' | 'payments' | 'users' | 'hpp' | 'master-data' | 'contact' | 'testimonials' | 'team' | 'freelancer-fee' | 'whatsapp';
 
   const [dashboardTab, setDashboardTabState] = useState<DashboardTab>(() => {
     if (typeof window !== 'undefined') {
@@ -988,6 +989,33 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return tempLead;
   };
 
+  const updateLead = async (id: string, updates: Partial<Lead>) => {
+    saveLeads((prev) =>
+      prev.map((item) => {
+        if (item.id !== id) return item;
+        const updated = { ...item, ...updates };
+        try {
+          supabase.channel('public_realtime_db_changes').send({
+            type: 'broadcast',
+            event: 'LEAD_UPDATE',
+            payload: updated,
+          });
+        } catch (bErr) {}
+        return updated;
+      })
+    );
+    try {
+      await fetch('/api/leads', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, ...updates }),
+      });
+    } catch (e) {
+      console.error(e);
+    }
+    showNotification('Data lead berhasil diperbarui', 'success');
+  };
+
   const updateLeadStatus = async (id: string, status: LeadStatus) => {
     saveLeads((prev) =>
       prev.map((item) => {
@@ -1504,6 +1532,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         hasRolePermission,
         leads,
         addLead,
+        updateLead,
         updateLeadStatus,
         deleteLead,
         markAllLeadsRead,

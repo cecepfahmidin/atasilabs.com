@@ -46,6 +46,7 @@ import {
   Search as SearchIcon,
   RestartAlt as ResetIcon,
   FilterList as FilterListIcon,
+  WhatsApp as WhatsAppIcon,
 } from '@mui/icons-material';
 import { useApp } from '../../context/AppContext';
 import { CardSkeletonGrid } from '../common/SkeletonLoader';
@@ -255,6 +256,7 @@ export const ProjectsView: React.FC = () => {
   const [formData, setFormData] = useState({
     clientName: '',
     clientEmail: '',
+    clientPhone: '',
     title: '',
     description: '',
     deadline: '',
@@ -282,6 +284,7 @@ export const ProjectsView: React.FC = () => {
     setFormData({
       clientName: '',
       clientEmail: '',
+      clientPhone: '',
       title: '',
       description: '',
       deadline: '2024-05-30',
@@ -303,6 +306,7 @@ export const ProjectsView: React.FC = () => {
     setFormData({
       clientName: proj.clientName,
       clientEmail: proj.clientEmail,
+      clientPhone: proj.clientPhone || '',
       title: proj.title,
       description: proj.description,
       deadline: proj.deadline,
@@ -1030,6 +1034,29 @@ export const ProjectsView: React.FC = () => {
                           <Typography variant="subtitle2" noWrap sx={{ fontWeight: 800, fontSize: { xs: '0.8rem', sm: '0.88rem' }, mt: 0.3 }}>
                             {proj.clientName}
                           </Typography>
+                          {proj.clientPhone && (
+                            <Box
+                              component="a"
+                              href={`https://wa.me/${proj.clientPhone.replace(/\D/g, '').startsWith('0') ? '62' + proj.clientPhone.replace(/\D/g, '').slice(1) : proj.clientPhone.replace(/\D/g, '')}?text=${encodeURIComponent(`Halo ${proj.clientName}, terkait pengerjaan proyek "${proj.title}" di Atasilabs...`)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                              sx={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 0.5,
+                                mt: 0.3,
+                                textDecoration: 'none',
+                                color: '#25D366',
+                                fontWeight: 700,
+                                fontSize: '0.73rem',
+                                '&:hover': { textDecoration: 'underline' },
+                              }}
+                            >
+                              <WhatsAppIcon sx={{ fontSize: 13 }} />
+                              {proj.clientPhone}
+                            </Box>
+                          )}
                         </Box>
                       </Grid>
 
@@ -1401,6 +1428,25 @@ export const ProjectsView: React.FC = () => {
                   placeholder="klien@perusahaan.com"
                   value={formData.clientEmail}
                   onChange={(e) => setFormData({ ...formData, clientEmail: e.target.value })}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Nomor WhatsApp Klien"
+                  placeholder="081234567890"
+                  value={formData.clientPhone}
+                  onChange={(e) => setFormData({ ...formData, clientPhone: e.target.value })}
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <WhatsAppIcon sx={{ fontSize: 18, color: '#25D366' }} />
+                        </InputAdornment>
+                      ),
+                    },
+                  }}
                 />
               </Grid>
 

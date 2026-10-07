@@ -48,7 +48,9 @@ import {
   Unarchive as UnarchiveIcon,
   ContentCopy as CopyIcon,
   WorkOutline as ProjectIcon,
+  WhatsApp as WhatsAppIcon,
 } from '@mui/icons-material';
+import { useRouter } from 'next/navigation';
 import { useApp } from '../../context/AppContext';
 import { Lead, LeadStatus } from '../../types';
 import { computeBudgetFromService } from '../../lib/pricingUtils';
@@ -58,6 +60,7 @@ export const LeadsView: React.FC = () => {
   const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
   const {
     leads,
+    updateLead,
     updateLeadStatus,
     deleteLead,
     markAllLeadsRead,
@@ -67,12 +70,15 @@ export const LeadsView: React.FC = () => {
     pricingTiers,
   } = useApp();
 
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [filterTab, setFilterTab] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [leadToDelete, setLeadToDelete] = useState<string | null>(null);
   const [copiedMessage, setCopiedMessage] = useState(false);
+  const [isEditingPhone, setIsEditingPhone] = useState(false);
+  const [editPhoneValue, setEditPhoneValue] = useState('');
 
   useEffect(() => {
     setMounted(true);
@@ -92,6 +98,7 @@ export const LeadsView: React.FC = () => {
     await addProject({
       clientName: selectedLead.name,
       clientEmail: selectedLead.email,
+      clientPhone: selectedLead.phone,
       clientCompany: selectedLead.company,
       title: selectedLead.serviceType || 'Pengembangan Web Custom',
       description: selectedLead.message,
@@ -133,6 +140,7 @@ export const LeadsView: React.FC = () => {
       const matchesSearch =
         lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         lead.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (lead.phone && lead.phone.includes(searchQuery)) ||
         (lead.company && lead.company.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (lead.serviceType && lead.serviceType.toLowerCase().includes(searchQuery.toLowerCase())) ||
         lead.message.toLowerCase().includes(searchQuery.toLowerCase());
@@ -197,9 +205,41 @@ export const LeadsView: React.FC = () => {
 
   const handleOpenDetail = (lead: Lead) => {
     setSelectedLead(lead);
+    setIsEditingPhone(false);
+    setEditPhoneValue(lead.phone || '');
     if (lead.status === 'NEW') {
       updateLeadStatus(lead.id, 'READ');
     }
+  };
+
+  const handleChatWhatsApp = (lead: Lead) => {
+    const raw = lead.phone || (lead as any).whatsapp || '';
+    const clean = raw.replace(/\D/g, '');
+    if (!clean) {
+      setSelectedLead(lead);
+      setIsEditingPhone(true);
+      setEditPhoneValue('');
+      return;
+    }
+    const intl = clean.startsWith('0') ? '62' + clean.slice(1) : clean.startsWith('8') ? '62' + clean : clean;
+    const msg = `Halo ${lead.name}, kami dari tim Atasilabs ingin menindaklanjuti pesan inquiry Anda mengenai ${lead.serviceType || 'proyek web'}.`;
+    const url = `https://api.whatsapp.com/send?phone=${intl}&text=${encodeURIComponent(msg)}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleOpenInWAGateway = (lead: Lead) => {
+    const raw = lead.phone || (lead as any).whatsapp || '';
+    const clean = raw.replace(/\D/g, '');
+    setDashboardTab('whatsapp');
+    router.push(`/dashboard/whatsapp?chatPhone=${encodeURIComponent(clean || raw)}&chatName=${encodeURIComponent(lead.name)}&leadId=${lead.id}`);
+  };
+
+  const handleSaveLeadPhone = async () => {
+    if (!selectedLead) return;
+    const newPhone = editPhoneValue.trim();
+    await updateLead(selectedLead.id, { phone: newPhone });
+    setSelectedLead((prev) => (prev ? { ...prev, phone: newPhone } : null));
+    setIsEditingPhone(false);
   };
 
   const handleCopyMessage = (text: string) => {
@@ -253,9 +293,82 @@ export const LeadsView: React.FC = () => {
               <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.74rem' }} noWrap display="block">
                 {params.row.email}
               </Typography>
+              {params.row.phone && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.3 }}>
+                  <WhatsAppIcon sx={{ fontSize: 13, color: '#25D366' }} />
+                  <Typography variant="caption" sx={{ fontSize: '0.73rem', color: '#25D366', fontWeight: 700 }}>
+                    {params.row.phone}
+                  </Typography>
+                </Box>
+              )}
             </Box>
           </Box>
         ),
+      },
+      {
+        field: 'phone',
+        headerName: 'No. WhatsApp',
+        flex: 1.2,
+        minWidth: 175,
+        renderCell: (params: GridRenderCellParams) => {
+          const rawPhone = params.row.phone || params.row.whatsapp || '';
+          return (
+            <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', height: '100%' }}>
+              {rawPhone ? (
+                <Tooltip title="Klik untuk Langsung Chat WhatsApp Klien" arrow>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    color="success"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleChatWhatsApp(params.row);
+                    }}
+                    startIcon={<WhatsAppIcon sx={{ fontSize: 16, color: '#25D366' }} />}
+                    sx={{
+                      textTransform: 'none',
+                      color: 'text.primary',
+                      fontWeight: 700,
+                      fontSize: '0.82rem',
+                      px: 1.2,
+                      py: 0.4,
+                      borderRadius: 2,
+                      border: '1px solid rgba(37, 211, 102, 0.4)',
+                      bgcolor: theme.palette.mode === 'dark' ? 'rgba(37, 211, 102, 0.1)' : 'rgba(37, 211, 102, 0.08)',
+                      '&:hover': {
+                        bgcolor: 'rgba(37, 211, 102, 0.22)',
+                        borderColor: '#25D366',
+                      },
+                    }}
+                  >
+                    {rawPhone}
+                  </Button>
+                </Tooltip>
+              ) : (
+                <Button
+                  size="small"
+                  variant="text"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedLead(params.row);
+                    setIsEditingPhone(true);
+                    setEditPhoneValue('');
+                  }}
+                  startIcon={<WhatsAppIcon sx={{ fontSize: 14, color: 'text.secondary' }} />}
+                  sx={{
+                    fontSize: '0.75rem',
+                    color: 'text.secondary',
+                    textTransform: 'none',
+                    py: 0.2,
+                    px: 0.8,
+                  }}
+                >
+                  + Tambah No WA
+                </Button>
+              )}
+            </Box>
+          );
+        },
       },
       {
         field: 'company',
@@ -348,11 +461,30 @@ export const LeadsView: React.FC = () => {
           const isArchived = params.row.status === 'ARCHIVED';
           return (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, height: '100%' }}>
+              <Tooltip title={params.row.phone ? `Chat WhatsApp (${params.row.phone})` : "Balas via WhatsApp"} arrow>
+                <IconButton
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleChatWhatsApp(params.row);
+                  }}
+                  sx={{
+                    bgcolor: 'rgba(37, 211, 102, 0.12)',
+                    color: '#25D366',
+                    '&:hover': { bgcolor: 'rgba(37, 211, 102, 0.25)' },
+                  }}
+                >
+                  <WhatsAppIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
               <Tooltip title="Baca Detail & Konversi">
                 <IconButton
                   size="small"
                   color="primary"
-                  onClick={() => handleOpenDetail(params.row)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleOpenDetail(params.row);
+                  }}
                   sx={{
                     bgcolor: theme.palette.mode === 'dark' ? 'rgba(99, 102, 241, 0.1)' : 'rgba(99, 102, 241, 0.05)',
                     '&:hover': { bgcolor: 'rgba(99, 102, 241, 0.2)' },
@@ -711,6 +843,7 @@ export const LeadsView: React.FC = () => {
               initialState={{
                 pagination: { paginationModel: { pageSize: 10 } },
               }}
+              onRowClick={(params) => handleOpenDetail(params.row)}
               disableRowSelectionOnClick
               rowHeight={64}
               sx={{
@@ -792,6 +925,19 @@ export const LeadsView: React.FC = () => {
                   border: `1px solid ${theme.palette.divider}`,
                 }}
               >
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography variant="caption" color="text.secondary">WhatsApp:</Typography>
+                  {lead.phone ? (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <WhatsAppIcon sx={{ fontSize: 13, color: '#25D366' }} />
+                      <Typography variant="caption" sx={{ fontWeight: 800, color: '#25D366' }}>
+                        {lead.phone}
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <Typography variant="caption" color="text.secondary">-</Typography>
+                  )}
+                </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Typography variant="caption" color="text.secondary">Instansi:</Typography>
                   <Typography variant="caption" sx={{ fontWeight: 700 }}>{lead.company || 'Pribadi'}</Typography>
@@ -816,6 +962,16 @@ export const LeadsView: React.FC = () => {
 
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', pt: 1, borderTop: `1px solid ${theme.palette.divider}` }}>
                 <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    color="success"
+                    startIcon={<WhatsAppIcon fontSize="small" />}
+                    onClick={() => handleChatWhatsApp(lead)}
+                    sx={{ borderRadius: 2, fontSize: '0.75rem', textTransform: 'none', fontWeight: 700 }}
+                  >
+                    Chat WA
+                  </Button>
                   <Button
                     size="small"
                     variant="contained"
@@ -934,6 +1090,92 @@ export const LeadsView: React.FC = () => {
                       <Typography variant="caption" color="primary" sx={{ fontWeight: 600 }}>
                         {selectedLead.email}
                       </Typography>
+                    </Box>
+                  </Box>
+
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
+                    <Avatar sx={{ width: 34, height: 34, bgcolor: 'rgba(37,211,102,0.12)', color: '#25D366' }}>
+                      <WhatsAppIcon sx={{ fontSize: 18 }} />
+                    </Avatar>
+                    <Box sx={{ flexGrow: 1 }}>
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        No. WhatsApp Klien
+                      </Typography>
+                      {isEditingPhone ? (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5, flexWrap: 'wrap' }}>
+                          <TextField
+                            size="small"
+                            value={editPhoneValue}
+                            onChange={(e) => setEditPhoneValue(e.target.value)}
+                            placeholder="0812-xxxx-xxxx"
+                            sx={{ width: 180, '& .MuiInputBase-input': { py: 0.6, fontSize: '0.85rem' } }}
+                            autoFocus
+                          />
+                          <Button
+                            size="small"
+                            variant="contained"
+                            color="success"
+                            onClick={handleSaveLeadPhone}
+                            sx={{ fontSize: '0.75rem', py: 0.5, px: 1.5, textTransform: 'none', fontWeight: 700 }}
+                          >
+                            Simpan
+                          </Button>
+                          <Button
+                            size="small"
+                            color="inherit"
+                            onClick={() => setIsEditingPhone(false)}
+                            sx={{ fontSize: '0.75rem', py: 0.5, textTransform: 'none' }}
+                          >
+                            Batal
+                          </Button>
+                        </Box>
+                      ) : selectedLead.phone ? (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.2 }}>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#25D366', fontSize: '0.95rem' }}>
+                            {selectedLead.phone}
+                          </Typography>
+                          <Tooltip title="Salin No. WhatsApp">
+                            <IconButton
+                              size="small"
+                              onClick={() => {
+                                navigator.clipboard.writeText(selectedLead.phone || '');
+                              }}
+                              sx={{ p: 0.3 }}
+                            >
+                              <CopyIcon sx={{ fontSize: 14 }} />
+                            </IconButton>
+                          </Tooltip>
+                          <Button
+                            size="small"
+                            variant="text"
+                            onClick={() => {
+                              setEditPhoneValue(selectedLead.phone || '');
+                              setIsEditingPhone(true);
+                            }}
+                            sx={{ fontSize: '0.72rem', textTransform: 'none', py: 0, px: 0.5, minWidth: 'auto', color: 'text.secondary' }}
+                          >
+                            Ubah
+                          </Button>
+                        </Box>
+                      ) : (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.2 }}>
+                          <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', fontSize: '0.85rem' }}>
+                            Belum dicantumkan
+                          </Typography>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            color="success"
+                            onClick={() => {
+                              setEditPhoneValue('');
+                              setIsEditingPhone(true);
+                            }}
+                            sx={{ fontSize: '0.72rem', textTransform: 'none', py: 0.2, px: 1, borderRadius: 1.5 }}
+                          >
+                            + Masukkan No WA
+                          </Button>
+                        </Box>
+                      )}
                     </Box>
                   </Box>
 
@@ -1105,6 +1347,31 @@ export const LeadsView: React.FC = () => {
                     </Button>
                   );
                 })()}
+                <Button
+                  variant="contained"
+                  color="success"
+                  startIcon={<WhatsAppIcon />}
+                  onClick={() => handleChatWhatsApp(selectedLead)}
+                  sx={{
+                    borderRadius: 2.5,
+                    fontWeight: 700,
+                    textTransform: 'none',
+                    bgcolor: '#25D366',
+                    color: '#ffffff',
+                    '&:hover': { bgcolor: '#1ebe5d' },
+                  }}
+                >
+                  {selectedLead.phone ? `Balas via WhatsApp (${selectedLead.phone})` : 'Balas via WhatsApp'}
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="inherit"
+                  startIcon={<WhatsAppIcon sx={{ color: '#25D366' }} />}
+                  onClick={() => handleOpenInWAGateway(selectedLead)}
+                  sx={{ borderRadius: 2.5, fontWeight: 700, textTransform: 'none' }}
+                >
+                  Buka di Gateway WA
+                </Button>
                 <Button
                   variant="contained"
                   color="success"

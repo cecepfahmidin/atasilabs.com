@@ -21,3 +21,7 @@ dist/
 # Environment variables
 .env*
 !.env.example
+
+# WhatsApp Web.js sessions and cache
+.wwebjs_auth/
+.wwebjs_cache/

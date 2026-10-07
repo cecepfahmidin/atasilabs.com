@@ -32,6 +32,7 @@ model Lead {
   id          String   @id @default(uuid())
   name        String
   email       String
+  phone       String?
   company     String?
   serviceType String?
   budget      String?
@@ -178,4 +179,41 @@ model CustomDocument {
   data        Json
   updatedAt   DateTime @default(now()) @updatedAt
 }
+
+model WhatsAppChat {
+  id          String            @id
+  name        String
+  phone       String?
+  isGroup     Boolean           @default(false)
+  unreadCount Int               @default(0)
+  lastMessage Json?
+  timestamp   Float             @default(0)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  messages    WhatsAppMessage[]
+}
+
+model WhatsAppMessage {
+  id        String       @id
+  chatId    String
+  body      String
+  from      String?
+  to        String?
+  fromMe    Boolean      @default(false)
+  timestamp Float        @default(0)
+  type      String       @default("chat")
+  hasMedia  Boolean      @default(false)
+  mediaUrl  String?
+  mediaKey  String?
+  mediaName String?
+  mediaMime String?
+  mediaSize Int?
+  ack       Int          @default(1)
+  createdAt DateTime     @default(now())
+
+  chat WhatsAppChat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  @@index([chatId, timestamp])
+}
+
 
