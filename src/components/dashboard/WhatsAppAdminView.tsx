@@ -69,6 +69,7 @@ import {
   OpenInNew as OpenInNewIcon,
   DeleteOutline as DeleteOutlineIcon,
   Group as GroupIcon,
+  Info as InfoIcon,
 } from '@mui/icons-material';
 import { useApp } from '../../context/AppContext';
 import { supabase } from '@/lib/supabase';
@@ -218,6 +219,8 @@ export const WhatsAppAdminView: React.FC = () => {
   });
   const [loadingStatus, setLoadingStatus] = useState(true);
   const [activeTab, setActiveTab] = useState(0); // 0: Inbox WhatsApp, 1: Kirim Cepat, 2: Koneksi & QR, 3: Log
+
+  const isRemoteHost = typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
 
   // Inbox & Chat State
   const [chats, setChats] = useState<WAChat[]>([]);
@@ -1360,6 +1363,68 @@ export const WhatsAppAdminView: React.FC = () => {
           sx={{ mb: 2.5, borderRadius: 2, fontWeight: 500 }}
         >
           {feedback.message}
+        </Alert>
+      )}
+
+      {/* Vercel Serverless Notice if Remote & Offline */}
+      {isRemoteHost && !statusData.serviceOnline && (
+        <Alert
+          severity="info"
+          icon={<InfoIcon />}
+          sx={{
+            mb: 2.5,
+            borderRadius: 2.5,
+            backgroundColor: isDark ? 'rgba(2, 136, 209, 0.12)' : 'rgba(2, 136, 209, 0.08)',
+            border: isDark ? '1px solid rgba(2, 136, 209, 0.3)' : '1px solid rgba(2, 136, 209, 0.2)',
+          }}
+        >
+          <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 0.5 }}>
+            Status WhatsApp di Server Produksi (Vercel):
+          </Typography>
+          <Typography variant="body2" sx={{ mb: 1 }}>
+            WhatsApp Web Gateway menggunakan Chromium &amp; Puppeteer yang berjalan sebagai daemon background terus-menerus. Platform serverless seperti Vercel tidak dapat menjalankan background browser secara langsung di cloud.
+          </Typography>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ mt: 1 }}>
+            <Button
+              variant="contained"
+              size="small"
+              component="a"
+              href="http://localhost:3000/dashboard/whatsapp"
+              target="_blank"
+              rel="noreferrer"
+              startIcon={<OpenInNewIcon />}
+              sx={{
+                borderRadius: 2,
+                textTransform: 'none',
+                fontWeight: 700,
+                backgroundColor: '#25D366',
+                color: '#fff',
+                '&:hover': { backgroundColor: '#1ebe57' },
+              }}
+            >
+              Buka di Localhost (Port 3000)
+            </Button>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => {
+                alert(
+                  'Panduan Menghubungkan WhatsApp ke Domain Produksi (atasilabs.com):\n\n' +
+                  '1. Pastikan service WhatsApp berjalan di PC/VPS Anda:\n' +
+                  '   node server/whatsapp-service.mjs\n\n' +
+                  '2. Buat public tunnel ke port 5001 (misal: Cloudflare Tunnel / Ngrok):\n' +
+                  '   npx cloudflared tunnel --url http://localhost:5001\n\n' +
+                  '3. Buka Vercel Dashboard -> Project Settings -> Environment Variables.\n\n' +
+                  '4. Tambahkan variabel:\n' +
+                  '   WA_SERVICE_URL = [URL tunnel atau VPS publik Anda]\n\n' +
+                  '5. Tekan Redeploy di Vercel.'
+                );
+              }}
+              sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+            >
+              Panduan Integrasi Online
+            </Button>
+          </Stack>
         </Alert>
       )}
 

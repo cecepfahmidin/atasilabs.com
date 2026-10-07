@@ -8,9 +8,10 @@ export const dynamic = 'force-dynamic';
 const WA_SERVICE_URL = process.env.WA_SERVICE_URL || 'http://127.0.0.1:5001';
 
 async function checkServiceStatus() {
+  const isVercel = Boolean(process.env.VERCEL);
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 2000);
+    const timeout = setTimeout(() => controller.abort(), 2500);
     const res = await fetch(`${WA_SERVICE_URL}/api/status`, {
       method: 'GET',
       signal: controller.signal,
@@ -20,11 +21,25 @@ async function checkServiceStatus() {
 
     if (res.ok) {
       const data = await res.json();
-      return { serviceOnline: true, ...data };
+      return { serviceOnline: true, isVercel, ...data };
     }
-    return { serviceOnline: false, status: 'SERVICE_STOPPED', message: 'Respon service tidak normal.' };
+    return {
+      serviceOnline: false,
+      status: 'SERVICE_STOPPED',
+      isVercel,
+      message: isVercel
+        ? 'Service WhatsApp belum terhubung ke Vercel. Atur WA_SERVICE_URL di Vercel Environment Variables.'
+        : 'Respon service tidak normal.',
+    };
   } catch {
-    return { serviceOnline: false, status: 'SERVICE_STOPPED', message: 'WhatsApp Gateway service belum aktif.' };
+    return {
+      serviceOnline: false,
+      status: 'SERVICE_STOPPED',
+      isVercel,
+      message: isVercel
+        ? 'Service WhatsApp belum terhubung. Vercel adalah serverless dan memerlukan WA_SERVICE_URL yang mengarah ke VPS atau Tunnel service WhatsApp aktif.'
+        : 'WhatsApp Gateway service belum aktif di port 5001.',
+    };
   }
 }
 
@@ -279,6 +294,15 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: true, message: 'Service WhatsApp sudah aktif.', status: current.status });
       }
 
+      if (process.env.VERCEL) {
+        return NextResponse.json({
+          success: false,
+          error: 'WhatsApp Gateway (Puppeteer/Chromium) tidak dapat dijalankan di dalam serverless Vercel. Jalankan service di PC lokal Anda atau di VPS (misal via PM2 / Docker / Tunnel), lalu hubungkan dengan memasukkan URL tersebut ke environment variable WA_SERVICE_URL di dashboard Vercel.',
+          isVercel: true,
+          status: 'SERVICE_STOPPED',
+        });
+      }
+
       const scriptPath = path.resolve(process.cwd(), 'server', 'whatsapp-service.mjs');
       const child = spawn(process.execPath, [scriptPath], {
         detached: true,
@@ -287,11 +311,11 @@ export async function POST(req: Request) {
       });
       child.unref();
 
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
       const verify = await checkServiceStatus();
 
       return NextResponse.json({
-        success: true,
+        success: verify.serviceOnline,
         message: verify.serviceOnline
           ? 'Service WhatsApp Gateway berhasil dijalankan!'
           : 'Service sedang memulai di background...',
