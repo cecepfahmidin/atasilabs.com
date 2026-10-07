@@ -1,21 +1,7 @@
-import { prisma as defaultPrisma } from './prisma';
+import { prisma } from './prisma';
 
 function getDb(): any {
-  if (defaultPrisma && (defaultPrisma as any).whatsAppChat) {
-    return defaultPrisma;
-  }
-  try {
-    const p1 = require.resolve('@prisma/client');
-    delete require.cache[p1];
-    const p2 = require.resolve('.prisma/client');
-    delete require.cache[p2];
-  } catch {}
-  try {
-    const { PrismaClient } = require('@prisma/client');
-    return new PrismaClient();
-  } catch {
-    return defaultPrisma;
-  }
+  return prisma;
 }
 
 export interface WhatsAppMessageData {
