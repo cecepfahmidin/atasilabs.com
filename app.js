@@ -52,10 +52,12 @@ import('./server/whatsapp-service.mjs').catch((err) => {
   console.error('[Startup Error] Gagal memuat whatsapp-service.mjs:', err);
   const port = process.env.PORT || 5001;
   const server = http.createServer((req, res) => {
-    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(
       JSON.stringify({
         success: false,
+        serviceOnline: false,
+        status: 'BOOT_ERROR',
         error: 'WhatsApp Service gagal start',
         message: err.message,
         stack: err.stack,

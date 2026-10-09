@@ -18,8 +18,18 @@ dotenv.config({ path: path.resolve(ROOT_DIR, '.env') });
 
 const PORT = process.env.PORT || process.env.WA_SERVICE_PORT || 5001;
 
-// Database Client
-const prisma = new PrismaClient();
+// Database Client (lazy & fail-safe)
+let prisma = null;
+function getPrisma() {
+  if (prisma) return prisma;
+  try {
+    prisma = new PrismaClient();
+  } catch (e) {
+    console.warn('[WA-SVC] PrismaClient not initialized yet:', e?.message || e);
+  }
+  return prisma;
+}
+getPrisma();
 
 // In-memory cache for downloaded WhatsApp media (msgId -> { data, mimetype, filename })
 const mediaCache = new Map();
@@ -270,6 +280,8 @@ async function getWhatsAppChatsDirectly() {
 
 function syncChatsWithDatabase(chatsList) {
   if (!Array.isArray(chatsList) || chatsList.length === 0) return;
+  const db = getPrisma();
+  if (!db) return;
   prismaQueue = prismaQueue.then(async () => {
     try {
       for (const c of chatsList) {
@@ -277,7 +289,7 @@ function syncChatsWithDatabase(chatsList) {
         const cleanName = c.id === '6282211331456@c.us' ? 'Cecep Fahmidin (+6282211331456)' : c.name;
         if (!cleanName || cleanName === 'Admin') continue;
 
-        await prisma.whatsAppChat.upsert({
+        await db.whatsAppChat.upsert({
           where: { id: c.id },
           create: {
             id: c.id,
@@ -477,6 +489,8 @@ let prismaQueue = Promise.resolve();
 
 function persistMessageToPrisma(msgObj, chatId, senderName, isGroup = false) {
   if (!chatId || chatId === 'status@broadcast' || chatId.endsWith('@broadcast')) return;
+  const db = getPrisma();
+  if (!db) return;
 
   prismaQueue = prismaQueue.then(async () => {
     try {
@@ -502,7 +516,7 @@ function persistMessageToPrisma(msgObj, chatId, senderName, isGroup = false) {
         : chatId.replace(/@.*$/, '');
       const finalChatName = isInvalidName ? defaultName : senderName;
 
-      await prisma.whatsAppChat.upsert({
+      await db.whatsAppChat.upsert({
         where: { id: chatId },
         create: {
           id: chatId,
@@ -521,7 +535,7 @@ function persistMessageToPrisma(msgObj, chatId, senderName, isGroup = false) {
         },
       });
 
-      await prisma.whatsAppMessage.upsert({
+      await db.whatsAppMessage.upsert({
         where: { id: msgObj.id },
         create: {
           id: msgObj.id,
@@ -1294,14 +1308,17 @@ const server = http.createServer(async (req, res) => {
       if (client && state.status === 'READY') {
         client.sendSeen(chatId).catch(() => {});
       }
-      prismaQueue = prismaQueue.then(async () => {
-        try {
-          await prisma.whatsAppChat.updateMany({
-            where: { id: chatId },
-            data: { unreadCount: 0 },
-          });
-        } catch (_) {}
-      });
+      const db = getPrisma();
+      if (db) {
+        prismaQueue = prismaQueue.then(async () => {
+          try {
+            await db.whatsAppChat.updateMany({
+              where: { id: chatId },
+              data: { unreadCount: 0 },
+            });
+          } catch (_) {}
+        });
+      }
       broadcastRealtime('CHAT_UPDATE', {
         chat: {
           id: chatId,
@@ -1800,14 +1817,17 @@ const server = http.createServer(async (req, res) => {
         if (client && state.status === 'READY') {
           client.sendSeen(chatId).catch(() => {});
         }
-        prismaQueue = prismaQueue.then(async () => {
-          try {
-            await prisma.whatsAppChat.updateMany({
-              where: { id: chatId },
-              data: { unreadCount: 0 },
-            });
-          } catch (_) {}
-        });
+        const db = getPrisma();
+        if (db) {
+          prismaQueue = prismaQueue.then(async () => {
+            try {
+              await db.whatsAppChat.updateMany({
+                where: { id: chatId },
+                data: { unreadCount: 0 },
+              });
+            } catch (_) {}
+          });
+        }
         broadcastRealtime('CHAT_READ', { chatId });
         broadcastRealtime('CHAT_UPDATE', { chat: { id: chatId, unreadCount: 0 } });
         res.writeHead(200, { 'Content-Type': 'application/json' });
