@@ -16,7 +16,7 @@ const ROOT_DIR = path.resolve(__dirname, '..');
 
 dotenv.config({ path: path.resolve(ROOT_DIR, '.env') });
 
-const PORT = process.env.WA_SERVICE_PORT || 5001;
+const PORT = process.env.PORT || process.env.WA_SERVICE_PORT || 5001;
 
 // Database Client
 const prisma = new PrismaClient();
@@ -1892,11 +1892,11 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(PORT, '127.0.0.1', () => {
+server.listen(PORT, () => {
   console.log(`=======================================================`);
   console.log(`[WA-SVC] ATASILABS WhatsApp Gateway Service Aktif!`);
   console.log(`[WA-SVC] Port: ${PORT}`);
-  console.log(`[WA-SVC] Health check: http://127.0.0.1:${PORT}/health`);
+  console.log(`[WA-SVC] Health check: /health`);
   console.log(`=======================================================`);
 
   // Start client automatically upon service boot

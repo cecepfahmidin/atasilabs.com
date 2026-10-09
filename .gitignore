@@ -25,3 +25,7 @@ dist/
 # WhatsApp Web.js sessions and cache
 .wwebjs_auth/
 .wwebjs_cache/
+
+# Archives
+*.zip
+
