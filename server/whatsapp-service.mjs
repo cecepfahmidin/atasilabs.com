@@ -1056,7 +1056,8 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  const url = new URL(req.url, `http://${req.headers.host}`);
+  const host = req.headers.host || '127.0.0.1';
+  const url = new URL(req.url, `http://${host}`);
   const pathname = url.pathname;
 
   // Helper to read JSON body

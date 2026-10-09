@@ -1,10 +1,7 @@
-// app.js - Entry point for cPanel Node.js (Phusion Passenger)
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// app.js - Universal CommonJS Entry Point for Phusion Passenger
+const fs = require('fs');
+const path = require('path');
+const http = require('http');
 
 // 1. Auto-patch whatsapp-web.js on boot
 try {
@@ -50,7 +47,20 @@ try {
   console.warn('[Auto-Patch] Warning applying patch:', e.message);
 }
 
-// 2. Start the WhatsApp Gateway service
+// 2. Load WhatsApp Service ES Module via dynamic import
 import('./server/whatsapp-service.mjs').catch((err) => {
   console.error('[Startup Error] Gagal memuat whatsapp-service.mjs:', err);
+  const port = process.env.PORT || 5001;
+  const server = http.createServer((req, res) => {
+    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.end(
+      JSON.stringify({
+        success: false,
+        error: 'WhatsApp Service gagal start',
+        message: err.message,
+        stack: err.stack,
+      })
+    );
+  });
+  server.listen(port);
 });
