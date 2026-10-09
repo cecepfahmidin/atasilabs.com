@@ -1913,7 +1913,7 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`=======================================================`);
   console.log(`[WA-SVC] ATASILABS WhatsApp Gateway Service Aktif!`);
   console.log(`[WA-SVC] Port: ${PORT}`);
