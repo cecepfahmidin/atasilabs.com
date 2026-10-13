@@ -2,19 +2,47 @@ import http from 'node:http';
 import path from 'node:path';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import pkg from 'whatsapp-web.js';
-const { Client, LocalAuth, MessageMedia } = pkg;
-import QRCode from 'qrcode';
-import dotenv from 'dotenv';
-import { createClient } from '@supabase/supabase-js';
-import WebSocket from 'ws';
-import { PrismaClient } from '@prisma/client';
+import { createRequire } from 'node:module';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.resolve(__dirname, '..');
 
+const require = createRequire(import.meta.url);
+
+// Multi-path safe resolver for CloudLinux / Passenger symlinked node_modules
+function safeRequire(packageName) {
+  try {
+    return require(packageName);
+  } catch (e1) {
+    try {
+      return require(path.resolve(ROOT_DIR, 'node_modules', packageName));
+    } catch (e2) {
+      try {
+        return require(path.resolve(ROOT_DIR, '..', 'nodevenv', 'wa.stieyasaanggana.ac.id', '20', 'lib', 'node_modules', packageName));
+      } catch (e3) {
+        throw new Error(
+          `Package '${packageName}' tidak ditemukan. Pastikan sudah klik 'Run NPM Install' di cPanel Setup Node.js App. (Detail: ${e1.message})`
+        );
+      }
+    }
+  }
+}
+
+const dotenv = safeRequire('dotenv');
 dotenv.config({ path: path.resolve(ROOT_DIR, '.env') });
+
+const pkg = safeRequire('whatsapp-web.js');
+const { Client, LocalAuth, MessageMedia } = pkg;
+
+const QRCode = safeRequire('qrcode');
+const { createClient } = safeRequire('@supabase/supabase-js');
+const WebSocket = safeRequire('ws');
+
+let PrismaClient = null;
+try {
+  PrismaClient = safeRequire('@prisma/client').PrismaClient;
+} catch (_) {}
 
 const PORT = process.env.PORT || process.env.WA_SERVICE_PORT || 5001;
 
@@ -1058,7 +1086,8 @@ async function initClient() {
 }
 
 // HTTP Server
-const server = http.createServer(async (req, res) => {
+// HTTP Request Handler
+export async function handleRequest(req, res) {
   // CORS Headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -1911,20 +1940,30 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(500, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: err?.message || 'Internal server error' }));
   }
-});
+}
 
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`=======================================================`);
-  console.log(`[WA-SVC] ATASILABS WhatsApp Gateway Service Aktif!`);
-  console.log(`[WA-SVC] Port: ${PORT}`);
-  console.log(`[WA-SVC] Health check: /health`);
-  console.log(`=======================================================`);
+const server = http.createServer(handleRequest);
 
-  // Start client automatically upon service boot
+if (process.env.PASSENGER_WRAPPER !== '1') {
+  server.listen(PORT, '0.0.0.0', () => {
+    console.log(`=======================================================`);
+    console.log(`[WA-SVC] ATASILABS WhatsApp Gateway Service Aktif!`);
+    console.log(`[WA-SVC] Port: ${PORT}`);
+    console.log(`[WA-SVC] Health check: /health`);
+    console.log(`=======================================================`);
+
+    initClient().catch((err) => {
+      console.error('[WA-SVC] Automatic init error:', err);
+    });
+  });
+} else {
+  // Started via Passenger wrapper, initialize client automatically
   initClient().catch((err) => {
     console.error('[WA-SVC] Automatic init error:', err);
   });
-});
+}
+
+export { server };
 
 // Graceful exit
 process.on('SIGINT', async () => {

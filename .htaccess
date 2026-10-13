@@ -1,10 +1,13 @@
 # DO NOT REMOVE. CLOUDLINUX PASSENGER CONFIGURATION BEGIN
 PassengerAppRoot "/home2/stieyasa/wa.stieyasaanggana.ac.id"
 PassengerBaseURI "/"
-PassengerNodejs "/home2/stieyasa/nodevenv/wa.stieyasaanggana.ac.id/20/bin/node"
+PassengerNodejs "/home2/stieyasa/nodevenv/wa.stieyasaanggana.ac.id/18/bin/node"
 PassengerAppType node
-PassengerStartupFile app.js
+PassengerStartupFile app.cjs
 PassengerAppLogFile "/home2/stieyasa/logs/wa-service.log"
 # DO NOT REMOVE. CLOUDLINUX PASSENGER CONFIGURATION END
+
+PassengerFriendlyErrorPages on
+PassengerAppEnv development
 
 Options -Indexes
