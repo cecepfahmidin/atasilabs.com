@@ -1,7 +1,11 @@
-// app.js - Universal CommonJS Entry Point for Phusion Passenger
-const fs = require('fs');
-const path = require('path');
-const http = require('http');
+// app.js - Universal Entry Point for Phusion Passenger
+import fs from 'node:fs';
+import path from 'node:path';
+import http from 'node:http';
+import { fileURLToPath } from 'node:url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // 1. Auto-patch whatsapp-web.js on boot
 try {
