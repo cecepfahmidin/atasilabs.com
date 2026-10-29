@@ -23,9 +23,6 @@ fs.copyFileSync(path.resolve(ROOT, 'wa-package.json'), path.resolve(stageDir, 'p
 fs.mkdirSync(path.resolve(stageDir, 'server'), { recursive: true });
 fs.copyFileSync(path.resolve(ROOT, 'server', 'whatsapp-service.mjs'), path.resolve(stageDir, 'server', 'whatsapp-service.mjs'));
 
-fs.mkdirSync(path.resolve(stageDir, 'scripts'), { recursive: true });
-fs.copyFileSync(path.resolve(ROOT, 'scripts', 'patch-wwebjs.mjs'), path.resolve(stageDir, 'scripts', 'patch-wwebjs.mjs'));
-
 fs.mkdirSync(path.resolve(stageDir, 'prisma'), { recursive: true });
 fs.copyFileSync(path.resolve(ROOT, 'prisma', 'schema.prisma'), path.resolve(stageDir, 'prisma', 'schema.prisma'));
 

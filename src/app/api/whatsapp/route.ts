@@ -297,7 +297,7 @@ export async function POST(req: Request) {
       if (process.env.VERCEL) {
         return NextResponse.json({
           success: false,
-          error: 'WhatsApp Gateway (Puppeteer/Chromium) tidak dapat dijalankan di dalam serverless Vercel. Jalankan service di PC lokal Anda atau di VPS (misal via PM2 / Docker / Tunnel), lalu hubungkan dengan memasukkan URL tersebut ke environment variable WA_SERVICE_URL di dashboard Vercel.',
+          error: 'WhatsApp Gateway tidak dapat dijalankan di dalam serverless Vercel karena memerlukan koneksi WebSocket persisten. Jalankan service di PC lokal Anda atau di VPS / cPanel (misal via PM2 / Docker / Tunnel), lalu hubungkan dengan memasukkan URL tersebut ke environment variable WA_SERVICE_URL di dashboard Vercel.',
           isVercel: true,
           status: 'SERVICE_STOPPED',
         });

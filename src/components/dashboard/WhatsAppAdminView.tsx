@@ -1192,7 +1192,7 @@ export const WhatsAppAdminView: React.FC = () => {
           bg: isDark ? 'rgba(59, 130, 246, 0.12)' : '#eff6ff',
           border: '#60a5fa',
           text: '#3b82f6',
-          desc: 'Memulai Chromium headless di background server...',
+          desc: 'Memulai Baileys socket gateway di background server...',
         };
       case 'DISCONNECTED':
         return {
@@ -1382,7 +1382,7 @@ export const WhatsAppAdminView: React.FC = () => {
             Status WhatsApp di Server Produksi (Vercel):
           </Typography>
           <Typography variant="body2" sx={{ mb: 1 }}>
-            WhatsApp Web Gateway menggunakan Chromium &amp; Puppeteer yang berjalan sebagai daemon background terus-menerus. Platform serverless seperti Vercel tidak dapat menjalankan background browser secara langsung di cloud.
+            WhatsApp Gateway menggunakan engine Baileys socket yang berjalan sebagai daemon background terus-menerus. Platform serverless seperti Vercel tidak dapat menjalankan koneksi socket persisten secara langsung di cloud.
           </Typography>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ mt: 1 }}>
             <Button
