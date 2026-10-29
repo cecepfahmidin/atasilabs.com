@@ -137,7 +137,7 @@ export async function GET(req: Request) {
               return c;
             })
             .filter(
-              (c: any) => c.id && !c.id.endsWith('@lid') && !c.id.includes('@broadcast')
+              (c: any) => c.id && !c.id.includes('@broadcast')
             );
         }
       } catch {}

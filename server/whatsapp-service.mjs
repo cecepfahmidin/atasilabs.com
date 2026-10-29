@@ -70,6 +70,9 @@ function getPrisma() {
 }
 getPrisma();
 
+const lidToPhoneMap = new Map();
+const phoneToLidMap = new Map();
+
 // JID Helpers (Bridge between Baileys protocol and DB/Frontend formats)
 function toChatId(jid) {
   if (!jid) return '';
@@ -80,6 +83,9 @@ function toChatId(jid) {
   }
   if (clean === '150336740303055@lid') {
     return '6282211331456@c.us';
+  }
+  if (clean.endsWith('@lid') && lidToPhoneMap.has(clean)) {
+    return lidToPhoneMap.get(clean);
   }
   if (clean.endsWith('@s.whatsapp.net')) {
     return clean.replace('@s.whatsapp.net', '@c.us');
@@ -96,8 +102,11 @@ function toBaileysJid(chatId) {
   if (clean.endsWith('@c.us')) {
     return clean.replace('@c.us', '@s.whatsapp.net');
   }
-  if (clean.endsWith('@g.us') || clean.endsWith('@s.whatsapp.net')) {
+  if (clean.endsWith('@g.us') || clean.endsWith('@s.whatsapp.net') || clean.endsWith('@lid')) {
     return clean;
+  }
+  if (phoneToLidMap.has(clean)) {
+    return phoneToLidMap.get(clean);
   }
   // Pure phone number
   let digits = clean.replace(/\D/g, '');
@@ -465,7 +474,7 @@ function backupSessionToDb(authPath) {
   }, 4000);
 }
 
-async function recordMessage(msg) {
+async function recordMessage(msg, isHistorical = false) {
   try {
     if (!msg) return;
     const fromMe = Boolean(msg.fromMe);
@@ -509,7 +518,7 @@ async function recordMessage(msg) {
         chatName = existingConv?.name && existingConv.name !== 'Admin' ? existingConv.name : chatId.replace(/@.*$/, '');
       } else {
         const contactJid = toBaileysJid(chatId);
-        const contact = contactsMap.get(contactJid);
+        const contact = contactsMap.get(contactJid) || contactsMap.get(chatId);
         chatName =
           msg.pushName ||
           contact?.name ||
@@ -600,20 +609,21 @@ async function recordMessage(msg) {
 
     if (existingIndex === -1) {
       existing.messages.push(messageObj);
-      if (!fromMe) {
+      if (!fromMe && !isHistorical) {
         existing.unreadCount += 1;
       }
-      broadcastRealtime('NEW_MESSAGE', {
-        chatId,
-        message: messageObj,
-      });
+      if (!isHistorical) {
+        broadcastRealtime('NEW_MESSAGE', {
+          chatId,
+          message: messageObj,
+        });
+      }
     } else {
       const old = existing.messages[existingIndex];
       const isOldTemp = !old.id || old.id.startsWith('msg-') || old.id.startsWith('temp-');
       const isNewReal = messageObj.id && !messageObj.id.startsWith('msg-') && !messageObj.id.startsWith('temp-');
       if (isOldTemp && isNewReal) {
         old.id = messageObj.id;
-        // DB persistence disabled — no DB cleanup needed for temp IDs
       }
       if (messageObj.ack && (!old.ack || messageObj.ack > old.ack)) {
         old.ack = messageObj.ack;
@@ -624,41 +634,49 @@ async function recordMessage(msg) {
         old.type = messageObj.type;
         old.hasMedia = true;
       }
-      broadcastRealtime('MESSAGE_UPDATE', {
-        chatId,
-        message: existing.messages[existingIndex],
-      });
+      if (!isHistorical) {
+        broadcastRealtime('MESSAGE_UPDATE', {
+          chatId,
+          message: existing.messages[existingIndex],
+        });
+      }
     }
 
+    // Keep messages sorted by timestamp asc
+    existing.messages.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
     if (existing.messages.length > 100) {
       existing.messages = existing.messages.slice(-100);
     }
 
-    existing.lastMessage = {
-      id: messageObj.id,
-      body: messageObj.body || (messageObj.hasMedia ? `[${messageObj.type === 'image' ? 'Foto' : 'Dokumen'}]` : ''),
-      timestamp: messageObj.timestamp,
-      fromMe: messageObj.fromMe,
-      type: messageObj.type,
-      mediaUrl: messageObj.mediaUrl,
-      authorName: messageObj.authorName,
-    };
-    existing.timestamp = messageObj.timestamp;
+    const latestMsg = existing.messages[existing.messages.length - 1];
+    if (latestMsg) {
+      existing.lastMessage = {
+        id: latestMsg.id,
+        body: latestMsg.body || (latestMsg.hasMedia ? `[${latestMsg.type === 'image' ? 'Foto' : 'Dokumen'}]` : ''),
+        timestamp: latestMsg.timestamp,
+        fromMe: latestMsg.fromMe,
+        type: latestMsg.type,
+        mediaUrl: latestMsg.mediaUrl,
+        authorName: latestMsg.authorName,
+      };
+      existing.timestamp = Math.max(existing.timestamp || 0, latestMsg.timestamp || 0);
+    }
+
     conversations.set(chatId, existing);
 
-    persistMessageToPrisma(messageObj, chatId, chatName, isGroup);
-
-    broadcastRealtime('CHAT_UPDATE', {
-      chat: {
-        id: existing.id,
-        name: existing.name,
-        unreadCount: existing.unreadCount,
-        timestamp: existing.timestamp,
-        isGroup: existing.isGroup,
-        avatarUrl: existing.avatarUrl || `/api/whatsapp?endpoint=avatar&chatId=${encodeURIComponent(existing.id)}`,
-        lastMessage: existing.lastMessage,
-      },
-    });
+    if (!isHistorical) {
+      broadcastRealtime('CHAT_UPDATE', {
+        chat: {
+          id: existing.id,
+          name: existing.name,
+          unreadCount: existing.unreadCount,
+          timestamp: existing.timestamp,
+          isGroup: existing.isGroup,
+          avatarUrl: existing.avatarUrl || `/api/whatsapp?endpoint=avatar&chatId=${encodeURIComponent(existing.id)}`,
+          lastMessage: existing.lastMessage,
+        },
+      });
+    }
   } catch (e) {
     console.error('[WA-SVC] recordMessage error:', e);
   }
@@ -730,7 +748,7 @@ async function initClient() {
       printQRInTerminal: false,
       browser: Browsers.ubuntu('Chrome'),
       markOnlineOnConnect: true,
-      syncFullHistory: false,
+      syncFullHistory: true,
       generateHighQualityLinkPreview: true,
       getMessage: async (key) => {
         const raw = rawMessagesMap.get(key.id);
@@ -821,17 +839,81 @@ async function initClient() {
       }
     });
 
+    function registerContact(c) {
+      if (!c || !c.id) return;
+      const id = c.id;
+      const lid = c.lid;
+      const name = c.name || c.verifiedName || null;
+      const notify = c.notify || null;
+      const phone = c.phoneNumber || (id.includes('@s.whatsapp.net') ? id.replace(/@.*$/, '') : null);
+
+      const info = { id, lid, name, notify, phone };
+      contactsMap.set(id, info);
+      if (lid) {
+        contactsMap.set(lid, info);
+        if (id.endsWith('@s.whatsapp.net')) {
+          const cUs = id.replace('@s.whatsapp.net', '@c.us');
+          lidToPhoneMap.set(lid, cUs);
+          phoneToLidMap.set(cUs, lid);
+        }
+      }
+    }
+
+    function processChatEntry(c) {
+      if (!c || !c.id) return;
+      const rawId = c.id;
+      if (rawId === 'status@broadcast' || rawId.endsWith('@broadcast') || rawId === '150336740303055@lid') return;
+
+      const cleanId = toChatId(rawId);
+      if (!cleanId || cleanId === '150336740303055@lid') return;
+
+      const isGroup = cleanId.endsWith('@g.us');
+      const contact = contactsMap.get(rawId) || contactsMap.get(cleanId);
+      const displayName =
+        c.name ||
+        contact?.name ||
+        contact?.notify ||
+        (isGroup ? 'Grup WhatsApp' : (cleanId === '6282211331456@c.us' ? 'Cecep Fahmidin (+6282211331456)' : cleanId.replace(/@.*$/, '')));
+
+      const rawTs = c.conversationTimestamp;
+      const timestamp = rawTs ? (Number(rawTs) < 10000000000 ? Number(rawTs) * 1000 : Number(rawTs)) : Date.now();
+
+      const existing = conversations.get(cleanId);
+      if (existing) {
+        if (displayName && (!existing.name || existing.name === cleanId.replace(/@.*$/, ''))) {
+          existing.name = displayName;
+        }
+        if (c.unreadCount !== undefined) {
+          existing.unreadCount = c.unreadCount;
+        }
+        if (timestamp > existing.timestamp) {
+          existing.timestamp = timestamp;
+        }
+        conversations.set(cleanId, existing);
+      } else {
+        conversations.set(cleanId, {
+          id: cleanId,
+          name: displayName,
+          phone: isGroup ? '' : cleanId.replace(/@.*$/, ''),
+          isGroup,
+          unreadCount: c.unreadCount || 0,
+          timestamp,
+          avatarUrl: `/api/whatsapp?endpoint=avatar&chatId=${encodeURIComponent(cleanId)}`,
+          lastMessage: null,
+          messages: [],
+        });
+      }
+    }
+
+    sock.ev.on('contacts.set', (contacts) => {
+      if (Array.isArray(contacts)) {
+        for (const c of contacts) registerContact(c);
+      }
+    });
+
     sock.ev.on('contacts.upsert', (contacts) => {
       if (Array.isArray(contacts)) {
-        for (const c of contacts) {
-          if (c.id) {
-            contactsMap.set(c.id, {
-              id: c.id,
-              name: c.name || c.verifiedName || null,
-              notify: c.notify || null,
-            });
-          }
-        }
+        for (const c of contacts) registerContact(c);
       }
     });
 
@@ -840,11 +922,39 @@ async function initClient() {
         for (const u of updates) {
           if (u.id) {
             const existing = contactsMap.get(u.id) || { id: u.id };
-            contactsMap.set(u.id, {
+            const merged = {
               ...existing,
               name: u.name || u.verifiedName || existing.name,
               notify: u.notify || existing.notify,
-            });
+            };
+            registerContact(merged);
+          }
+        }
+      }
+    });
+
+    sock.ev.on('chats.set', (chats) => {
+      if (Array.isArray(chats)) {
+        for (const c of chats) processChatEntry(c);
+      }
+    });
+
+    sock.ev.on('chats.upsert', (chats) => {
+      if (Array.isArray(chats)) {
+        for (const c of chats) processChatEntry(c);
+      }
+    });
+
+    sock.ev.on('chats.update', (updates) => {
+      if (Array.isArray(updates)) {
+        for (const u of updates) {
+          if (!u.id) continue;
+          const cleanId = toChatId(u.id);
+          const existing = conversations.get(cleanId);
+          if (existing) {
+            if (u.unreadCount !== undefined) existing.unreadCount = u.unreadCount;
+            if (u.conversationTimestamp) existing.timestamp = Number(u.conversationTimestamp) * 1000;
+            conversations.set(cleanId, existing);
           }
         }
       }
@@ -862,25 +972,54 @@ async function initClient() {
     });
 
     sock.ev.on('messaging-history.set', async ({ chats, contacts, messages }) => {
+      console.log(`[WA-SVC] 📥 History sync received: ${chats?.length || 0} chats, ${contacts?.length || 0} contacts, ${messages?.length || 0} messages.`);
       if (Array.isArray(contacts)) {
-        for (const c of contacts) {
-          if (c.id) {
-            contactsMap.set(c.id, {
-              id: c.id,
-              name: c.name || c.verifiedName || null,
-              notify: c.notify || null,
-            });
-          }
-        }
+        for (const c of contacts) registerContact(c);
+      }
+      if (Array.isArray(chats)) {
+        for (const c of chats) processChatEntry(c);
       }
       if (Array.isArray(messages)) {
         for (const m of messages) {
-          if (m?.key?.id) {
-            rawMessagesMap.set(m.key.id, m);
-          }
+          if (!m || !m.key) continue;
+          const remoteJid = m.key.remoteJid;
+          if (!remoteJid || remoteJid === 'status@broadcast' || remoteJid.endsWith('@broadcast')) continue;
+
+          const msgId = m.key.id;
+          if (msgId) rawMessagesMap.set(msgId, m);
+
+          const fromMe = Boolean(m.key.fromMe);
+          const bodyText = extractMessageBody(m);
+          const mediaInfo = extractMediaInfo(m.message);
+          const myWid = state.info?.wid || (sock?.user?.id ? toChatId(sock.user.id) : 'admin');
+          const chatId = toChatId(remoteJid);
+          if (!chatId || chatId === '150336740303055@lid') continue;
+
+          const formattedMsg = {
+            id: msgId,
+            body: bodyText,
+            from: fromMe ? myWid : chatId,
+            to: fromMe ? chatId : myWid,
+            chatId,
+            fromMe,
+            timestamp: m.messageTimestamp ? Number(m.messageTimestamp) * 1000 : Date.now(),
+            type: mediaInfo.type,
+            hasMedia: mediaInfo.hasMedia,
+            mediaMime: mediaInfo.mime,
+            mediaName: mediaInfo.filename,
+            mediaSize: mediaInfo.size,
+            caption: mediaInfo.caption,
+            pushName: m.pushName,
+            participant: m.key.participant,
+            ack: fromMe ? 1 : undefined,
+          };
+
+          await recordMessage(formattedMsg, true);
         }
       }
-      console.log(`[WA-SVC] History sync: received ${chats?.length || 0} chats, ${messages?.length || 0} messages.`);
+
+      console.log(`[WA-SVC] ✅ Loaded ${conversations.size} active conversations into memory.`);
+      broadcastStatus();
     });
 
     sock.ev.on('messages.upsert', async ({ messages, type }) => {

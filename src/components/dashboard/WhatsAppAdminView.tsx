@@ -231,7 +231,7 @@ export const WhatsAppAdminView: React.FC = () => {
   const [chatInputText, setChatInputText] = useState('');
   const [sendingChat, setSendingChat] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterType, setFilterType] = useState<'ALL' | 'UNREAD' | 'LEADS' | 'PROJECTS'>('ALL');
+  const [filterType, setFilterType] = useState<'ALL' | 'PERSONAL' | 'GROUP' | 'UNREAD' | 'LEADS' | 'PROJECTS'>('ALL');
   const [mobileShowChat, setMobileShowChat] = useState(false);
 
   // New Chat Dialog / Menu
@@ -1134,6 +1134,10 @@ export const WhatsAppAdminView: React.FC = () => {
           });
         }
       });
+    } else if (filterType === 'PERSONAL') {
+      result = result.filter((c) => !c.isGroup && !c.id.endsWith('@g.us'));
+    } else if (filterType === 'GROUP') {
+      result = result.filter((c) => Boolean(c.isGroup || c.id.endsWith('@g.us')));
     } else if (filterType === 'UNREAD') {
       result = result.filter((c) => c.unreadCount > 0);
     }
@@ -1631,6 +1635,8 @@ export const WhatsAppAdminView: React.FC = () => {
                   <Stack direction="row" spacing={0.8} sx={{ overflowX: 'auto', py: 0.5 }}>
                     {[
                       { key: 'ALL', label: 'Semua' },
+                      { key: 'PERSONAL', label: 'Pribadi' },
+                      { key: 'GROUP', label: 'Grup' },
                       { key: 'UNREAD', label: 'Belum Dibaca' },
                       { key: 'LEADS', label: 'Leads' },
                       { key: 'PROJECTS', label: 'Klien Proyek' },
