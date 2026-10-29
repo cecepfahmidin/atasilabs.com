@@ -24,7 +24,12 @@ export interface WhatsAppMessageData {
   chatPhone?: string;
 }
 
-export async function saveMessageToDb(msg: WhatsAppMessageData) {
+export async function saveMessageToDb(_msg: WhatsAppMessageData) {
+  // NO-OP: Chat WhatsApp tidak disimpan ke Supabase database.
+  return null;
+}
+
+export async function _disabled_saveMessageToDb(msg: WhatsAppMessageData) {
   try {
     let chatId = msg.chatId;
     if (!chatId || !msg.id) return null;
