@@ -386,152 +386,24 @@ function deduplicateMessagesList(messages) {
 
 let prismaQueue = Promise.resolve();
 
-function persistMessageToPrisma(msgObj, chatId, senderName, isGroup = false) {
-  if (!chatId || chatId === 'status@broadcast' || chatId.endsWith('@broadcast')) return;
-  const db = getPrisma();
-  if (!db) return;
+// ── DB PERSISTENCE DISABLED ──────────────────────────────────────────────────
+// Chat/message data hanya disimpan di memori (conversations Map).
+// Tidak ada penulisan ke tabel WhatsAppChat / WhatsAppMessage di Supabase.
+// DB hanya digunakan untuk backup/restore session Baileys (Heroku ephemeral FS).
+// ─────────────────────────────────────────────────────────────────────────────
 
-  prismaQueue = prismaQueue.then(async () => {
-    try {
-      const timeNum = Number(msgObj.timestamp) || Date.now();
-      const cleanBody = msgObj.body || (msgObj.hasMedia ? (msgObj.type === 'image' ? '[Foto]' : '[Dokumen]') : '');
-      const lastMessageData = {
-        id: msgObj.id,
-        body: cleanBody,
-        timestamp: timeNum,
-        fromMe: Boolean(msgObj.fromMe),
-        type: msgObj.type || 'chat',
-        mediaUrl: msgObj.mediaUrl ?? null,
-        mediaName: msgObj.mediaName ?? null,
-        authorName: msgObj.authorName ?? null,
-      };
-
-      const isInvalidName = !senderName || senderName.toLowerCase() === 'admin';
-      const defaultName = isGroup
-        ? 'Grup WhatsApp'
-        : chatId === '6282211331456@c.us'
-        ? 'Cecep Fahmidin (+6282211331456)'
-        : chatId.replace(/@.*$/, '');
-      const finalChatName = isInvalidName ? defaultName : senderName;
-
-      await db.whatsAppChat.upsert({
-        where: { id: chatId },
-        create: {
-          id: chatId,
-          name: finalChatName,
-          phone: chatId.replace(/@.*$/, ''),
-          isGroup: Boolean(isGroup),
-          timestamp: timeNum,
-          unreadCount: msgObj.fromMe ? 0 : 1,
-          lastMessage: lastMessageData,
-        },
-        update: {
-          timestamp: timeNum,
-          ...(!isInvalidName ? { name: finalChatName } : {}),
-          lastMessage: lastMessageData,
-          isGroup: Boolean(isGroup),
-        },
-      });
-
-      await db.whatsAppMessage.upsert({
-        where: { id: msgObj.id },
-        create: {
-          id: msgObj.id,
-          chatId: chatId,
-          body: msgObj.body || '',
-          from: msgObj.from || null,
-          to: msgObj.to || null,
-          fromMe: Boolean(msgObj.fromMe),
-          timestamp: timeNum,
-          type: msgObj.type || 'chat',
-          hasMedia: Boolean(msgObj.hasMedia),
-          mediaUrl: msgObj.mediaUrl || null,
-          mediaKey: msgObj.mediaKey || null,
-          mediaName: msgObj.mediaName || null,
-          mediaMime: msgObj.mediaMime || null,
-          mediaSize: msgObj.mediaSize ? Math.round(Number(msgObj.mediaSize)) : null,
-          ack: msgObj.ack || 1,
-        },
-        update: {
-          body: msgObj.body || '',
-          ack: msgObj.ack || 1,
-          ...(msgObj.mediaUrl ? { mediaUrl: msgObj.mediaUrl } : {}),
-          ...(msgObj.mediaKey ? { mediaKey: msgObj.mediaKey } : {}),
-          ...(msgObj.mediaName ? { mediaName: msgObj.mediaName } : {}),
-        },
-      });
-    } catch (err) {
-      console.warn('[WA-SVC] Prisma persist warning:', err?.message || err);
-    }
-  }).catch(() => {});
-  return prismaQueue;
+function persistMessageToPrisma(_msgObj, _chatId, _senderName, _isGroup = false) {
+  // NO-OP: Penyimpanan chat ke DB dinonaktifkan. Data hanya di memori.
 }
 
-function syncChatsWithDatabase(chatsList) {
-  if (!Array.isArray(chatsList) || chatsList.length === 0) return;
-  const db = getPrisma();
-  if (!db) return;
-  prismaQueue = prismaQueue.then(async () => {
-    try {
-      for (const c of chatsList) {
-        if (!c.id || c.id.includes('@broadcast') || c.id === '150336740303055@lid') continue;
-        const cleanName = c.id === '6282211331456@c.us' ? 'Cecep Fahmidin (+6282211331456)' : c.name;
-        if (!cleanName || cleanName === 'Admin') continue;
-
-        await db.whatsAppChat.upsert({
-          where: { id: c.id },
-          create: {
-            id: c.id,
-            name: cleanName,
-            phone: c.id.replace(/@.*$/, ''),
-            isGroup: Boolean(c.isGroup),
-            timestamp: Number(c.timestamp) || Date.now(),
-            unreadCount: Number(c.unreadCount) || 0,
-            lastMessage: c.lastMessage || null,
-          },
-          update: {
-            name: cleanName,
-            isGroup: Boolean(c.isGroup),
-            timestamp: Number(c.timestamp) || Date.now(),
-            ...(c.lastMessage ? { lastMessage: c.lastMessage } : {}),
-          },
-        });
-      }
-    } catch (e) {
-      console.warn('[WA-SVC] syncChatsWithDatabase warning:', e?.message);
-    }
-  }).catch(() => {});
+function syncChatsWithDatabase(_chatsList) {
+  // NO-OP: Sinkronisasi chat ke DB dinonaktifkan.
 }
 
 async function loadChatsFromDatabase() {
-  const db = getPrisma();
-  if (!db) return;
-  try {
-    const dbChats = await db.whatsAppChat.findMany({
-      orderBy: { timestamp: 'desc' },
-      take: 200,
-    });
-    for (const dbc of dbChats) {
-      if (!conversations.has(dbc.id)) {
-        conversations.set(dbc.id, {
-          id: dbc.id,
-          name: dbc.name,
-          phone: dbc.phone,
-          isGroup: dbc.isGroup,
-          unreadCount: dbc.unreadCount || 0,
-          timestamp: dbc.timestamp || Date.now(),
-          avatarUrl: `/api/whatsapp?endpoint=avatar&chatId=${encodeURIComponent(dbc.id)}`,
-          lastMessage: dbc.lastMessage,
-          messages: [],
-        });
-      }
-    }
-    console.log(`[WA-SVC] Loaded ${dbChats.length} chats from database into memory.`);
-  } catch (err) {
-    console.warn('[WA-SVC] loadChatsFromDatabase warning:', err?.message);
-  }
+  // NO-OP: Load awal dari DB dinonaktifkan; mulai dengan memori kosong.
+  console.log('[WA-SVC] DB persistence disabled — starting with empty in-memory store.');
 }
-loadChatsFromDatabase().catch(() => {});
 
 // Cloud / Heroku ephemeral filesystem persistence: Backup & Restore session from DB
 async function restoreSessionFromDb(authPath) {
@@ -740,16 +612,8 @@ async function recordMessage(msg) {
       const isOldTemp = !old.id || old.id.startsWith('msg-') || old.id.startsWith('temp-');
       const isNewReal = messageObj.id && !messageObj.id.startsWith('msg-') && !messageObj.id.startsWith('temp-');
       if (isOldTemp && isNewReal) {
-        const oldTempId = old.id;
         old.id = messageObj.id;
-        const db = getPrisma();
-        if (db) {
-          prismaQueue = prismaQueue.then(async () => {
-            try {
-              await db.whatsAppMessage.deleteMany({ where: { id: oldTempId } });
-            } catch (_) {}
-          });
-        }
+        // DB persistence disabled — no DB cleanup needed for temp IDs
       }
       if (messageObj.ack && (!old.ack || messageObj.ack > old.ack)) {
         old.ack = messageObj.ack;
@@ -1206,37 +1070,10 @@ export async function handleRequest(req, res) {
       const conv = conversations.get(cleanChatId);
       let messagesList = conv?.messages ? [...conv.messages] : [];
 
-      // Query database if needed
-      if (messagesList.length < limit) {
-        const db = getPrisma();
-        if (db) {
-          try {
-            const dbMsgs = await db.whatsAppMessage.findMany({
-              where: { chatId: cleanChatId },
-              orderBy: { timestamp: 'desc' },
-              take: limit,
-            });
-            const msgMap = new Map();
-            dbMsgs.reverse().forEach((m) => msgMap.set(m.id, m));
-            messagesList.forEach((m) => msgMap.set(m.id, m));
-            messagesList = Array.from(msgMap.values());
-          } catch (_) {}
-        }
-      }
+      // DB persistence disabled — only use in-memory messages
 
       if (conv) {
         conv.unreadCount = 0;
-      }
-      const db = getPrisma();
-      if (db) {
-        prismaQueue = prismaQueue.then(async () => {
-          try {
-            await db.whatsAppChat.updateMany({
-              where: { id: cleanChatId },
-              data: { unreadCount: 0 },
-            });
-          } catch (_) {}
-        });
       }
       broadcastRealtime('CHAT_UPDATE', { chat: { id: cleanChatId, unreadCount: 0 } });
 
@@ -1570,17 +1407,7 @@ export async function handleRequest(req, res) {
         if (sock && state.status === 'READY') {
           sock.readMessages([{ remoteJid: toBaileysJid(cleanChatId), fromMe: false }]).catch(() => {});
         }
-        const db = getPrisma();
-        if (db) {
-          prismaQueue = prismaQueue.then(async () => {
-            try {
-              await db.whatsAppChat.updateMany({
-                where: { id: cleanChatId },
-                data: { unreadCount: 0 },
-              });
-            } catch (_) {}
-          });
-        }
+        // DB persistence disabled — only update in-memory unreadCount
         broadcastRealtime('CHAT_READ', { chatId: cleanChatId });
         broadcastRealtime('CHAT_UPDATE', { chat: { id: cleanChatId, unreadCount: 0 } });
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -1602,15 +1429,7 @@ export async function handleRequest(req, res) {
       const cleanChatId = toChatId(chatId);
       try {
         conversations.delete(cleanChatId);
-        const db = getPrisma();
-        if (db) {
-          prismaQueue = prismaQueue.then(async () => {
-            try {
-              await db.whatsAppMessage.deleteMany({ where: { chatId: cleanChatId } });
-              await db.whatsAppChat.deleteMany({ where: { id: cleanChatId } });
-            } catch (_) {}
-          });
-        }
+        // DB persistence disabled — only delete from in-memory store
         broadcastRealtime('CHAT_DELETED', { chatId: cleanChatId });
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: true, message: 'Chat berhasil dihapus.' }));
@@ -1647,14 +1466,7 @@ export async function handleRequest(req, res) {
             });
           } catch (_) {}
         }
-        const db = getPrisma();
-        if (db) {
-          prismaQueue = prismaQueue.then(async () => {
-            try {
-              await db.whatsAppMessage.deleteMany({ where: { id: messageId } });
-            } catch (_) {}
-          });
-        }
+        // DB persistence disabled — only delete from in-memory store
         broadcastRealtime('MESSAGE_DELETED', { messageId, chatId: cleanChatId });
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: true, message: 'Pesan berhasil dihapus.' }));

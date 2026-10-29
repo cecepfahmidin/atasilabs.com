@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { spawn } from 'node:child_process';
 import path from 'node:path';
-import { getChatsFromDb, getMessagesFromDb, saveMessageToDb, deleteChatFromDb, deleteMessageFromDb, markChatReadInDb } from '@/lib/whatsappDb';
 
 export const dynamic = 'force-dynamic';
 
@@ -143,50 +142,19 @@ export async function GET(req: Request) {
         }
       } catch {}
 
-      let dbDiag = null;
-      let dbChats: any[] = [];
-      try {
-        dbChats = await getChatsFromDb();
-      } catch (e: any) {
-        dbDiag = e.message;
-      }
+      // DB persistence disabled — only return gateway (in-memory) chats
+      const chats = gwChats.map((c) => ({
+        ...c,
+        avatarUrl: c.avatarUrl || `/api/whatsapp?endpoint=avatar&chatId=${encodeURIComponent(c.id)}`,
+      }));
 
-      // Merge GW chats and DB chats uniquely
-      const chatMap = new Map();
-      gwChats.forEach((c) =>
-        chatMap.set(c.id, {
-          ...c,
-          avatarUrl: c.avatarUrl || `/api/whatsapp?endpoint=avatar&chatId=${encodeURIComponent(c.id)}`,
-        })
-      );
-      dbChats.forEach((dbc) => {
-        if (!chatMap.has(dbc.id) && !dbc.id.includes('@broadcast') && !dbc.id.endsWith('@lid')) {
-          chatMap.set(dbc.id, {
-            id: dbc.id,
-            name: dbc.name,
-            phone: dbc.phone,
-            isGroup: dbc.isGroup,
-            unreadCount: dbc.unreadCount,
-            timestamp: dbc.timestamp,
-            lastMessage: dbc.lastMessage,
-            avatarUrl: `/api/whatsapp?endpoint=avatar&chatId=${encodeURIComponent(dbc.id)}`,
-          });
-        }
-      });
-
-      const merged = Array.from(chatMap.values()).sort((a, b) => (Number(b.timestamp) || 0) - (Number(a.timestamp) || 0));
-      return NextResponse.json({ success: true, chats: merged });
+      return NextResponse.json({ success: true, chats });
     }
 
     if (endpoint === 'messages') {
       const chatId = searchParams.get('chatId') || '';
       const limit = parseInt(searchParams.get('limit') || '60', 10);
       let gwMessages: any[] = [];
-
-      // Auto mark read in database when messages are requested
-      if (chatId) {
-        markChatReadInDb(chatId).catch(() => {});
-      }
 
       try {
         const res = await fetch(`${WA_SERVICE_URL}/api/messages?chatId=${encodeURIComponent(chatId)}&limit=${limit}`, {
@@ -195,69 +163,12 @@ export async function GET(req: Request) {
         const data = await res.json();
         if (data.success && Array.isArray(data.messages)) {
           gwMessages = data.messages;
-          // Async background sync of newly fetched messages into database
-          Promise.all(
-            gwMessages.map((m) =>
-              saveMessageToDb({
-                id: m.id,
-                chatId,
-                body: m.body,
-                from: m.from,
-                to: m.to,
-                fromMe: m.fromMe,
-                timestamp: m.timestamp,
-                type: m.type,
-                hasMedia: m.hasMedia,
-                mediaUrl: m.mediaUrl,
-                mediaKey: m.mediaKey,
-                mediaName: m.mediaName,
-                mediaMime: m.mediaMime,
-                mediaSize: m.mediaSize,
-                ack: m.ack,
-              })
-            )
-          ).catch(() => {});
+          // DB persistence disabled — no background DB sync
         }
       } catch {}
 
-      const dbMessages = await getMessagesFromDb(chatId, limit);
-
-      // Merge and deduplicate
-      const msgMap = new Map();
-      gwMessages.forEach((m) => msgMap.set(m.id, { ...m }));
-      dbMessages.forEach((dbm) => {
-        if (!msgMap.has(dbm.id)) {
-          msgMap.set(dbm.id, {
-            id: dbm.id,
-            chatId: dbm.chatId,
-            body: dbm.body,
-            from: dbm.from,
-            to: dbm.to,
-            fromMe: dbm.fromMe,
-            timestamp: dbm.timestamp,
-            type: dbm.type,
-            hasMedia: dbm.hasMedia,
-            mediaUrl: dbm.mediaUrl,
-            mediaKey: dbm.mediaKey,
-            mediaName: dbm.mediaName,
-            mediaMime: dbm.mediaMime,
-            mediaSize: dbm.mediaSize,
-            ack: dbm.ack,
-          });
-        } else {
-          // If gw message lacks mediaUrl but dbm has it, copy over
-          const existing = msgMap.get(dbm.id);
-          if (!existing.mediaUrl && dbm.mediaUrl) {
-            existing.mediaUrl = dbm.mediaUrl;
-            existing.mediaKey = dbm.mediaKey || existing.mediaKey;
-            existing.mediaName = dbm.mediaName || existing.mediaName;
-            existing.mediaMime = dbm.mediaMime || existing.mediaMime;
-            existing.mediaSize = dbm.mediaSize || existing.mediaSize;
-          }
-        }
-      });
-
-      const finalMessages = Array.from(msgMap.values()).sort((a, b) => (Number(a.timestamp) || 0) - (Number(b.timestamp) || 0));
+      // DB persistence disabled — only return gateway (in-memory) messages
+      const finalMessages = [...gwMessages].sort((a, b) => (Number(a.timestamp) || 0) - (Number(b.timestamp) || 0));
       return NextResponse.json({ success: true, chatId, messages: finalMessages });
     }
 
@@ -336,17 +247,7 @@ export async function POST(req: Request) {
       const chatName = name || `+${rawPhone}`;
       const now = Date.now();
 
-      await saveMessageToDb({
-        id: `init-${now}`,
-        chatId: targetJid,
-        body: message || 'Memulai percakapan',
-        fromMe: true,
-        timestamp: now,
-        type: 'chat',
-        chatName,
-        chatPhone: rawPhone,
-      });
-
+      // DB persistence disabled — chat will appear after first real message is received
       return NextResponse.json({
         success: true,
         chat: {
@@ -365,8 +266,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: false, error: 'chatId wajib diisi.' }, { status: 400 });
       }
 
-      await markChatReadInDb(targetChatId);
-
+      // DB persistence disabled — only forward to gateway service
       try {
         await fetch(`${WA_SERVICE_URL}/api/mark-read`, {
           method: 'POST',
@@ -385,8 +285,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: false, error: 'chatId wajib diisi.' }, { status: 400 });
       }
 
-      await deleteChatFromDb(targetChatId);
-
+      // DB persistence disabled — only forward to gateway service
       try {
         await fetch(`${WA_SERVICE_URL}/api/delete-chat`, {
           method: 'POST',
@@ -405,8 +304,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: false, error: 'messageId wajib diisi.' }, { status: 400 });
       }
 
-      await deleteMessageFromDb(messageId, chatId);
-
+      // DB persistence disabled — only forward to gateway service
       try {
         await fetch(`${WA_SERVICE_URL}/api/delete-message`, {
           method: 'POST',
@@ -448,27 +346,7 @@ export async function POST(req: Request) {
 
       const responseData = await forwardRes.json().catch(() => ({}));
 
-      // If send was successful, persist to PostgreSQL DB as well!
-      if (action === 'send' && responseData.success && responseData.sentMessage) {
-        const sm = responseData.sentMessage;
-        saveMessageToDb({
-          id: sm.id,
-          chatId: sm.to || chatId,
-          body: sm.body,
-          from: sm.from,
-          to: sm.to,
-          fromMe: true,
-          timestamp: sm.timestamp || Date.now(),
-          type: sm.type || 'chat',
-          hasMedia: sm.hasMedia,
-          mediaUrl: sm.mediaUrl,
-          mediaKey: sm.mediaKey,
-          mediaName: sm.mediaName,
-          mediaMime: sm.mediaMime,
-          mediaSize: sm.mediaSize,
-          ack: sm.ack || 1,
-        }).catch(() => {});
-      }
+      // DB persistence disabled — no DB write for sent messages
 
       return NextResponse.json(responseData, { status: forwardRes.status });
     } catch {
